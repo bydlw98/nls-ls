@@ -162,19 +162,54 @@ impl EntryBuf {
     pub fn nlink_cell(&self) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => DisplayCell::from_ascii_string(metadata.nlink().to_string(), false),
-            None => DisplayCell::from_ascii_string(String::from("?"), false),
+            None => DisplayCell::error_right_aligned(),
         }
     }
 
     #[cfg(not(unix))]
     pub fn nlink_cell(&self) -> DisplayCell {
-        DisplayCell::from_ascii_string(1.to_string(), false)
+        match &self.metadata {
+            Some(_) => DisplayCell::from_ascii_string(1.to_string(), false),
+            None => DisplayCell::error_right_aligned(),
+        }
+    }
+
+    #[cfg(unix)]
+    pub fn owner_cell(&self) -> DisplayCell {
+        match &self.metadata {
+            Some(metadata) => get_username_cell_by_uid(metadata.uid()),
+            None => DisplayCell::error_left_aligned(),
+        }
+    }
+
+    #[cfg(not(unix))]
+    pub fn owner_cell(&self) -> DisplayCell {
+        match &self.metadata {
+            Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
+            None => DisplayCell::error_left_aligned(),
+        }
+    }
+
+    #[cfg(unix)]
+    pub fn group_cell(&self) -> DisplayCell {
+        match &self.metadata {
+            Some(metadata) => get_groupname_cell_by_gid(metadata.gid()),
+            None => DisplayCell::error_left_aligned(),
+        }
+    }
+
+    #[cfg(not(unix))]
+    pub fn group_cell(&self) -> DisplayCell {
+        match &self.metadata {
+            Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
+            None => DisplayCell::error_left_aligned(),
+        }
     }
 
     pub fn size_cell(&self) -> DisplayCell {
         match &self.size {
             Some(size) => DisplayCell::from_ascii_string(size.to_string(), false),
-            None => DisplayCell::from_ascii_string(String::from("?"), false),
+            None => DisplayCell::error_right_aligned(),
         }
     }
 
