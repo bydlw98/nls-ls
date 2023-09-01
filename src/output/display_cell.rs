@@ -11,6 +11,23 @@ pub struct DisplayCell {
 }
 
 impl DisplayCell {
+    pub fn error_left_aligned() -> Self {
+        Self {
+            contents: String::from('?'),
+            width: 1,
+            pad_width: 0,
+            left_aligned: true,
+        }
+    }
+
+    pub fn error_right_aligned() -> Self {
+        Self {
+            contents: String::from('?'),
+            width: 1,
+            pad_width: 0,
+            left_aligned: false,
+        }
+    }
     pub fn from_ascii_string(value: String, left_aligned: bool) -> DisplayCell {
         let width = value.len();
 
@@ -38,6 +55,11 @@ impl DisplayCell {
         } else {
             self.pad_width = width - self.width;
         }
+    }
+
+    pub fn push_ascii_str(&mut self, string: &str) {
+        self.width += string.len();
+        self.contents.push_str(string);
     }
 
     pub fn push_char(&mut self, ch: char) {

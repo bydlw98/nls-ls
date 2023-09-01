@@ -6,7 +6,9 @@ use std::path::{Path, PathBuf};
 use crate::config::Config;
 #[cfg(unix)]
 use crate::os::unix::*;
-use crate::output::DisplayCell;
+use crate::output::*;
+#[cfg(not(unix))]
+use crate::utils::get_unix_timestamp_from_systemtime;
 
 #[derive(Debug, Default)]
 pub struct EntryBuf {
@@ -15,6 +17,7 @@ pub struct EntryBuf {
     path: PathBuf,
     metadata: Option<Metadata>,
     size: Option<u64>,
+    timestamp: Option<i64>,
 }
 
 impl EntryBuf {
@@ -87,6 +90,37 @@ impl EntryBuf {
         if let Some(metadata) = &self.metadata {
             self.size = Some(metadata.len());
         }
+
+        #[cfg(unix)]
+        self.load_unix_metadata();
+
+        #[cfg(not(unix))]
+        self.load_other_metadata();
+    }
+
+    #[cfg(unix)]
+    pub fn load_unix_metadata(&mut self) {
+        if let Some(metadata) = &self.metadata {
+            self.timestamp = Some(metadata.mtime());
+        }
+    }
+
+    #[cfg(not(unix))]
+    pub fn load_other_metadata(&mut self) {
+        if let Some(metadata) = &self.metadata {
+            match metadata.modified() {
+                Ok(modified) => {
+                    self.timestamp = Some(get_unix_timestamp_from_systemtime(modified));
+                }
+                Err(err) => {
+                    eprintln!(
+                        "nls: unable to get modified timestamp of '{}': {}",
+                        self.path.display(),
+                        err
+                    );
+                }
+            }
+        }
     }
 
     pub fn file_name_key(&self) -> &str {
@@ -141,6 +175,13 @@ impl EntryBuf {
         match &self.size {
             Some(size) => DisplayCell::from_ascii_string(size.to_string(), false),
             None => DisplayCell::from_ascii_string(String::from("?"), false),
+        }
+    }
+
+    pub fn timestamp_cell(&self) -> DisplayCell {
+        match &self.timestamp {
+            Some(timestamp) => format_timestamp(*timestamp),
+            None => DisplayCell::error_left_aligned(),
         }
     }
 }

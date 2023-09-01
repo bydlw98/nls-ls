@@ -6,7 +6,7 @@ use crate::config::Config;
 use crate::entry::EntryBuf;
 
 pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
-    let num_columns: usize = 4;
+    let num_columns: usize = 5;
 
     let mut grid = LongFormatGrid::new(num_columns, entrybuf_vec.len());
 
@@ -14,6 +14,7 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
         grid.add(entrybuf.mode_cell());
         grid.add(entrybuf.nlink_cell());
         grid.add(entrybuf.size_cell());
+        grid.add(entrybuf.timestamp_cell());
         grid.add(entrybuf.file_name_cell());
     }
 

@@ -1,8 +1,10 @@
 mod column;
 mod display_cell;
 mod long;
+mod format_timestamp;
 
 pub use display_cell::DisplayCell;
+pub use format_timestamp::format_timestamp;
 
 use column::{across_format, single_column_format, vertical_format};
 use long::long_format;
