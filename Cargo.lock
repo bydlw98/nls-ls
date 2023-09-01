@@ -201,9 +201,11 @@ dependencies = [
  "clap_lex",
  "env_logger",
  "ignore",
+ "libc",
  "log",
  "term_grid",
  "terminal_size",
+ "unicode-width",
 ]
 
 [[package]]

@@ -1,6 +1,7 @@
 mod config;
 mod entry;
 mod list_dir;
+mod os;
 mod output;
 mod utils;
 

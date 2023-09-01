@@ -1,6 +1,11 @@
 mod column;
+mod display_cell;
+mod long;
+
+pub use display_cell::DisplayCell;
 
 use column::{across_format, single_column_format, vertical_format};
+use long::long_format;
 
 use std::cmp::Ordering;
 
@@ -15,10 +20,10 @@ pub fn output(entrybuf_vec: &mut Vec<EntryBuf>, config: &Config) {
     entrybuf_vec.sort_by(file_name_compare);
 
     match config.output_format {
-        OutputFormat::Across => across_format(entrybuf_vec, config),
         OutputFormat::SingleColumn => single_column_format(entrybuf_vec, config),
         OutputFormat::Vertical => vertical_format(entrybuf_vec, config),
-
+        OutputFormat::Across => across_format(entrybuf_vec, config),
+        OutputFormat::Long => long_format(entrybuf_vec, config),
     }
 }
 

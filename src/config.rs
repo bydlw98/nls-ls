@@ -59,6 +59,9 @@ impl Config {
                         Ok('C') => {
                             self.output_format = OutputFormat::Vertical;
                         }
+                        Ok('l') => {
+                            self.output_format = OutputFormat::Long;
+                        }
                         Ok('x') => {
                             self.output_format = OutputFormat::Across;
                         }
@@ -119,9 +122,10 @@ impl Default for Config {
 
 #[derive(Debug)]
 pub enum OutputFormat {
-    Across,
-    Vertical,
     SingleColumn,
+    Vertical,
+    Across,
+    Long,
 }
 
 impl Default for OutputFormat {
