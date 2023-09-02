@@ -14,6 +14,7 @@ pub struct Config {
     pub output_format: OutputFormat,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
+    pub size_format: SizeFormat,
     pub sorting_order: SortingOrder,
     pub width: usize,
 }
@@ -65,6 +66,9 @@ impl Config {
                         Ok('F') => {
                             self.indicator_style = IndicatorStyle::Classify;
                         }
+                        Ok('h') => {
+                            self.size_format = SizeFormat::HumanReadable;
+                        }
                         Ok('l') => {
                             self.output_format = OutputFormat::Long;
                         }
@@ -109,6 +113,12 @@ impl Config {
                     Ok("classify") => {
                         self.indicator_style = IndicatorStyle::Classify;
                     }
+                    Ok("human-readable") => {
+                        self.size_format = SizeFormat::HumanReadable;
+                    }
+                    Ok("iec") => {
+                        self.size_format = SizeFormat::Iec;
+                    }
                     Ok("ignore-file") => {
                         self.ignore_file = true;
                     }
@@ -117,6 +127,9 @@ impl Config {
                     }
                     Ok("reverse") => {
                         self.reverse = true;
+                    }
+                    Ok("si") => {
+                        self.size_format = SizeFormat::Si;
                     }
                     _ => {
                         eprintln!("nls: Unexpected flag '{}'", arg.display());
@@ -141,6 +154,7 @@ impl Default for Config {
             output_format: OutputFormat::default(),
             reverse: false,
             show_current_and_parent_dirs: false,
+            size_format: SizeFormat::default(),
             sorting_order: SortingOrder::default(),
             width: 80,
         }
@@ -175,6 +189,20 @@ impl IndicatorStyle {
 impl Default for IndicatorStyle {
     fn default() -> Self {
         Self::Never
+    }
+}
+
+#[derive(Debug)]
+pub enum SizeFormat {
+    Raw,
+    HumanReadable,
+    Iec,
+    Si,
+}
+
+impl Default for SizeFormat {
+    fn default() -> Self {
+        Self::Raw
     }
 }
 

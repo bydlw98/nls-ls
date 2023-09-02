@@ -253,9 +253,9 @@ impl EntryBuf {
         self.size
     }
 
-    pub fn size_cell(&self) -> DisplayCell {
+    pub fn size_cell(&self, config: &Config) -> DisplayCell {
         match &self.size {
-            Some(size) => DisplayCell::from_ascii_string(size.to_string(), false),
+            Some(size) => format_size(*size, config),
             None => DisplayCell::error_right_aligned(),
         }
     }

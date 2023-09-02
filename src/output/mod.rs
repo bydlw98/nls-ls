@@ -2,11 +2,13 @@ mod column;
 mod display_cell;
 mod long;
 mod format_filename;
+mod format_size;
 mod format_timestamp;
 mod sort;
 
 pub use display_cell::DisplayCell;
 pub use format_filename::format_filename;
+pub use format_size::format_size;
 pub use format_timestamp::format_timestamp;
 
 use column::{across_format, single_column_format, vertical_format};
