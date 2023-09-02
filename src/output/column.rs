@@ -13,7 +13,7 @@ pub fn across_format(entrybuf_vec: &[EntryBuf], config: &Config) {
 
 pub fn single_column_format(entrybuf_vec: &[EntryBuf], config: &Config) {
     for entrybuf in entrybuf_vec {
-        println!("{}", entrybuf.file_name_cell());
+        println!("{}", entrybuf.file_name_cell(config));
     }
 }
 
@@ -25,7 +25,7 @@ fn internal_multi_column_format(direction: Direction, entrybuf_vec: &[EntryBuf],
     grid.reserve(entrybuf_vec.len() + 1);
 
     for entrybuf in entrybuf_vec {
-        grid.add(entrybuf.file_name_cell().into());
+        grid.add(entrybuf.file_name_cell(config).into());
     }
 
     match grid.fit_into_width(config.width) {

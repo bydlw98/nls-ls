@@ -17,7 +17,7 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
         grid.add(entrybuf.group_cell());
         grid.add(entrybuf.size_cell());
         grid.add(entrybuf.timestamp_cell());
-        grid.add(entrybuf.file_name_cell());
+        grid.add(entrybuf.file_name_cell(config));
     }
 
     print!("{}", grid);

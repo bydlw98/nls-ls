@@ -10,6 +10,7 @@ pub struct Config {
     pub git_ignore: bool,
     pub ignore_file: bool,
     pub ignore_hidden: bool,
+    pub indicator_style: IndicatorStyle,
     pub output_format: OutputFormat,
     pub show_current_and_parent_dirs: bool,
     pub width: usize,
@@ -59,8 +60,14 @@ impl Config {
                         Ok('C') => {
                             self.output_format = OutputFormat::Vertical;
                         }
+                        Ok('F') => {
+                            self.indicator_style = IndicatorStyle::Classify;
+                        }
                         Ok('l') => {
                             self.output_format = OutputFormat::Long;
+                        }
+                        Ok('p') => {
+                            self.indicator_style = IndicatorStyle::Slash;
                         }
                         Ok('x') => {
                             self.output_format = OutputFormat::Across;
@@ -88,6 +95,9 @@ impl Config {
                         self.show_current_and_parent_dirs = false;
                         self.ignore_hidden = false;
                     }
+                    Ok("classify") => {
+                        self.indicator_style = IndicatorStyle::Classify;
+                    }
                     Ok("ignore-file") => {
                         self.ignore_file = true;
                     }
@@ -113,10 +123,42 @@ impl Default for Config {
             git_ignore: false,
             ignore_file: false,
             ignore_hidden: true,
+            indicator_style: IndicatorStyle::default(),
             output_format: OutputFormat::default(),
             show_current_and_parent_dirs: false,
             width: 80,
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum IndicatorStyle {
+    Classify,
+    Slash,
+    Never,
+}
+
+impl IndicatorStyle {
+    pub const DIR: char = '/';
+    pub const SYMLINK: char = '@';
+    pub const EXEC: char = '*';
+    #[cfg(unix)]
+    pub const SOCKET: char = '=';
+    #[cfg(unix)]
+    pub const FIFO: char = '|';
+
+    pub fn dir(&self) -> bool {
+        *self != Self::Never
+    }
+
+    pub fn others(&self) -> bool {
+        *self == Self::Classify
+    }
+}
+
+impl Default for IndicatorStyle {
+    fn default() -> Self {
+        Self::Never
     }
 }
 

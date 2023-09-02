@@ -127,8 +127,11 @@ impl EntryBuf {
         &self.file_name_key
     }
 
-    pub fn file_name_cell(&self) -> DisplayCell {
-        DisplayCell::from(self.file_name.clone())
+    pub fn file_name_cell(&self, config: &Config) -> DisplayCell {
+        match &self.metadata {
+            Some(metadata) => format_filename(&self.file_name, metadata, config),
+            None => DisplayCell::from(self.file_name.clone())
+        }
     }
 
     #[cfg(unix)]
