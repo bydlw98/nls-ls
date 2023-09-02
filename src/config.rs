@@ -162,12 +162,18 @@ impl Default for IndicatorStyle {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum OutputFormat {
     SingleColumn,
     Vertical,
     Across,
     Long,
+}
+
+impl OutputFormat {
+    pub fn is_long(&self) -> bool {
+        *self == Self::Long
+    }
 }
 
 impl Default for OutputFormat {

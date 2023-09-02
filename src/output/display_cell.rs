@@ -49,6 +49,11 @@ impl DisplayCell {
         self.width
     }
 
+    pub fn append(&mut self, other: Self) {
+        self.contents.push_str(&other.contents);
+        self.width += other.width;
+    }
+
     pub fn pad_to_width(&mut self, width: usize) {
         if width <= self.width {
             self.pad_width = 0;
@@ -60,6 +65,11 @@ impl DisplayCell {
     pub fn push_ascii_str(&mut self, string: &str) {
         self.width += string.len();
         self.contents.push_str(string);
+    }
+
+    pub fn push_str(&mut self, string: &str) {
+        self.contents.push_str(string);
+        self.width += string.width();
     }
 
     pub fn push_char(&mut self, ch: char) {

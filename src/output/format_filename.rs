@@ -28,7 +28,7 @@ pub fn format_filename(file_name: &str, metadata: &Metadata, config: &Config) ->
         }
 
         c::S_IFLNK => {
-            if indicator_style.others() {
+            if indicator_style.others() && !config.output_format.is_long() {
                 filename_cell.push_char(IndicatorStyle::SYMLINK);
             }
         }

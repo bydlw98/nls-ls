@@ -123,14 +123,54 @@ impl EntryBuf {
         }
     }
 
+    fn get_symlink_target_cell(&self, config: &Config) -> DisplayCell {
+        let mut symlink_target_cell = DisplayCell::with_capacity(128);
+        symlink_target_cell.push_ascii_str(" -> ");
+
+        match std::fs::read_link(&self.path) {
+            Ok(symlink_target_name) => match self.path.metadata() {
+                Ok(symlink_target_metadata) => {
+                    let symlink_target_file_name_cell = format_filename(
+                        &symlink_target_name.to_string_lossy(),
+                        &symlink_target_metadata,
+                        config,
+                    );
+                    symlink_target_cell.append(symlink_target_file_name_cell);
+                }
+                Err(err) => {
+                    symlink_target_cell.push_str(&symlink_target_name.to_string_lossy());
+                    eprintln!(
+                        "nls: unable to get link metadata of '{}': {}",
+                        self.path.display(),
+                        err
+                    );
+                }
+            },
+            Err(err) => {
+                symlink_target_cell.push_char('?');
+                eprintln!("nls: unable to readlink '{}': {}", self.path.display(), err);
+            }
+        }
+
+        symlink_target_cell
+    }
+
     pub fn file_name_key(&self) -> &str {
         &self.file_name_key
     }
 
     pub fn file_name_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
-            Some(metadata) => format_filename(&self.file_name, metadata, config),
-            None => DisplayCell::from(self.file_name.clone())
+            Some(metadata) => {
+                let mut file_name_cell = format_filename(&self.file_name, metadata, config);
+
+                if metadata.is_symlink() && config.output_format.is_long() {
+                    file_name_cell.append(self.get_symlink_target_cell(config));
+                }
+
+                file_name_cell
+            }
+            None => DisplayCell::from(self.file_name.clone()),
         }
     }
 
