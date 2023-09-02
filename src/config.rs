@@ -12,7 +12,9 @@ pub struct Config {
     pub ignore_hidden: bool,
     pub indicator_style: IndicatorStyle,
     pub output_format: OutputFormat,
+    pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
+    pub sorting_order: SortingOrder,
     pub width: usize,
 }
 
@@ -69,6 +71,15 @@ impl Config {
                         Ok('p') => {
                             self.indicator_style = IndicatorStyle::Slash;
                         }
+                        Ok('r') => {
+                            self.reverse = true;
+                        }
+                        Ok('S') => {
+                            self.sorting_order = SortingOrder::Size;
+                        }
+                        Ok('t') => {
+                            self.sorting_order = SortingOrder::Timestamp;
+                        }
                         Ok('x') => {
                             self.output_format = OutputFormat::Across;
                         }
@@ -104,6 +115,9 @@ impl Config {
                     Ok("gitignore") => {
                         self.git_ignore = true;
                     }
+                    Ok("reverse") => {
+                        self.reverse = true;
+                    }
                     _ => {
                         eprintln!("nls: Unexpected flag '{}'", arg.display());
                         process::exit(1);
@@ -125,7 +139,9 @@ impl Default for Config {
             ignore_hidden: true,
             indicator_style: IndicatorStyle::default(),
             output_format: OutputFormat::default(),
+            reverse: false,
             show_current_and_parent_dirs: false,
+            sorting_order: SortingOrder::default(),
             width: 80,
         }
     }
@@ -159,6 +175,19 @@ impl IndicatorStyle {
 impl Default for IndicatorStyle {
     fn default() -> Self {
         Self::Never
+    }
+}
+
+#[derive(Debug)]
+pub enum SortingOrder {
+    FileName,
+    Size,
+    Timestamp
+}
+
+impl Default for SortingOrder {
+    fn default() -> Self {
+        Self::FileName
     }
 }
 

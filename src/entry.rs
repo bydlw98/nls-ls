@@ -249,11 +249,19 @@ impl EntryBuf {
         }
     }
 
+    pub fn size(&self) -> Option<u64> {
+        self.size
+    }
+
     pub fn size_cell(&self) -> DisplayCell {
         match &self.size {
             Some(size) => DisplayCell::from_ascii_string(size.to_string(), false),
             None => DisplayCell::error_right_aligned(),
         }
+    }
+
+    pub fn timestamp(&self) -> Option<i64> {
+        self.timestamp
     }
 
     pub fn timestamp_cell(&self) -> DisplayCell {
