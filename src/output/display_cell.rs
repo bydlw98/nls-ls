@@ -45,6 +45,10 @@ impl DisplayCell {
         }
     }
 
+    pub fn contents(&self) -> &str {
+        &self.contents
+    }
+
     pub fn width(&self) -> usize {
         self.width
     }
@@ -75,6 +79,12 @@ impl DisplayCell {
     pub fn push_char(&mut self, ch: char) {
         self.contents.push(ch);
         self.width += 1;
+    }
+
+    pub fn paint(&mut self, ansi_style_str: &str) {
+        self.contents
+            .insert_str(0, &format!("\x1b[{}m", ansi_style_str));
+        self.contents.push_str("\x1b[0m");
     }
 }
 

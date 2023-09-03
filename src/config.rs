@@ -2,15 +2,18 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process;
 
+use crate::ls_colors::LsColors;
 use crate::utils;
 
 #[derive(Debug)]
 pub struct Config {
     pub is_atty: bool,
+    pub color: bool,
     pub git_ignore: bool,
     pub ignore_file: bool,
     pub ignore_hidden: bool,
     pub indicator_style: IndicatorStyle,
+    pub ls_colors: LsColors,
     pub output_format: OutputFormat,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
@@ -26,10 +29,15 @@ impl Config {
 
         if let Some(term_width) = utils::terminal_width() {
             config.is_atty = true;
+            config.color = true;
             config.output_format = OutputFormat::Vertical;
             config.width = term_width;
         }
         config.parse_args(std::env::args_os(), &mut path_args_vec);
+
+        if config.color {
+            config.ls_colors.init();
+        }
 
         path_args_vec.sort();
 
@@ -110,6 +118,22 @@ impl Config {
                         self.show_current_and_parent_dirs = false;
                         self.ignore_hidden = false;
                     }
+                    Ok("color") => match value {
+                        Some(when) => {
+                            if when == "always" {
+                                self.color = true;
+                            } else if when == "auto" {
+                                self.color = self.is_atty;
+                            } else if when == "never" {
+                                self.color = false;
+                            } else {
+                                eprintln!("nls: '{}' is an invalid argument for '--color'", when.to_string_lossy());
+                                eprintln!("     possible arguments are ['always', 'auto', 'never']");
+                                process::exit(1);
+                            }
+                        }
+                        None => self.color = true,
+                    },
                     Ok("classify") => {
                         self.indicator_style = IndicatorStyle::Classify;
                     }
@@ -147,10 +171,12 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             is_atty: false,
+            color: false,
             git_ignore: false,
             ignore_file: false,
             ignore_hidden: true,
             indicator_style: IndicatorStyle::default(),
+            ls_colors: LsColors::default(),
             output_format: OutputFormat::default(),
             reverse: false,
             show_current_and_parent_dirs: false,
@@ -210,7 +236,7 @@ impl Default for SizeFormat {
 pub enum SortingOrder {
     FileName,
     Size,
-    Timestamp
+    Timestamp,
 }
 
 impl Default for SortingOrder {

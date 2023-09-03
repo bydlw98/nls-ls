@@ -1,6 +1,7 @@
 mod config;
 mod entry;
 mod list_dir;
+mod ls_colors;
 mod os;
 mod output;
 mod utils;
