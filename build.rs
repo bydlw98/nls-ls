@@ -146,6 +146,12 @@ fn build_command() -> Command {
                 .help("Sort entries by most recent timestamp first"),
         )
         .arg(
+            Arg::new("version")
+                .action(ArgAction::Version)
+                .long("version")
+                .help("Print version information"),
+        )
+        .arg(
             Arg::new("across")
                 .action(ArgAction::SetTrue)
                 .short('x')

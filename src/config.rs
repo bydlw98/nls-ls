@@ -159,6 +159,10 @@ impl Config {
                     Ok("si") => {
                         self.size_format = SizeFormat::Si;
                     }
+                    Ok("version") => {
+                        println!("nls-ls {}", env!("CARGO_PKG_VERSION"));
+                        process::exit(0);
+                    }
                     _ => {
                         eprintln!("nls: Unexpected flag '{}'", arg.display());
                         process::exit(1);
