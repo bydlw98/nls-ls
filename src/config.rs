@@ -137,6 +137,10 @@ impl Config {
                     Ok("classify") => {
                         self.indicator_style = IndicatorStyle::Classify;
                     }
+                    Ok("help") => {
+                        println!("{}", include_str!(concat!(env!("OUT_DIR"), "/help-page.txt")));
+                        process::exit(0);
+                    }
                     Ok("human-readable") => {
                         self.size_format = SizeFormat::HumanReadable;
                     }
