@@ -218,15 +218,15 @@ impl EntryBuf {
     }
 
     #[cfg(unix)]
-    pub fn owner_cell(&self) -> DisplayCell {
+    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
-            Some(metadata) => get_username_cell_by_uid(metadata.uid()),
+            Some(metadata) => get_username_cell_by_uid(metadata.uid(), config),
             None => DisplayCell::error_left_aligned(),
         }
     }
 
     #[cfg(not(unix))]
-    pub fn owner_cell(&self) -> DisplayCell {
+    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
             None => DisplayCell::error_left_aligned(),
@@ -234,9 +234,9 @@ impl EntryBuf {
     }
 
     #[cfg(unix)]
-    pub fn group_cell(&self) -> DisplayCell {
+    pub fn group_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
-            Some(metadata) => get_groupname_cell_by_gid(metadata.gid()),
+            Some(metadata) => get_groupname_cell_by_gid(metadata.gid(), config),
             None => DisplayCell::error_left_aligned(),
         }
     }

@@ -111,6 +111,13 @@ fn build_command() -> Command {
                 .help("List entries along with their metadata in long format"),
         )
         .arg(
+            Arg::new("numeric-uid-gid")
+                .action(ArgAction::SetTrue)
+                .short('n')
+                .long("numeric-uid-gid")
+                .help("Like -l but list the owner and group names as their respective uid and gid"),
+        )
+        .arg(
             Arg::new("slash")
                 .action(ArgAction::SetTrue)
                 .short('p')

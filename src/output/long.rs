@@ -13,8 +13,8 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
     for entrybuf in entrybuf_vec {
         grid.add(entrybuf.mode_cell());
         grid.add(entrybuf.nlink_cell());
-        grid.add(entrybuf.owner_cell());
-        grid.add(entrybuf.group_cell());
+        grid.add(entrybuf.owner_cell(config));
+        grid.add(entrybuf.group_cell(config));
         grid.add(entrybuf.size_cell(config));
         grid.add(entrybuf.timestamp_cell());
         grid.add(entrybuf.file_name_cell(config));

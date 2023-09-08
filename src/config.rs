@@ -14,6 +14,7 @@ pub struct Config {
     pub ignore_hidden: bool,
     pub indicator_style: IndicatorStyle,
     pub ls_colors: LsColors,
+    pub numeric_uid_gid: bool,
     pub output_format: OutputFormat,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
@@ -80,6 +81,10 @@ impl Config {
                         Ok('l') => {
                             self.output_format = OutputFormat::Long;
                         }
+                        Ok('n') => {
+                            self.numeric_uid_gid = true;
+                            self.output_format = OutputFormat::Long;
+                        }
                         Ok('p') => {
                             self.indicator_style = IndicatorStyle::Slash;
                         }
@@ -127,8 +132,13 @@ impl Config {
                             } else if when == "never" {
                                 self.color = false;
                             } else {
-                                eprintln!("nls: '{}' is an invalid argument for '--color'", when.to_string_lossy());
-                                eprintln!("     possible arguments are ['always', 'auto', 'never']");
+                                eprintln!(
+                                    "nls: '{}' is an invalid argument for '--color'",
+                                    when.to_string_lossy()
+                                );
+                                eprintln!(
+                                    "     possible arguments are ['always', 'auto', 'never']"
+                                );
                                 process::exit(1);
                             }
                         }
@@ -138,7 +148,10 @@ impl Config {
                         self.indicator_style = IndicatorStyle::Classify;
                     }
                     Ok("help") => {
-                        println!("{}", include_str!(concat!(env!("OUT_DIR"), "/help-page.txt")));
+                        println!(
+                            "{}",
+                            include_str!(concat!(env!("OUT_DIR"), "/help-page.txt"))
+                        );
                         process::exit(0);
                     }
                     Ok("human-readable") => {
@@ -152,6 +165,10 @@ impl Config {
                     }
                     Ok("gitignore") => {
                         self.git_ignore = true;
+                    }
+                    Ok("numeric-uid-gid") => {
+                        self.numeric_uid_gid = true;
+                        self.output_format = OutputFormat::Long;
                     }
                     Ok("reverse") => {
                         self.reverse = true;
@@ -185,6 +202,7 @@ impl Default for Config {
             ignore_hidden: true,
             indicator_style: IndicatorStyle::default(),
             ls_colors: LsColors::default(),
+            numeric_uid_gid: false,
             output_format: OutputFormat::default(),
             reverse: false,
             show_current_and_parent_dirs: false,
