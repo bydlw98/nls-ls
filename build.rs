@@ -71,6 +71,12 @@ fn build_command() -> Command {
                 .help("Append filetype indicator (either */=@|) to entry file names"),
         )
         .arg(
+            Arg::new("list-owner")
+                .action(ArgAction::SetFalse)
+                .short('g')
+                .help("Like -l but do not list the owner column"),
+        )
+        .arg(
             Arg::new("gitignore")
                 .action(ArgAction::SetTrue)
                 .long("gitignore")
@@ -116,6 +122,12 @@ fn build_command() -> Command {
                 .short('n')
                 .long("numeric-uid-gid")
                 .help("Like -l but list the owner and group names as their respective uid and gid"),
+        )
+        .arg(
+            Arg::new("list-group")
+                .action(ArgAction::SetFalse)
+                .short('o')
+                .help("Like -l but do not list the group column"),
         )
         .arg(
             Arg::new("slash")

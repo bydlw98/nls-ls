@@ -18,6 +18,8 @@ pub struct Config {
     pub output_format: OutputFormat,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
+    pub list_owner: bool,
+    pub list_group: bool,
     pub size_format: SizeFormat,
     pub sorting_order: SortingOrder,
     pub width: usize,
@@ -75,6 +77,10 @@ impl Config {
                         Ok('F') => {
                             self.indicator_style = IndicatorStyle::Classify;
                         }
+                        Ok('g') => {
+                            self.list_owner = false;
+                            self.output_format = OutputFormat::Long;
+                        }
                         Ok('h') => {
                             self.size_format = SizeFormat::HumanReadable;
                         }
@@ -83,6 +89,10 @@ impl Config {
                         }
                         Ok('n') => {
                             self.numeric_uid_gid = true;
+                            self.output_format = OutputFormat::Long;
+                        }
+                        Ok('o') => {
+                            self.list_group = false;
                             self.output_format = OutputFormat::Long;
                         }
                         Ok('p') => {
@@ -205,6 +215,8 @@ impl Default for Config {
             numeric_uid_gid: false,
             output_format: OutputFormat::default(),
             reverse: false,
+            list_owner: true,
+            list_group: true,
             show_current_and_parent_dirs: false,
             size_format: SizeFormat::default(),
             sorting_order: SortingOrder::default(),
