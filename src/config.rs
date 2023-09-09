@@ -18,6 +18,7 @@ pub struct Config {
     pub output_format: OutputFormat,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
+    pub list_inode: bool,
     pub list_owner: bool,
     pub list_group: bool,
     pub size_format: SizeFormat,
@@ -83,6 +84,9 @@ impl Config {
                         }
                         Ok('h') => {
                             self.size_format = SizeFormat::HumanReadable;
+                        }
+                        Ok('i') => {
+                            self.list_inode = true;
                         }
                         Ok('l') => {
                             self.output_format = OutputFormat::Long;
@@ -173,6 +177,9 @@ impl Config {
                     Ok("ignore-file") => {
                         self.ignore_file = true;
                     }
+                    Ok("inode") => {
+                        self.list_inode = true;
+                    }
                     Ok("gitignore") => {
                         self.git_ignore = true;
                     }
@@ -215,6 +222,7 @@ impl Default for Config {
             numeric_uid_gid: false,
             output_format: OutputFormat::default(),
             reverse: false,
+            list_inode: false,
             list_owner: true,
             list_group: true,
             show_current_and_parent_dirs: false,

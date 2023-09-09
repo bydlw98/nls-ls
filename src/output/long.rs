@@ -6,11 +6,17 @@ use crate::config::Config;
 use crate::entry::EntryBuf;
 
 pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
-    let num_columns: usize = 5 + (config.list_owner as usize) + (config.list_group as usize);
+    let num_columns: usize = 5
+        + (config.list_inode as usize)
+        + (config.list_owner as usize)
+        + (config.list_group as usize);
 
     let mut grid = LongFormatGrid::new(num_columns, entrybuf_vec.len());
 
     for entrybuf in entrybuf_vec {
+        if config.list_inode {
+            grid.add(entrybuf.ino_cell());
+        }
         grid.add(entrybuf.mode_cell());
         grid.add(entrybuf.nlink_cell());
         if config.list_owner {
@@ -28,7 +34,7 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
 }
 
 #[derive(Debug)]
-struct LongFormatGrid {
+pub struct LongFormatGrid {
     display_cells_vec: Vec<DisplayCell>,
     column_widths: Vec<usize>,
     num_columns: usize,

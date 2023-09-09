@@ -97,6 +97,13 @@ fn build_command() -> Command {
                 .help("Print help information"),
         )
         .arg(
+            Arg::new("list-inode")
+                .action(ArgAction::SetTrue)
+                .short('i')
+                .long("inode")
+                .help("List entries along with their file inode number"),
+        )
+        .arg(
             Arg::new("iec")
                 .action(ArgAction::SetTrue)
                 .long("iec")

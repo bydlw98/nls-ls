@@ -76,6 +76,11 @@ impl DisplayCell {
         self.width += string.width();
     }
 
+    pub fn push_str_with_width(&mut self, string: &str, width: usize) {
+        self.contents.push_str(string);
+        self.width += width;
+    }
+
     pub fn push_char(&mut self, ch: char) {
         self.contents.push(ch);
         self.width += 1;
