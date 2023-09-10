@@ -39,7 +39,12 @@ fn one_path_arg(path: &Path, config: &Config) {
                 list_dir::list_dir(path, config);
             } else {
                 let entrybuf = EntryBuf::from_path(path, config);
-                output::output(&mut vec![entrybuf], config);
+                let mut entrybuf_vec = vec![entrybuf];
+
+                if config.list_allocated_size {
+                    output::print_total(&entrybuf_vec, config);
+                }
+                output::output(&mut entrybuf_vec, config);
             }
         }
         Err(err) => {
@@ -56,6 +61,10 @@ fn multiple_path_args(path_args_vec: Vec<PathBuf>, config: &Config) {
         let mut entrybuf_vec: Vec<EntryBuf> = Vec::with_capacity(list_non_dir_paths_vec.len());
         for path in list_non_dir_paths_vec {
             entrybuf_vec.push(EntryBuf::from_path(&path, config));
+        }
+
+        if config.list_allocated_size {
+            output::print_total(&entrybuf_vec, config);
         }
         output::output(&mut entrybuf_vec, config);
     }

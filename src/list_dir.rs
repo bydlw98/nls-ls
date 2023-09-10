@@ -4,7 +4,7 @@ use ignore::{Walk, WalkBuilder};
 
 use crate::config::Config;
 use crate::entry::EntryBuf;
-use crate::output::output;
+use crate::output::{output, print_total};
 
 pub fn list_dir(path: &Path, config: &Config) {
     let mut entrybuf_vec: Vec<EntryBuf> = Vec::with_capacity(16);
@@ -32,6 +32,11 @@ pub fn list_dir(path: &Path, config: &Config) {
         entrybuf_vec.insert(0, current_dir_entrybuf);
         entrybuf_vec.insert(1, parent_dir_entrybuf);
     }
+
+    if config.output_format.is_long() || config.list_allocated_size {
+        print_total(&entrybuf_vec, config);
+    }
+
     output(&mut entrybuf_vec, config);
 }
 

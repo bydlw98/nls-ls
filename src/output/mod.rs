@@ -1,9 +1,9 @@
 mod column;
 mod display_cell;
-mod long;
 mod format_filename;
 mod format_size;
 mod format_timestamp;
+mod long;
 mod sort;
 
 pub use display_cell::DisplayCell;
@@ -31,4 +31,13 @@ pub fn output(entrybuf_vec: &mut Vec<EntryBuf>, config: &Config) {
         OutputFormat::Across => across_format(entrybuf_vec, config),
         OutputFormat::Long => long_format(entrybuf_vec, config),
     }
+}
+
+pub fn print_total(entrybuf_vec: &[EntryBuf], config: &Config) {
+    let total: u64 = entrybuf_vec
+        .iter()
+        .map(|entrybuf| entrybuf.allocated_size().unwrap_or(0))
+        .sum();
+
+    println!("total {}", format_size(total, config));
 }

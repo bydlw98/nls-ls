@@ -45,6 +45,12 @@ fn build_command() -> Command {
                 .help("Like -a, --all but do not list implied . and .. entries"),
         )
         .arg(
+            Arg::new("allocated-bytes")
+                .action(ArgAction::SetTrue)
+                .long("allocated-bytes")
+                .help("Use raw allocated size"),
+        )
+        .arg(
             Arg::new("vertical")
                 .action(ArgAction::SetTrue)
                 .short('C')
@@ -117,6 +123,13 @@ fn build_command() -> Command {
                 .help("Ignore files set in '.ignore' files"),
         )
         .arg(
+            Arg::new("kibibytes")
+                .action(ArgAction::SetTrue)
+                .short('k')
+                .long("kibibytes")
+                .help("Use 1024 byte blocks for allocated size"),
+        )
+        .arg(
             Arg::new("long")
                 .action(ArgAction::SetTrue)
                 .short('l')
@@ -151,11 +164,11 @@ fn build_command() -> Command {
                 .help("Reverse sorting order"),
         )
         .arg(
-            Arg::new("si")
+            Arg::new("list-allocated-size")
                 .action(ArgAction::SetTrue)
-                .long("si")
-                .overrides_with_all(["human-readable", "iec"])
-                .help("Format size using factors of 1000 like 1.0K 200M 3.0G etc"),
+                .short('s')
+                .long("size")
+                .help("List entries along with their allocated size"),
         )
         .arg(
             Arg::new("size-sort")
@@ -163,6 +176,13 @@ fn build_command() -> Command {
                 .short('S')
                 .overrides_with("timestamp-sort")
                 .help("Sort entries by largest size first"),
+        )
+        .arg(
+            Arg::new("si")
+                .action(ArgAction::SetTrue)
+                .long("si")
+                .overrides_with_all(["human-readable", "iec"])
+                .help("Format size using factors of 1000 like 1.0K 200M 3.0G etc"),
         )
         .arg(
             Arg::new("timestamp-sort")

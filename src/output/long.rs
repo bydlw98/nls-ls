@@ -8,6 +8,7 @@ use crate::entry::EntryBuf;
 pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
     let num_columns: usize = 5
         + (config.list_inode as usize)
+        + (config.list_allocated_size as usize)
         + (config.list_owner as usize)
         + (config.list_group as usize);
 
@@ -16,6 +17,9 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
     for entrybuf in entrybuf_vec {
         if config.list_inode {
             grid.add(entrybuf.ino_cell());
+        }
+        if config.list_allocated_size {
+            grid.add(entrybuf.allocated_size_cell(config));
         }
         grid.add(entrybuf.mode_cell());
         grid.add(entrybuf.nlink_cell());

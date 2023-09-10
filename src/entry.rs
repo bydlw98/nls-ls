@@ -16,6 +16,7 @@ pub struct EntryBuf {
     file_name_key: String,
     path: PathBuf,
     metadata: Option<Metadata>,
+    allocated_size: Option<u64>,
     size: Option<u64>,
     timestamp: Option<i64>,
     #[cfg(unix)]
@@ -99,16 +100,17 @@ impl EntryBuf {
         }
 
         #[cfg(unix)]
-        self.load_unix_metadata();
+        self.load_unix_metadata(config);
 
         #[cfg(not(unix))]
         self.load_other_metadata();
     }
 
     #[cfg(unix)]
-    pub fn load_unix_metadata(&mut self) {
+    pub fn load_unix_metadata(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.ino = Some(metadata.ino());
+            self.allocated_size = Some(get_allocated_size(metadata, config));
             self.timestamp = Some(metadata.mtime());
         }
     }
@@ -194,6 +196,17 @@ impl EntryBuf {
     pub fn ino_cell(&self) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string('-'.to_string(), false),
+            None => DisplayCell::error_right_aligned(),
+        }
+    }
+
+    pub fn allocated_size(&self) -> Option<u64> {
+        self.allocated_size
+    }
+
+    pub fn allocated_size_cell(&self, config: &Config) -> DisplayCell {
+        match &self.allocated_size {
+            Some(allocated_size) => format_size(*allocated_size, config),
             None => DisplayCell::error_right_aligned(),
         }
     }

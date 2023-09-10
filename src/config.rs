@@ -19,6 +19,8 @@ pub struct Config {
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
     pub list_inode: bool,
+    pub list_allocated_size: bool,
+    pub allocated_size_blocks: AllocatedSizeBlocks,
     pub list_owner: bool,
     pub list_group: bool,
     pub size_format: SizeFormat,
@@ -84,9 +86,15 @@ impl Config {
                         }
                         Ok('h') => {
                             self.size_format = SizeFormat::HumanReadable;
+                            self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                         }
                         Ok('i') => {
                             self.list_inode = true;
+                        }
+                        Ok('k') => {
+                            if self.size_format.is_raw() {
+                                self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
+                            }
                         }
                         Ok('l') => {
                             self.output_format = OutputFormat::Long;
@@ -104,6 +112,9 @@ impl Config {
                         }
                         Ok('r') => {
                             self.reverse = true;
+                        }
+                        Ok('s') => {
+                            self.list_allocated_size = true;
                         }
                         Ok('S') => {
                             self.sorting_order = SortingOrder::Size;
@@ -137,6 +148,11 @@ impl Config {
                         self.show_current_and_parent_dirs = false;
                         self.ignore_hidden = false;
                     }
+                    Ok("allocated-bytes") => {
+                        if self.size_format.is_raw() {
+                            self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
+                        }
+                    }
                     Ok("color") => match value {
                         Some(when) => {
                             if when == "always" {
@@ -161,6 +177,9 @@ impl Config {
                     Ok("classify") => {
                         self.indicator_style = IndicatorStyle::Classify;
                     }
+                    Ok("gitignore") => {
+                        self.git_ignore = true;
+                    }
                     Ok("help") => {
                         println!(
                             "{}",
@@ -170,9 +189,11 @@ impl Config {
                     }
                     Ok("human-readable") => {
                         self.size_format = SizeFormat::HumanReadable;
+                        self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                     }
                     Ok("iec") => {
                         self.size_format = SizeFormat::Iec;
+                        self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                     }
                     Ok("ignore-file") => {
                         self.ignore_file = true;
@@ -180,8 +201,10 @@ impl Config {
                     Ok("inode") => {
                         self.list_inode = true;
                     }
-                    Ok("gitignore") => {
-                        self.git_ignore = true;
+                    Ok("kibibytes") => {
+                        if self.size_format.is_raw() {
+                            self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
+                        }
                     }
                     Ok("numeric-uid-gid") => {
                         self.numeric_uid_gid = true;
@@ -192,6 +215,10 @@ impl Config {
                     }
                     Ok("si") => {
                         self.size_format = SizeFormat::Si;
+                        self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
+                    }
+                    Ok("size") => {
+                        self.list_allocated_size = true;
                     }
                     Ok("version") => {
                         println!("nls-ls {}", env!("CARGO_PKG_VERSION"));
@@ -223,6 +250,8 @@ impl Default for Config {
             output_format: OutputFormat::default(),
             reverse: false,
             list_inode: false,
+            list_allocated_size: false,
+            allocated_size_blocks: AllocatedSizeBlocks::default(),
             list_owner: true,
             list_group: true,
             show_current_and_parent_dirs: false,
@@ -230,6 +259,19 @@ impl Default for Config {
             sorting_order: SortingOrder::default(),
             width: 80,
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum AllocatedSizeBlocks {
+    Posix,
+    Kibibytes,
+    Raw,
+}
+
+impl Default for AllocatedSizeBlocks {
+    fn default() -> Self {
+        Self::Posix
     }
 }
 
@@ -264,12 +306,18 @@ impl Default for IndicatorStyle {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum SizeFormat {
     Raw,
     HumanReadable,
     Iec,
     Si,
+}
+
+impl SizeFormat {
+    fn is_raw(&self) -> bool {
+        *self == Self::Raw
+    }
 }
 
 impl Default for SizeFormat {
