@@ -137,6 +137,14 @@ fn build_command() -> Command {
                 .help("List entries along with their metadata in long format"),
         )
         .arg(
+            Arg::new("max-depth")
+                .action(ArgAction::Set)
+                .long("max-depth")
+                .value_parser(value_parser!(usize))
+                .value_name("NUM")
+                .help("Set the max depth to recurse into"),
+        )
+        .arg(
             Arg::new("numeric-uid-gid")
                 .action(ArgAction::SetTrue)
                 .short('n')
@@ -162,6 +170,13 @@ fn build_command() -> Command {
                 .short('r')
                 .long("reverse")
                 .help("Reverse sorting order"),
+        )
+        .arg(
+            Arg::new("recursive")
+                .action(ArgAction::SetTrue)
+                .short('R')
+                .long("recursive")
+                .help("Recurse into directories"),
         )
         .arg(
             Arg::new("list-allocated-size")

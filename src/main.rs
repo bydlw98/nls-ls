@@ -29,14 +29,22 @@ fn main() {
 }
 
 fn zero_path_args(config: &Config) {
-    list_dir::list_dir(Path::new("."), config);
+    if config.recursive {
+        list_dir::recursive_list_dir(Path::new("."), config);
+    } else {
+        list_dir::list_dir(Path::new("."), config);
+    }
 }
 
 fn one_path_arg(path: &Path, config: &Config) {
     match path.metadata() {
         Ok(metadata) => {
             if metadata.is_dir() {
-                list_dir::list_dir(path, config);
+                if config.recursive {
+                    list_dir::recursive_list_dir(Path::new("."), config);
+                } else {
+                    list_dir::list_dir(Path::new("."), config);
+                }
             } else {
                 let entrybuf = EntryBuf::from_path(path, config);
                 let mut entrybuf_vec = vec![entrybuf];
@@ -76,12 +84,22 @@ fn multiple_path_args(path_args_vec: Vec<PathBuf>, config: &Config) {
             println!("\n{}:", &list_dir_paths_vec[0].display());
         }
 
-        list_dir::list_dir(&list_dir_paths_vec[0], config);
+        if config.recursive {
+            list_dir::recursive_list_dir(&list_dir_paths_vec[0], config);
 
-        let remainding_dir_paths_vec = &list_dir_paths_vec[1..];
-        for path in remainding_dir_paths_vec {
-            println!("\n{}:", path.display());
-            list_dir::list_dir(path, config);
+            let remainding_dir_paths_vec = &list_dir_paths_vec[1..];
+            for path in remainding_dir_paths_vec {
+                println!("\n{}:", path.display());
+                list_dir::recursive_list_dir(path, config);
+            }
+        } else {
+            list_dir::list_dir(&list_dir_paths_vec[0], config);
+
+            let remainding_dir_paths_vec = &list_dir_paths_vec[1..];
+            for path in remainding_dir_paths_vec {
+                println!("\n{}:", path.display());
+                list_dir::list_dir(path, config);
+            }
         }
     }
 }

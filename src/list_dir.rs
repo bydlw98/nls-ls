@@ -25,9 +25,11 @@ pub fn list_dir(path: &Path, config: &Config) {
         }
     }
     if error_count == 0 && !entrybuf_vec.is_empty() && config.show_current_and_parent_dirs {
-        let current_dir_entrybuf = EntryBuf::from_path_with_file_name(String::from("."), path, config);
+        let current_dir_entrybuf =
+            EntryBuf::from_path_with_file_name(String::from("."), path, config);
         let parent_dir_path = path.join("..");
-        let parent_dir_entrybuf = EntryBuf::from_path_with_file_name(String::from(".."), &parent_dir_path, config);
+        let parent_dir_entrybuf =
+            EntryBuf::from_path_with_file_name(String::from(".."), &parent_dir_path, config);
 
         entrybuf_vec.insert(0, current_dir_entrybuf);
         entrybuf_vec.insert(1, parent_dir_entrybuf);
@@ -40,6 +42,23 @@ pub fn list_dir(path: &Path, config: &Config) {
     output(&mut entrybuf_vec, config);
 }
 
+pub fn recursive_list_dir(path: &Path, config: &Config) {
+    for result in recursive_walk_dir(path, config) {
+        match result {
+            Ok(dent) => {
+                if dent.depth() != 0 {
+                    println!("\n{}:", dent.path().display());
+                }
+
+                list_dir(dent.path(), config);
+            }
+            Err(err) => {
+                eprintln!("nls: {}", err);
+            }
+        }
+    }
+}
+
 fn walk_dir(path: &Path, config: &Config) -> Walk {
     WalkBuilder::new(path)
         .hidden(config.ignore_hidden)
@@ -49,5 +68,23 @@ fn walk_dir(path: &Path, config: &Config) -> Walk {
         .git_global(config.git_ignore)
         .git_ignore(config.git_ignore)
         .max_depth(Some(1))
+        .build()
+}
+
+fn recursive_walk_dir(path: &Path, config: &Config) -> Walk {
+    WalkBuilder::new(path)
+        .hidden(config.ignore_hidden)
+        .parents(config.git_ignore)
+        .ignore(config.ignore_file)
+        .git_exclude(config.git_ignore)
+        .git_global(config.git_ignore)
+        .git_ignore(config.git_ignore)
+        .max_depth(config.max_depth)
+        .sort_by_file_path(|path1, path2| path1.cmp(path2))
+        .filter_entry(|dent| {
+            dent.file_type()
+                .map(|file_type| file_type.is_dir())
+                .unwrap_or(false)
+        })
         .build()
 }

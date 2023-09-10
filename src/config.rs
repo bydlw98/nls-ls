@@ -16,6 +16,8 @@ pub struct Config {
     pub ls_colors: LsColors,
     pub numeric_uid_gid: bool,
     pub output_format: OutputFormat,
+    pub recursive: bool,
+    pub max_depth: Option<usize>,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
     pub list_inode: bool,
@@ -113,6 +115,9 @@ impl Config {
                         Ok('r') => {
                             self.reverse = true;
                         }
+                        Ok('R') => {
+                            self.recursive = true;
+                        }
                         Ok('s') => {
                             self.list_allocated_size = true;
                         }
@@ -206,9 +211,32 @@ impl Config {
                             self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
                         }
                     }
+                    Ok("max-depth") => match value {
+                        Some(max_depth_os) => {
+                            match max_depth_os.to_string_lossy().parse::<usize>() {
+                                Ok(max_depth) => {
+                                    self.max_depth = Some(max_depth);
+                                }
+                                Err(err) => {
+                                    eprintln!(
+                                        "nls: {:?} is not a valid input for '--max-depth': {}",
+                                        max_depth_os, err
+                                    );
+                                    process::exit(1);
+                                }
+                            }
+                        }
+                        None => {
+                            eprintln!("nls: '--max-depth' requires an argument");
+                            process::exit(1);
+                        }
+                    },
                     Ok("numeric-uid-gid") => {
                         self.numeric_uid_gid = true;
                         self.output_format = OutputFormat::Long;
+                    }
+                    Ok("recursive") => {
+                        self.recursive = true;
                     }
                     Ok("reverse") => {
                         self.reverse = true;
@@ -248,6 +276,8 @@ impl Default for Config {
             ls_colors: LsColors::default(),
             numeric_uid_gid: false,
             output_format: OutputFormat::default(),
+            recursive: false,
+            max_depth: None,
             reverse: false,
             list_inode: false,
             list_allocated_size: false,
