@@ -41,9 +41,9 @@ fn one_path_arg(path: &Path, config: &Config) {
         Ok(metadata) => {
             if metadata.is_dir() {
                 if config.recursive {
-                    list_dir::recursive_list_dir(Path::new("."), config);
+                    list_dir::recursive_list_dir(path, config);
                 } else {
-                    list_dir::list_dir(Path::new("."), config);
+                    list_dir::list_dir(path, config);
                 }
             } else {
                 let entrybuf = EntryBuf::from_path(path, config);
