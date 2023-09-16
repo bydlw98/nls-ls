@@ -3,6 +3,7 @@ use std::fs::Metadata;
 use std::os::unix::fs::MetadataExt;
 
 use crate::config::{Config, IndicatorStyle};
+#[cfg(unix)]
 use crate::os::unix::sys_prelude::*;
 use crate::utils::HasMaskSetExt;
 

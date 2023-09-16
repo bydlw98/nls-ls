@@ -6,6 +6,8 @@ use std::path::{Path, PathBuf};
 use crate::config::{Config, TimestampUsed};
 #[cfg(unix)]
 use crate::os::unix::*;
+#[cfg(windows)]
+use crate::os::windows::*;
 use crate::output::*;
 use crate::utils::get_unix_timestamp_from_systemtime;
 
@@ -20,6 +22,8 @@ pub struct EntryBuf {
     timestamp: Option<i64>,
     #[cfg(unix)]
     ino: Option<u64>,
+    #[cfg(windows)]
+    windows_metadata: WindowsMetadata,
 }
 
 impl EntryBuf {
@@ -101,7 +105,10 @@ impl EntryBuf {
         #[cfg(unix)]
         self.load_unix_metadata(config);
 
-        #[cfg(not(unix))]
+        #[cfg(windows)]
+        self.load_windows_metadata(config);
+
+        #[cfg(not(any(unix, windows)))]
         self.load_other_metadata(config);
     }
 
@@ -120,7 +127,26 @@ impl EntryBuf {
         }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    pub fn load_windows_metadata(&mut self, config: &Config) {
+        if let Some(metadata) = &self.metadata {
+            self.timestamp = match config.timestamp_used {
+                TimestampUsed::Accessed => get_unix_timestamp_from_systemtime(metadata.accessed()),
+                TimestampUsed::Changed => None,
+                TimestampUsed::Created => get_unix_timestamp_from_systemtime(metadata.created()),
+                TimestampUsed::Modified => get_unix_timestamp_from_systemtime(metadata.modified()),
+            };
+        }
+
+        self.windows_metadata = WindowsMetadata::get(&self.path, config);
+        self.allocated_size = self.windows_metadata.allocated_size(config);
+
+        if let Some(size) = self.windows_metadata.size() {
+            self.size = Some(size);
+        }
+    }
+
+    #[cfg(not(any(unix, windows)))]
     pub fn load_other_metadata(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.timestamp = match config.timestamp_used {
@@ -222,7 +248,7 @@ impl EntryBuf {
     pub fn mode_cell(&self) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => {
-                let file_type = Metadata.file_type();
+                let file_type = metadata.file_type();
                 if file_type.is_file() {
                     DisplayCell::from_ascii_string(String::from("-"), true)
                 } else if file_type.is_dir() {
@@ -245,7 +271,12 @@ impl EntryBuf {
         }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    pub fn nlink_cell(&self) -> DisplayCell {
+        self.windows_metadata.nlink_cell()
+    }
+
+    #[cfg(not(any(unix, windows)))]
     pub fn nlink_cell(&self) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string(1.to_string(), false),
@@ -278,7 +309,7 @@ impl EntryBuf {
     }
 
     #[cfg(not(unix))]
-    pub fn group_cell(&self) -> DisplayCell {
+    pub fn group_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
             None => DisplayCell::error_left_aligned(),

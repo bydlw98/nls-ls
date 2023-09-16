@@ -393,11 +393,17 @@ impl Default for SizeFormat {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SortingOrder {
     FileName,
     Size,
     Timestamp,
+}
+
+impl SortingOrder {
+    pub fn is_size(&self) -> bool {
+        *self == Self::Size
+    }
 }
 
 impl Default for SortingOrder {

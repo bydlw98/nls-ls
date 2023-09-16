@@ -362,6 +362,7 @@ dependencies = [
  "term_grid",
  "terminal_size",
  "unicode-width",
+ "windows-sys",
 ]
 
 [[package]]
