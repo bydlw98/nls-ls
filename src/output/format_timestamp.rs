@@ -44,5 +44,5 @@ const MONTH_TABLE: [&str; 12] = [
 fn get_six_months_ago_unix_timestamp() -> i64 {
     const SIX_MONTHS_IN_SECS: i64 = 60 * 60 * 24 * 30 * 6;
 
-    get_unix_timestamp_from_systemtime(SystemTime::now()) - SIX_MONTHS_IN_SECS
+    get_unix_timestamp_from_systemtime(Ok(SystemTime::now())).unwrap() - SIX_MONTHS_IN_SECS
 }

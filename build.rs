@@ -51,6 +51,13 @@ fn build_command() -> Command {
                 .help("Use raw allocated size"),
         )
         .arg(
+            Arg::new("changed")
+                .action(ArgAction::SetTrue)
+                .short('c')
+                .overrides_with_all(["accessed", "time"])
+                .help("Use timestamp of when entry status was last changed"),
+        )
+        .arg(
             Arg::new("vertical")
                 .action(ArgAction::SetTrue)
                 .short('C')
@@ -205,6 +212,36 @@ fn build_command() -> Command {
                 .short('t')
                 .overrides_with("size-sort")
                 .help("Sort entries by most recent timestamp first"),
+        )
+        .arg(
+            Arg::new("time")
+                .action(ArgAction::Set)
+                .long("time")
+                .value_parser([
+                    PossibleValue::new("accessed")
+                        .help("Use timestamp of when entry was last accessed (-u)"),
+                    PossibleValue::new("changed")
+                        .help("Use timestamp of when entry status was last changed (-c)"),
+                    PossibleValue::new("created").help("Use timestamp of when entry was created"),
+                    PossibleValue::new("modified")
+                        .help("Use timestamp of when entry was last modified"),
+                    PossibleValue::new("atime").help("Alias to 'accessed'"),
+                    PossibleValue::new("ctime").help("Alias to 'changed'"),
+                    PossibleValue::new("btime").help("Alias to 'created'"),
+                    PossibleValue::new("mtime").help("Alias to 'modified'"),
+                ])
+                .value_name("WORD")
+                .overrides_with_all(["accessed", "changed"])
+                .help(
+                    "Set timestamp to use for sorting by timestamp or/and listing in long format",
+                ),
+        )
+        .arg(
+            Arg::new("accessed")
+                .action(ArgAction::SetTrue)
+                .short('u')
+                .overrides_with_all(["changed", "time"])
+                .help("Use timestamp of when entry was last accessed"),
         )
         .arg(
             Arg::new("version")

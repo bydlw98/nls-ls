@@ -27,6 +27,7 @@ pub struct Config {
     pub list_group: bool,
     pub size_format: SizeFormat,
     pub sorting_order: SortingOrder,
+    pub timestamp_used: TimestampUsed,
     pub width: usize,
 }
 
@@ -75,6 +76,9 @@ impl Config {
                         Ok('A') => {
                             self.show_current_and_parent_dirs = false;
                             self.ignore_hidden = false;
+                        }
+                        Ok('c') => {
+                            self.timestamp_used = TimestampUsed::Changed;
                         }
                         Ok('C') => {
                             self.output_format = OutputFormat::Vertical;
@@ -126,6 +130,9 @@ impl Config {
                         }
                         Ok('t') => {
                             self.sorting_order = SortingOrder::Timestamp;
+                        }
+                        Ok('u') => {
+                            self.timestamp_used = TimestampUsed::Accessed;
                         }
                         Ok('x') => {
                             self.output_format = OutputFormat::Across;
@@ -248,6 +255,35 @@ impl Config {
                     Ok("size") => {
                         self.list_allocated_size = true;
                     }
+                    Ok("time") => match value {
+                        Some(timestamp_used) => {
+                            if timestamp_used == "accessed" || timestamp_used == "atime" {
+                                self.timestamp_used = TimestampUsed::Accessed;
+                            } else if timestamp_used == "changed" || timestamp_used == "ctime" {
+                                self.timestamp_used = TimestampUsed::Changed;
+                            } else if timestamp_used == "created" || timestamp_used == "btime" {
+                                self.timestamp_used = TimestampUsed::Created;
+                            } else if timestamp_used == "modified" || timestamp_used == "mtime" {
+                                self.timestamp_used = TimestampUsed::Modified;
+                            } else {
+                                eprintln!(
+                                    "nls: {:?} is not a valid input for '--time'",
+                                    timestamp_used
+                                );
+                                eprintln!(
+                                    "     possible arguments are ['accessed', 'changed', 'created', 'modified', 'atime', 'ctime', 'btime', 'mtime']"
+                                );
+                                process::exit(1);
+                            }
+                        }
+                        None => {
+                            eprintln!("nls: '--time' requires an argument");
+                            eprintln!(
+                                    "     possible arguments are ['accessed', 'changed', 'created', 'modified', 'atime', 'ctime', 'btime', 'mtime']"
+                            );
+                            process::exit(1);
+                        }
+                    },
                     Ok("version") => {
                         println!("nls-ls {}", env!("CARGO_PKG_VERSION"));
                         process::exit(0);
@@ -287,6 +323,7 @@ impl Default for Config {
             show_current_and_parent_dirs: false,
             size_format: SizeFormat::default(),
             sorting_order: SortingOrder::default(),
+            timestamp_used: TimestampUsed::default(),
             width: 80,
         }
     }
@@ -386,5 +423,19 @@ impl OutputFormat {
 impl Default for OutputFormat {
     fn default() -> Self {
         Self::SingleColumn
+    }
+}
+
+#[derive(Debug)]
+pub enum TimestampUsed {
+    Accessed,
+    Changed,
+    Created,
+    Modified,
+}
+
+impl Default for TimestampUsed {
+    fn default() -> Self {
+        Self::Modified
     }
 }

@@ -3,11 +3,10 @@ use std::fs::Metadata;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-use crate::config::Config;
+use crate::config::{Config, TimestampUsed};
 #[cfg(unix)]
 use crate::os::unix::*;
 use crate::output::*;
-#[cfg(not(unix))]
 use crate::utils::get_unix_timestamp_from_systemtime;
 
 #[derive(Debug, Default)]
@@ -103,7 +102,7 @@ impl EntryBuf {
         self.load_unix_metadata(config);
 
         #[cfg(not(unix))]
-        self.load_other_metadata();
+        self.load_other_metadata(config);
     }
 
     #[cfg(unix)]
@@ -111,25 +110,25 @@ impl EntryBuf {
         if let Some(metadata) = &self.metadata {
             self.ino = Some(metadata.ino());
             self.allocated_size = Some(get_allocated_size(metadata, config));
-            self.timestamp = Some(metadata.mtime());
+
+            self.timestamp = match config.timestamp_used {
+                TimestampUsed::Accessed => Some(metadata.atime()),
+                TimestampUsed::Changed => Some(metadata.ctime()),
+                TimestampUsed::Created => get_unix_timestamp_from_systemtime(metadata.created()),
+                TimestampUsed::Modified => Some(metadata.mtime()),
+            };
         }
     }
 
     #[cfg(not(unix))]
-    pub fn load_other_metadata(&mut self) {
+    pub fn load_other_metadata(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
-            match metadata.modified() {
-                Ok(modified) => {
-                    self.timestamp = Some(get_unix_timestamp_from_systemtime(modified));
-                }
-                Err(err) => {
-                    eprintln!(
-                        "nls: unable to get modified timestamp of '{}': {}",
-                        self.path.display(),
-                        err
-                    );
-                }
-            }
+            self.timestamp = match config.timestamp_used {
+                TimestampUsed::Accessed => get_unix_timestamp_from_systemtime(metadata.accessed()),
+                TimestampUsed::Changed => None,
+                TimestampUsed::Created => get_unix_timestamp_from_systemtime(metadata.created()),
+                TimestampUsed::Modified => get_unix_timestamp_from_systemtime(metadata.modified()),
+            };
         }
     }
 

@@ -1,3 +1,4 @@
+use std::io;
 use std::time::SystemTime;
 
 pub fn terminal_width() -> Option<usize> {
@@ -21,9 +22,15 @@ impl HasMaskSetExt for u32 {
     }
 }
 
-pub fn get_unix_timestamp_from_systemtime(systemtime: SystemTime) -> i64 {
-    match systemtime.duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(duration) => duration.as_secs() as i64,
-        Err(duration_err) => -(duration_err.duration().as_secs() as i64),
-    }
+pub fn get_unix_timestamp_from_systemtime(
+    systemtime: Result<SystemTime, io::Error>,
+) -> Option<i64> {
+    systemtime
+        .map(
+            |sys_time| match sys_time.duration_since(SystemTime::UNIX_EPOCH) {
+                Ok(duration) => Some(duration.as_secs() as i64),
+                Err(duration_err) => Some(-(duration_err.duration().as_secs() as i64)),
+            },
+        )
+        .unwrap_or(None)
 }
