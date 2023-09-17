@@ -292,7 +292,12 @@ impl EntryBuf {
         }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    pub fn owner_cell(&self, _config: &Config) -> DisplayCell {
+        self.windows_metadata.owner_cell()
+    }
+
+    #[cfg(not(any(unix, windows)))]
     pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
@@ -308,7 +313,12 @@ impl EntryBuf {
         }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    pub fn group_cell(&self, _config: &Config) -> DisplayCell {
+        self.windows_metadata.group_cell()
+    }
+
+    #[cfg(not(any(unix, windows)))]
     pub fn group_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),

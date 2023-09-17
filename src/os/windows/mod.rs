@@ -1,8 +1,11 @@
+mod accounts;
+mod security_info;
 mod sys_prelude;
 
 use sys_prelude::*;
 
 use std::ffi::c_void;
+use std::fmt;
 use std::io;
 use std::mem::{self, MaybeUninit};
 use std::ops;
@@ -13,11 +16,16 @@ use std::ptr;
 use crate::config::{AllocatedSizeBlocks, Config};
 use crate::output::DisplayCell;
 
+use accounts::{get_accountname_cell_by_sid_ptr, get_string_sid_cell_by_sid_ptr};
+use security_info::SecurityInfo;
+
 #[derive(Debug, Default)]
 pub struct WindowsMetadata {
     nlink: Option<u32>,
     allocated_size: Option<u64>,
     size: Option<u64>,
+    owner_cell: DisplayCell,
+    group_cell: DisplayCell,
 }
 
 impl WindowsMetadata {
@@ -30,6 +38,10 @@ impl WindowsMetadata {
             || config.list_allocated_size
         {
             windows_metadata.init_file_standard_info(&wide_path, path);
+        }
+
+        if config.output_format.is_long() {
+            windows_metadata.init_security_info(&wide_path, path, config);
         }
 
         windows_metadata
@@ -77,6 +89,41 @@ impl WindowsMetadata {
         }
     }
 
+    fn init_security_info(&mut self, wide_path: &[u16], path: &Path, config: &Config) {
+        match SecurityInfo::from_wide_path(wide_path, path, config) {
+            Ok(security_info) => {
+                if config.numeric_uid_gid {
+                    if config.list_owner {
+                        self.owner_cell =
+                            get_string_sid_cell_by_sid_ptr(security_info.sid_owner_ptr());
+                    }
+                    if config.list_group {
+                        self.group_cell =
+                            get_string_sid_cell_by_sid_ptr(security_info.sid_group_ptr());
+                    }
+                } else {
+                    if config.list_owner {
+                        self.owner_cell =
+                            get_accountname_cell_by_sid_ptr(security_info.sid_owner_ptr());
+                    }
+                    if config.list_group {
+                        self.group_cell =
+                            get_accountname_cell_by_sid_ptr(security_info.sid_group_ptr());
+                    }
+                }
+            }
+            Err(err) => {
+                eprintln!(
+                    "nls: unable to get security info for '{}': {}",
+                    path.display(),
+                    err
+                );
+                self.owner_cell = DisplayCell::error_left_aligned();
+                self.group_cell = DisplayCell::error_left_aligned();
+            }
+        }
+    }
+
     pub fn allocated_size(&self, config: &Config) -> Option<u64> {
         match self.allocated_size {
             Some(allocated_size) => match config.allocated_size_blocks {
@@ -99,6 +146,14 @@ impl WindowsMetadata {
 
     pub fn size(&self) -> Option<u64> {
         self.size
+    }
+
+    pub fn owner_cell(&self) -> DisplayCell {
+        self.owner_cell.clone()
+    }
+
+    pub fn group_cell(&self) -> DisplayCell {
+        self.group_cell.clone()
     }
 }
 
@@ -141,7 +196,7 @@ impl Drop for FileHandle {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct WideString(Vec<u16>);
 
 impl WideString {
@@ -151,6 +206,27 @@ impl WideString {
 
         Self(wide_buf)
     }
+
+    pub fn from_utf16_parts(utf16_buf: &[u16], length: usize) -> Self {
+        let mut wide_buf = Self(utf16_buf[0..length].to_vec());
+
+        match wide_buf.last() {
+            Some(wch) => {
+                if *wch != 0 {
+                    wide_buf.0.push(0);
+                }
+            }
+            None => wide_buf.0.push(0),
+        }
+
+        wide_buf
+    }
+}
+
+impl fmt::Debug for WideString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "L\"{}\"", utf16_null_terminated_to_string_lossy(&self))
+    }
 }
 
 impl ops::Deref for WideString {
@@ -159,4 +235,14 @@ impl ops::Deref for WideString {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+pub fn utf16_null_terminated_to_string_lossy(utf16_buf: &[u16]) -> String {
+    String::from_utf16_lossy(
+        &utf16_buf
+            .iter()
+            .cloned()
+            .take_while(|&c| c != 0)
+            .collect::<Vec<u16>>(),
+    )
 }
