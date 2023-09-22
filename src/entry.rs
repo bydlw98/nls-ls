@@ -244,7 +244,17 @@ impl EntryBuf {
         }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    pub fn mode_cell(&self) -> DisplayCell {
+        self.windows_metadata.rwx_mode_cell(
+            self.metadata
+                .as_ref()
+                .map(|metadata| Some(metadata.file_type()))
+                .unwrap_or(None),
+        )
+    }
+
+    #[cfg(not(any(unix, windows)))]
     pub fn mode_cell(&self) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => {

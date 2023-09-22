@@ -1,4 +1,6 @@
 mod accounts;
+mod mode;
+mod permissions;
 mod security_info;
 mod sys_prelude;
 
@@ -6,6 +8,7 @@ use sys_prelude::*;
 
 use std::ffi::c_void;
 use std::fmt;
+use std::fs::FileType;
 use std::io;
 use std::mem::{self, MaybeUninit};
 use std::ops;
@@ -17,6 +20,7 @@ use crate::config::{AllocatedSizeBlocks, Config};
 use crate::output::DisplayCell;
 
 use accounts::{get_accountname_cell_by_sid_ptr, get_string_sid_cell_by_sid_ptr};
+use permissions::get_rwx_permissions;
 use security_info::SecurityInfo;
 
 #[derive(Debug, Default)]
@@ -24,6 +28,7 @@ pub struct WindowsMetadata {
     nlink: Option<u32>,
     allocated_size: Option<u64>,
     size: Option<u64>,
+    rwx_permissions: String,
     owner_cell: DisplayCell,
     group_cell: DisplayCell,
 }
@@ -90,8 +95,10 @@ impl WindowsMetadata {
     }
 
     fn init_security_info(&mut self, wide_path: &[u16], path: &Path, config: &Config) {
-        match SecurityInfo::from_wide_path(wide_path, path, config) {
+        match SecurityInfo::from_wide_path(wide_path) {
             Ok(security_info) => {
+                self.rwx_permissions = get_rwx_permissions(&security_info);
+
                 if config.numeric_uid_gid {
                     if config.list_owner {
                         self.owner_cell =
@@ -118,6 +125,7 @@ impl WindowsMetadata {
                     path.display(),
                     err
                 );
+                self.rwx_permissions = String::from("?????????");
                 self.owner_cell = DisplayCell::error_left_aligned();
                 self.group_cell = DisplayCell::error_left_aligned();
             }
@@ -154,6 +162,10 @@ impl WindowsMetadata {
 
     pub fn group_cell(&self) -> DisplayCell {
         self.group_cell.clone()
+    }
+
+    pub fn rwx_mode_cell(&self, file_type: Option<FileType>) -> DisplayCell {
+        mode::rwx_mode_cell(file_type, &self.rwx_permissions)
     }
 }
 

@@ -1,24 +1,19 @@
 use std::io;
-use std::path::Path;
 use std::ptr;
 
 use super::sys_prelude::*;
 use super::FileHandle;
-use crate::config::Config;
 
 pub struct SecurityInfo {
     sd_ptr: c::PSECURITY_DESCRIPTOR,
     sid_owner_ptr: c::PSID,
     sid_group_ptr: c::PSID,
+    dacl_ptr: *mut c::ACL,
     is_ok: bool,
 }
 
 impl SecurityInfo {
-    pub fn from_wide_path(
-        wide_path: &[u16],
-        path: &Path,
-        config: &Config,
-    ) -> Result<Self, io::Error> {
+    pub fn from_wide_path(wide_path: &[u16]) -> Result<Self, io::Error> {
         let file_handle = FileHandle::open(wide_path, c::READ_CONTROL)?;
         let mut security_info = Self::default();
 
@@ -26,10 +21,12 @@ impl SecurityInfo {
             let return_code = c::GetSecurityInfo(
                 file_handle.raw_handle(),
                 c::SE_FILE_OBJECT,
-                c::OWNER_SECURITY_INFORMATION | c::GROUP_SECURITY_INFORMATION,
+                c::OWNER_SECURITY_INFORMATION
+                    | c::GROUP_SECURITY_INFORMATION
+                    | c::DACL_SECURITY_INFORMATION,
                 &mut security_info.sid_owner_ptr,
                 &mut security_info.sid_group_ptr,
-                ptr::null_mut(),
+                &mut security_info.dacl_ptr,
                 ptr::null_mut(),
                 &mut security_info.sd_ptr,
             );
@@ -52,6 +49,10 @@ impl SecurityInfo {
     pub fn sid_group_ptr(&self) -> c::PSID {
         self.sid_group_ptr
     }
+
+    pub fn dacl_ptr(&self) -> *const c::ACL {
+        self.dacl_ptr
+    }
 }
 
 impl Default for SecurityInfo {
@@ -60,6 +61,7 @@ impl Default for SecurityInfo {
             sd_ptr: ptr::null_mut(),
             sid_owner_ptr: ptr::null_mut(),
             sid_group_ptr: ptr::null_mut(),
+            dacl_ptr: ptr::null_mut(),
             is_ok: false,
         }
     }
