@@ -127,18 +127,21 @@ fn file_format_with_color(
         filename_cell.paint(&ls_colors.setgid);
     } else if st_mode.has_mask_set(EXEC_MASK) {
         filename_cell.paint(&ls_colors.exec);
+        if indicator_style.others() && st_mode.has_bit_in_mask_set(EXEC_MASK) {
+            filename_cell.push_char(IndicatorStyle::EXEC);
+        }
     } else if nlink > 1 {
         filename_cell.paint(&ls_colors.multiple_hard_links);
     } else {
         let extension = get_file_extension(filename_cell.contents());
-        match ls_colors.extension.get(&extension.to_string()) {
-            Some(ansi_style_str) => filename_cell.paint(ansi_style_str),
-            None => filename_cell.paint(&ls_colors.file),
+        if extension.is_empty() {
+            filename_cell.paint(&ls_colors.file);
+        } else {
+            match ls_colors.extension.get(&extension) {
+                Some(ansi_style_str) => filename_cell.paint(ansi_style_str),
+                None => filename_cell.paint(&ls_colors.file),
+            }
         }
-    }
-
-    if indicator_style.others() && st_mode.has_bit_in_mask_set(EXEC_MASK) {
-        filename_cell.push_char(IndicatorStyle::EXEC);
     }
 }
 
@@ -163,7 +166,11 @@ fn dir_format_with_color(filename_cell: &mut DisplayCell, st_mode: u32, config: 
 }
 
 #[cfg(not(unix))]
-pub fn internal_format_filename(file_name: &str, metadata: &Metadata, config: &Config) -> DisplayCell {
+pub fn internal_format_filename(
+    file_name: &str,
+    metadata: &Metadata,
+    config: &Config,
+) -> DisplayCell {
     let indicator_style = config.indicator_style;
     let file_type = metadata.file_type();
     let mut filename_cell = DisplayCell::from(String::from(file_name));
@@ -176,6 +183,15 @@ pub fn internal_format_filename(file_name: &str, metadata: &Metadata, config: &C
         let mut filename_cell = DisplayCell::from(String::from(file_name));
         if indicator_style.others() && !config.output_format.is_long() {
             filename_cell.push_char(IndicatorStyle::SYMLINK);
+        }
+    }
+    #[cfg(windows)]
+    if file_type.is_file() {
+        let extension = get_file_extension(filename_cell.contents());
+        if ["exe", "bat", "cmd"].contains(&&extension.as_str()) {
+            if indicator_style.others() {
+                filename_cell.push_char(IndicatorStyle::EXEC);
+            }
         }
     }
 
@@ -205,24 +221,37 @@ pub fn internal_format_filename_with_color(
         }
     } else if file_type.is_file() {
         let extension = get_file_extension(filename_cell.contents());
-        match ls_colors.extension.get(&extension.to_string()) {
-            Some(ansi_style_str) => filename_cell.paint(ansi_style_str),
-            None => filename_cell.paint(&ls_colors.file),
+        if extension.is_empty() {
+            filename_cell.paint(&ls_colors.file);
+            return filename_cell;
+        } else {
+            #[cfg(windows)]
+            if ["exe", "bat", "cmd"].contains(&&extension.as_str()) {
+                filename_cell.paint(&ls_colors.exec);
+                if indicator_style.others() {
+                    filename_cell.push_char(IndicatorStyle::EXEC);
+                }
+                return filename_cell;
+            }
+            match ls_colors.extension.get(&extension) {
+                Some(ansi_style_str) => filename_cell.paint(ansi_style_str),
+                None => filename_cell.paint(&ls_colors.file),
+            }
         }
     }
 
     filename_cell
 }
 
-fn get_file_extension(file_name: &str) -> &str {
+fn get_file_extension(file_name: &str) -> String {
     match file_name.rsplit_once('.') {
         Some((file_name_without_extension, extension)) => {
             if file_name_without_extension.is_empty() {
-                ""
+                String::default()
             } else {
-                extension
+                extension.to_string()
             }
         }
-        None => "",
+        None => String::default(),
     }
 }
