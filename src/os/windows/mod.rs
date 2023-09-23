@@ -19,7 +19,7 @@ use std::ptr;
 use crate::config::{AllocatedSizeBlocks, Config};
 use crate::output::DisplayCell;
 
-use accounts::{get_accountname_cell_by_sid_ptr, get_string_sid_cell_by_sid_ptr};
+use accounts::get_accountname_cell_by_sid_ptr;
 use permissions::get_rwx_permissions;
 use security_info::SecurityInfo;
 
@@ -98,25 +98,13 @@ impl WindowsMetadata {
         match SecurityInfo::from_wide_path(wide_path) {
             Ok(security_info) => {
                 self.rwx_permissions = get_rwx_permissions(&security_info);
-
-                if config.numeric_uid_gid {
-                    if config.list_owner {
-                        self.owner_cell =
-                            get_string_sid_cell_by_sid_ptr(security_info.sid_owner_ptr());
-                    }
-                    if config.list_group {
-                        self.group_cell =
-                            get_string_sid_cell_by_sid_ptr(security_info.sid_group_ptr());
-                    }
-                } else {
-                    if config.list_owner {
-                        self.owner_cell =
-                            get_accountname_cell_by_sid_ptr(security_info.sid_owner_ptr());
-                    }
-                    if config.list_group {
-                        self.group_cell =
-                            get_accountname_cell_by_sid_ptr(security_info.sid_group_ptr());
-                    }
+                if config.list_owner {
+                    self.owner_cell =
+                        get_accountname_cell_by_sid_ptr(security_info.sid_owner_ptr(), config);
+                }
+                if config.list_group {
+                    self.group_cell =
+                        get_accountname_cell_by_sid_ptr(security_info.sid_group_ptr(), config);
                 }
             }
             Err(err) => {
@@ -237,7 +225,7 @@ impl WideString {
 
 impl fmt::Debug for WideString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "L\"{}\"", utf16_null_terminated_to_string_lossy(&self))
+        write!(f, "L\"{}\"", utf16_until_null_to_string_lossy(&self))
     }
 }
 
@@ -249,7 +237,7 @@ impl ops::Deref for WideString {
     }
 }
 
-pub fn utf16_null_terminated_to_string_lossy(utf16_buf: &[u16]) -> String {
+pub fn utf16_until_null_to_string_lossy(utf16_buf: &[u16]) -> String {
     String::from_utf16_lossy(
         &utf16_buf
             .iter()

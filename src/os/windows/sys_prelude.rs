@@ -9,9 +9,9 @@ pub mod c {
         SE_FILE_OBJECT, TRUSTEE_W,
     };
     pub use windows_sys::Win32::Security::{
-        CreateWellKnownSid, EqualSid, GetSidLengthRequired, LookupAccountSidW, SidTypeUnknown,
-        WinWorldSid, ACL, DACL_SECURITY_INFORMATION, GROUP_SECURITY_INFORMATION,
-        OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
+        CopySid, CreateWellKnownSid, EqualSid, GetLengthSid, GetSidLengthRequired,
+        LookupAccountSidW, SidTypeUnknown, WinWorldSid, ACL, DACL_SECURITY_INFORMATION,
+        GROUP_SECURITY_INFORMATION, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
     };
     pub use windows_sys::Win32::Storage::FileSystem::{
         CreateFileW, FileIdInfo, FileStandardInfo, GetFileInformationByHandleEx,
