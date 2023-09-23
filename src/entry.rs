@@ -217,7 +217,23 @@ impl EntryBuf {
         }
     }
 
-    #[cfg(not(unix))]
+    #[cfg(windows)]
+    pub fn ino_cell(&self) -> DisplayCell {
+        match get_file_id_by_path(&self.path) {
+            Ok(file_id) => DisplayCell::from_ascii_string(file_id.to_string(), false),
+            Err(err) => {
+                eprintln!(
+                    "nls: unable to get inode number of '{}': {}",
+                    self.path.display(),
+                    err
+                );
+
+                DisplayCell::error_right_aligned()
+            }
+        }
+    }
+
+    #[cfg(not(any(unix, windows)))]
     pub fn ino_cell(&self) -> DisplayCell {
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_string('-'.to_string(), false),

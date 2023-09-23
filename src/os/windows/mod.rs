@@ -258,3 +258,26 @@ pub fn utf16_null_terminated_to_string_lossy(utf16_buf: &[u16]) -> String {
             .collect::<Vec<u16>>(),
     )
 }
+
+pub fn get_file_id_by_path(path: &Path) -> Result<u128, io::Error> {
+    let wide_path = WideString::from_path(path);
+    let file_handle = FileHandle::open(&wide_path, 0)?;
+
+    unsafe {
+        let mut file_id_info = MaybeUninit::<c::FILE_ID_INFO>::uninit();
+        let return_code = c::GetFileInformationByHandleEx(
+            file_handle.raw_handle(),
+            c::FileIdInfo,
+            file_id_info.as_mut_ptr() as *mut c_void,
+            mem::size_of::<c::FILE_ID_INFO>() as u32,
+        );
+
+        if return_code != 0 {
+            let file_id_info = file_id_info.assume_init();
+
+            Ok(u128::from_le_bytes(file_id_info.FileId.Identifier))
+        } else {
+            Err(io::Error::last_os_error())
+        }
+    }
+}

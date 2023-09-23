@@ -14,9 +14,10 @@ pub mod c {
         OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
     };
     pub use windows_sys::Win32::Storage::FileSystem::{
-        CreateFileW, FileStandardInfo, GetFileInformationByHandleEx, FILE_FLAG_BACKUP_SEMANTICS,
-        FILE_FLAG_OPEN_REPARSE_POINT, FILE_GENERIC_EXECUTE, FILE_GENERIC_READ, FILE_GENERIC_WRITE,
-        FILE_SHARE_READ, FILE_STANDARD_INFO, OPEN_EXISTING, READ_CONTROL,
+        CreateFileW, FileIdInfo, FileStandardInfo, GetFileInformationByHandleEx,
+        FILE_FLAG_BACKUP_SEMANTICS, FILE_FLAG_OPEN_REPARSE_POINT, FILE_GENERIC_EXECUTE,
+        FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_ID_INFO, FILE_SHARE_READ, FILE_STANDARD_INFO,
+        OPEN_EXISTING, READ_CONTROL,
     };
     pub use windows_sys::Win32::System::Memory::LocalFree;
 }
