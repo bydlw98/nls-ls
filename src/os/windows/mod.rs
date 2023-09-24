@@ -23,6 +23,8 @@ use accounts::get_accountname_cell_by_sid_ptr;
 use permissions::get_rwx_permissions;
 use security_info::SecurityInfo;
 
+pub use mode::pwsh_mode_cell;
+
 #[derive(Debug, Default)]
 pub struct WindowsMetadata {
     nlink: Option<u32>,
@@ -97,7 +99,9 @@ impl WindowsMetadata {
     fn init_security_info(&mut self, wide_path: &[u16], path: &Path, config: &Config) {
         match SecurityInfo::from_wide_path(wide_path) {
             Ok(security_info) => {
-                self.rwx_permissions = get_rwx_permissions(&security_info);
+                if config.mode_format.is_rwx() {
+                    self.rwx_permissions = get_rwx_permissions(&security_info);
+                }
                 if config.list_owner {
                     self.owner_cell =
                         get_accountname_cell_by_sid_ptr(security_info.sid_owner_ptr(), config);

@@ -1,6 +1,8 @@
 use std::fs::Metadata;
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
+#[cfg(windows)]
+use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
 use crate::config::{Config, TimestampUsed};
@@ -253,7 +255,7 @@ impl EntryBuf {
     }
 
     #[cfg(unix)]
-    pub fn mode_cell(&self) -> DisplayCell {
+    pub fn mode_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => rwx_mode_cell(metadata.mode()),
             None => DisplayCell::from_ascii_string(String::from("??????????"), true),
@@ -261,17 +263,26 @@ impl EntryBuf {
     }
 
     #[cfg(windows)]
-    pub fn mode_cell(&self) -> DisplayCell {
-        self.windows_metadata.rwx_mode_cell(
-            self.metadata
-                .as_ref()
-                .map(|metadata| Some(metadata.file_type()))
-                .unwrap_or(None),
-        )
+    pub fn mode_cell(&self, config: &Config) -> DisplayCell {
+        if config.mode_format.is_pwsh() {
+            pwsh_mode_cell(
+                self.metadata
+                    .as_ref()
+                    .map(|metadata| Some(metadata.file_attributes()))
+                    .unwrap_or(None),
+            )
+        } else {
+            self.windows_metadata.rwx_mode_cell(
+                self.metadata
+                    .as_ref()
+                    .map(|metadata| Some(metadata.file_type()))
+                    .unwrap_or(None),
+            )
+        }
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn mode_cell(&self) -> DisplayCell {
+    pub fn mode_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => {
                 let file_type = metadata.file_type();

@@ -21,7 +21,7 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
         if config.list_allocated_size {
             grid.add(entrybuf.allocated_size_cell(config));
         }
-        grid.add(entrybuf.mode_cell());
+        grid.add(entrybuf.mode_cell(config));
         grid.add(entrybuf.nlink_cell());
         if config.list_owner {
             grid.add(entrybuf.owner_cell(config));

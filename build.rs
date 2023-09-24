@@ -152,6 +152,18 @@ fn build_command() -> Command {
                 .help("Set the max depth to recurse into"),
         )
         .arg(
+            Arg::new("mode")
+                .action(ArgAction::Set)
+                .long("mode")
+                .value_parser([
+                    PossibleValue::new("native").help("Use the platform default mode format"),
+                    PossibleValue::new("pwsh").help("Use powershell mode format e.g. 'darhsl'. This is the default on windows"),
+                    PossibleValue::new("rwx").help("Use symbolic format e.g. 'drwxrwxrwx'. This is the default on unix like platforms"),
+                ])
+                .value_name("WORD")
+                .help("Set the mode format to be used in long format"),
+        )
+        .arg(
             Arg::new("numeric-uid-gid")
                 .action(ArgAction::SetTrue)
                 .short('n')

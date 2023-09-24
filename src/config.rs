@@ -14,6 +14,7 @@ pub struct Config {
     pub ignore_hidden: bool,
     pub indicator_style: IndicatorStyle,
     pub ls_colors: LsColors,
+    pub mode_format: ModeFormat,
     pub numeric_uid_gid: bool,
     pub output_format: OutputFormat,
     pub recursive: bool,
@@ -238,6 +239,25 @@ impl Config {
                             process::exit(1);
                         }
                     },
+                    Ok("mode") => match value {
+                        Some(word) => {
+                            if word == "native" {
+                                self.mode_format.set_native();
+                            } else if word == "pwsh" {
+                                self.mode_format = ModeFormat::Pwsh;
+                            } else if word == "rwx" {
+                                self.mode_format = ModeFormat::Rwx;
+                            } else {
+                                eprintln!(
+                                    "nls: '{}' is an invalid argument for '--mode'",
+                                    word.to_string_lossy()
+                                );
+                                eprintln!("     possible arguments are ['native', 'pwsh', 'rwx']");
+                                process::exit(1);
+                            }
+                        }
+                        None => self.color = true,
+                    },
                     Ok("numeric-uid-gid") => {
                         self.numeric_uid_gid = true;
                         self.output_format = OutputFormat::Long;
@@ -310,6 +330,7 @@ impl Default for Config {
             ignore_hidden: true,
             indicator_style: IndicatorStyle::default(),
             ls_colors: LsColors::default(),
+            mode_format: ModeFormat::default(),
             numeric_uid_gid: false,
             output_format: OutputFormat::default(),
             recursive: false,
@@ -370,6 +391,54 @@ impl IndicatorStyle {
 impl Default for IndicatorStyle {
     fn default() -> Self {
         Self::Never
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ModeFormat {
+    Pwsh,
+    Rwx,
+}
+
+impl ModeFormat {
+    #[cfg(unix)]
+    pub fn set_native(&mut self) {
+        *self = Self::Rwx;
+    }
+
+    #[cfg(windows)]
+    pub fn set_native(&mut self) {
+        *self = Self::Pwsh
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    pub fn set_native(&mut self) {
+        *self = Self::Rwx
+    }
+
+    pub fn is_pwsh(&self) -> bool {
+        *self == Self::Pwsh
+    }
+
+    pub fn is_rwx(&self) -> bool {
+        *self == Self::Rwx
+    }
+}
+
+impl Default for ModeFormat {
+    #[cfg(unix)]
+    fn default() -> Self {
+        Self::Rwx
+    }
+
+    #[cfg(windows)]
+    fn default() -> Self {
+        Self::Pwsh
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    fn default() -> Self {
+        Self::Rwx
     }
 }
 
