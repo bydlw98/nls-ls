@@ -89,7 +89,10 @@ fn complex_multi_column_grid_init(grid: &mut Grid, entrybuf_vec: &[EntryBuf], co
         if config.list_allocated_size {
             let allocated_size_cell = &mut allocated_size_cell_vec[i];
             allocated_size_cell.pad_to_width(max_allocated_size_cell_width);
-            cell.push_str_with_width(&allocated_size_cell.to_string(), max_allocated_size_cell_width);
+            cell.push_str_with_width(
+                &allocated_size_cell.to_string(),
+                max_allocated_size_cell_width,
+            );
             cell.push_char(' ');
         }
         cell.append(entrybuf_vec[i].file_name_cell(config));

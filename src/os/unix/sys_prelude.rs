@@ -23,8 +23,8 @@ pub mod c {
     pub const S_IXOTH: u32 = libc::S_IXOTH as u32;
     pub const S_ISVTX: u32 = libc::S_ISVTX as u32;
 
-    pub use libc::getpwuid_r;
-    pub use libc::passwd;
     pub use libc::getgrgid_r;
+    pub use libc::getpwuid_r;
     pub use libc::group;
+    pub use libc::passwd;
 }

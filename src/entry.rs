@@ -261,7 +261,7 @@ impl EntryBuf {
                 if config.mode_format.is_rwx() {
                     rwx_mode_cell(metadata.mode())
                 } else {
-                    pwsh_mode_cell(metadata.mode(), &self.path, &self.file_name)
+                    pwsh_mode_cell(metadata.mode(), &self.file_name, &self.path)
                 }
             }
             None => DisplayCell::from_ascii_string(String::from("??????????"), true),

@@ -88,7 +88,7 @@ pub fn rwx_mode_cell(st_mode: u32) -> DisplayCell {
     cell
 }
 
-pub fn pwsh_mode_cell(st_mode: u32, path: &Path, file_name: &str) -> DisplayCell {
+pub fn pwsh_mode_cell(st_mode: u32, file_name: &str, path: &Path) -> DisplayCell {
     let mut cell = DisplayCell::with_capacity(6);
     let file_type_mask = st_mode & c::S_IFMT;
     let is_symlink = file_type_mask == c::S_IFLNK;
@@ -113,6 +113,7 @@ pub fn pwsh_mode_cell(st_mode: u32, path: &Path, file_name: &str) -> DisplayCell
     // archive attribute
     cell.push_char('-');
 
+    // readonly attribute
     if !st_mode.has_bit_in_mask_set(c::S_IWUSR | c::S_IWGRP | c::S_IWOTH) {
         cell.push_char('r');
     } else {
