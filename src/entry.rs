@@ -257,7 +257,13 @@ impl EntryBuf {
     #[cfg(unix)]
     pub fn mode_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
-            Some(metadata) => rwx_mode_cell(metadata.mode()),
+            Some(metadata) => {
+                if config.mode_format.is_rwx() {
+                    rwx_mode_cell(metadata.mode())
+                } else {
+                    pwsh_mode_cell(metadata.mode(), &self.path, &self.file_name)
+                }
+            }
             None => DisplayCell::from_ascii_string(String::from("??????????"), true),
         }
     }

@@ -3,7 +3,7 @@ mod mode;
 pub mod sys_prelude;
 
 pub use accounts::{get_groupname_cell_by_gid, get_username_cell_by_uid};
-pub use mode::rwx_mode_cell;
+pub use mode::{pwsh_mode_cell, rwx_mode_cell};
 
 use std::fs::Metadata;
 use std::os::unix::fs::MetadataExt;
