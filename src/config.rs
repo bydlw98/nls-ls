@@ -23,6 +23,7 @@ pub struct Config {
     pub max_depth: Option<usize>,
     pub reverse: bool,
     pub show_current_and_parent_dirs: bool,
+    pub list_dir: bool,
     pub list_inode: bool,
     pub list_allocated_size: bool,
     pub allocated_size_blocks: AllocatedSizeBlocks,
@@ -87,6 +88,9 @@ impl Config {
                         }
                         Ok('C') => {
                             self.output_format = OutputFormat::Vertical;
+                        }
+                        Ok('d') => {
+                            self.list_dir = false;
                         }
                         Ok('F') => {
                             self.indicator_style = IndicatorStyle::Classify;
@@ -203,6 +207,9 @@ impl Config {
                     },
                     Ok("classify") => {
                         self.indicator_style = IndicatorStyle::Classify;
+                    }
+                    Ok("directory") => {
+                        self.list_dir = false;
                     }
                     Ok("gitignore") => {
                         self.git_ignore = true;
@@ -366,6 +373,7 @@ impl Default for Config {
             recursive: false,
             max_depth: None,
             reverse: false,
+            list_dir: true,
             list_inode: false,
             list_allocated_size: false,
             allocated_size_blocks: AllocatedSizeBlocks::default(),

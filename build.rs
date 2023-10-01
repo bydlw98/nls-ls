@@ -70,10 +70,16 @@ fn build_command() -> Command {
                 .long("color")
                 .value_parser(value_parser!(ColorWhen))
                 .value_name("WHEN")
-                .default_value("auto")
                 .default_missing_value("always")
                 .num_args(0..=1)
                 .help("Flag to control when to use color for output"),
+        )
+        .arg(
+            Arg::new("directory")
+                .action(ArgAction::SetTrue)
+                .short('d')
+                .long("directory")
+                .help("Do not list directory contents, instead list the directory itself"),
         )
         .arg(
             Arg::new("classify")
@@ -117,6 +123,15 @@ fn build_command() -> Command {
                 .help("List entries along with their file inode number"),
         )
         .arg(
+            Arg::new("ignore-glob")
+                .action(ArgAction::Append)
+                .short('I')
+                .long("ignore-glob")
+                .value_parser(value_parser!(String))
+                .value_name("PATTERN")
+                .help("Ignore entries matching glob pattern")
+        )
+        .arg(
             Arg::new("iec")
                 .action(ArgAction::SetTrue)
                 .long("iec")
@@ -128,15 +143,6 @@ fn build_command() -> Command {
                 .action(ArgAction::SetTrue)
                 .long("ignore-file")
                 .help("Ignore files set in '.ignore' files"),
-        )
-        .arg(
-            Arg::new("ignore-glob")
-            .action(ArgAction::Append)
-            .short('I')
-            .long("ignore-glob")
-            .value_parser(value_parser!(String))
-            .value_name("PATTERN")
-            .help("Ignore entries matching glob pattern")
         )
         .arg(
             Arg::new("kibibytes")

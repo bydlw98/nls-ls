@@ -30,7 +30,15 @@ fn main() {
 }
 
 fn zero_path_args(config: &Config) {
-    if config.recursive {
+    if !config.list_dir {
+        let entrybuf = EntryBuf::from_path(Path::new("."), config);
+        let mut entrybuf_vec = vec![entrybuf];
+
+        if config.list_allocated_size {
+            output::print_total(&entrybuf_vec, config);
+        }
+        output::output(&mut entrybuf_vec, config);
+    } else if config.recursive {
         list_dir::recursive_list_dir(Path::new("."), config);
     } else {
         list_dir::list_dir(Path::new("."), config);
@@ -40,7 +48,7 @@ fn zero_path_args(config: &Config) {
 fn one_path_arg(path: &Path, config: &Config) {
     match path.metadata() {
         Ok(metadata) => {
-            if metadata.is_dir() {
+            if metadata.is_dir() && config.list_dir {
                 if config.recursive {
                     list_dir::recursive_list_dir(path, config);
                 } else {
@@ -116,7 +124,7 @@ fn split_path_args_vec(
     for path in &path_args_vec {
         match path.metadata() {
             Ok(metadata) => {
-                if metadata.is_dir() {
+                if metadata.is_dir() && config.list_dir {
                     list_dir_paths_vec.push(path.to_path_buf());
                 } else {
                     list_non_dir_paths_vec.push(path.to_path_buf());

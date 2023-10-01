@@ -10,7 +10,6 @@ use crate::output::{output, print_total};
 
 pub fn list_dir(path: &Path, config: &Config) {
     let mut entrybuf_vec: Vec<EntryBuf> = Vec::with_capacity(16);
-    let mut error_count: usize = 0;
 
     for result in walk_dir(path, config) {
         match result {
@@ -21,12 +20,14 @@ pub fn list_dir(path: &Path, config: &Config) {
                 entrybuf_vec.push(EntryBuf::from_direntry(dent, config));
             }
             Err(err) => {
-                error_count += 1;
                 eprintln!("nls: {}", err);
+                if err.is_io() {
+                    return;
+                }
             }
         }
     }
-    if error_count == 0 && !entrybuf_vec.is_empty() && config.show_current_and_parent_dirs {
+    if config.show_current_and_parent_dirs {
         let current_dir_entrybuf =
             EntryBuf::from_path_with_file_name(String::from("."), path, config);
         let parent_dir_path = path.join("..");
@@ -64,7 +65,7 @@ pub fn recursive_list_dir(path: &Path, config: &Config) {
 fn walk_dir(path: &Path, config: &Config) -> Walk {
     let mut override_builder = OverrideBuilder::new(path);
     for ignore_glob in &config.ignore_glob_vec {
-        if let Err(err) = override_builder.add(&ignore_glob) {
+        if let Err(err) = override_builder.add(ignore_glob) {
             eprintln!("nls: error with ignore-glob '{}': {}", ignore_glob, err);
             process::exit(1);
         }
@@ -72,7 +73,7 @@ fn walk_dir(path: &Path, config: &Config) -> Walk {
     match override_builder.build() {
         Ok(overrides) => WalkBuilder::new(path)
             .hidden(config.ignore_hidden)
-            .parents(config.git_ignore)
+            .parents(config.git_ignore || config.ignore_file)
             .ignore(config.ignore_file)
             .git_exclude(config.git_ignore)
             .git_global(config.git_ignore)
@@ -90,7 +91,7 @@ fn walk_dir(path: &Path, config: &Config) -> Walk {
 fn recursive_walk_dir(path: &Path, config: &Config) -> Walk {
     let mut override_builder = OverrideBuilder::new(path);
     for ignore_glob in &config.ignore_glob_vec {
-        if let Err(err) = override_builder.add(&ignore_glob) {
+        if let Err(err) = override_builder.add(ignore_glob) {
             eprintln!("nls: error with ignore-glob '{}': {}", ignore_glob, err);
             process::exit(1);
         }
@@ -98,7 +99,7 @@ fn recursive_walk_dir(path: &Path, config: &Config) -> Walk {
     match override_builder.build() {
         Ok(overrides) => WalkBuilder::new(path)
             .hidden(config.ignore_hidden)
-            .parents(config.git_ignore)
+            .parents(config.git_ignore || config.ignore_file)
             .ignore(config.ignore_file)
             .git_exclude(config.git_ignore)
             .git_global(config.git_ignore)
