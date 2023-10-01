@@ -130,6 +130,15 @@ fn build_command() -> Command {
                 .help("Ignore files set in '.ignore' files"),
         )
         .arg(
+            Arg::new("ignore-glob")
+            .action(ArgAction::Append)
+            .short('I')
+            .long("ignore-glob")
+            .value_parser(value_parser!(String))
+            .value_name("PATTERN")
+            .help("Ignore entries matching glob pattern")
+        )
+        .arg(
             Arg::new("kibibytes")
                 .action(ArgAction::SetTrue)
                 .short('k')

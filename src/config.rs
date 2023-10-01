@@ -12,6 +12,7 @@ pub struct Config {
     pub color: bool,
     pub git_ignore: bool,
     pub ignore_file: bool,
+    pub ignore_glob_vec: Vec<String>,
     pub ignore_hidden: bool,
     pub indicator_style: IndicatorStyle,
     pub ls_colors: LsColors,
@@ -101,6 +102,16 @@ impl Config {
                         Ok('i') => {
                             self.list_inode = true;
                         }
+                        Ok('I') => match shorts.next_value_os() {
+                            Some(pattern) => {
+                                self.ignore_glob_vec
+                                    .push(format!("!{}", pattern.to_string_lossy()));
+                            }
+                            None => {
+                                eprintln!("nls: '-I' requires an argument");
+                                process::exit(1);
+                            }
+                        },
                         Ok('k') => {
                             if self.size_format.is_raw() {
                                 self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
@@ -211,6 +222,17 @@ impl Config {
                         self.size_format = SizeFormat::Iec;
                         self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                     }
+                    Ok("ignore-glob") => match value {
+                        Some(pattern) => {
+                            self.ignore_glob_vec
+                                .push(format!("!{}", pattern.to_string_lossy()));
+                        }
+                        None => {
+                            eprintln!("nls: '--ignore-glob' requires an argument");
+                            process::exit(1);
+                        }
+                    },
+
                     Ok("ignore-file") => {
                         self.ignore_file = true;
                     }
@@ -334,6 +356,7 @@ impl Default for Config {
             color: false,
             git_ignore: false,
             ignore_file: false,
+            ignore_glob_vec: Vec::default(),
             ignore_hidden: true,
             indicator_style: IndicatorStyle::default(),
             ls_colors: LsColors::default(),

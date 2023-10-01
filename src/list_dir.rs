@@ -1,5 +1,7 @@
 use std::path::Path;
+use std::process;
 
+use ignore::overrides::OverrideBuilder;
 use ignore::{Walk, WalkBuilder};
 
 use crate::config::Config;
@@ -60,31 +62,59 @@ pub fn recursive_list_dir(path: &Path, config: &Config) {
 }
 
 fn walk_dir(path: &Path, config: &Config) -> Walk {
-    WalkBuilder::new(path)
-        .hidden(config.ignore_hidden)
-        .parents(config.git_ignore)
-        .ignore(config.ignore_file)
-        .git_exclude(config.git_ignore)
-        .git_global(config.git_ignore)
-        .git_ignore(config.git_ignore)
-        .max_depth(Some(1))
-        .build()
+    let mut override_builder = OverrideBuilder::new(path);
+    for ignore_glob in &config.ignore_glob_vec {
+        if let Err(err) = override_builder.add(&ignore_glob) {
+            eprintln!("nls: error with ignore-glob '{}': {}", ignore_glob, err);
+            process::exit(1);
+        }
+    }
+    match override_builder.build() {
+        Ok(overrides) => WalkBuilder::new(path)
+            .hidden(config.ignore_hidden)
+            .parents(config.git_ignore)
+            .ignore(config.ignore_file)
+            .git_exclude(config.git_ignore)
+            .git_global(config.git_ignore)
+            .git_ignore(config.git_ignore)
+            .max_depth(Some(1))
+            .overrides(overrides)
+            .build(),
+        Err(err) => {
+            eprintln!("nls: unable to build override builder: {}", err);
+            process::exit(1);
+        }
+    }
 }
 
 fn recursive_walk_dir(path: &Path, config: &Config) -> Walk {
-    WalkBuilder::new(path)
-        .hidden(config.ignore_hidden)
-        .parents(config.git_ignore)
-        .ignore(config.ignore_file)
-        .git_exclude(config.git_ignore)
-        .git_global(config.git_ignore)
-        .git_ignore(config.git_ignore)
-        .max_depth(config.max_depth)
-        .sort_by_file_path(|path1, path2| path1.cmp(path2))
-        .filter_entry(|dent| {
-            dent.file_type()
-                .map(|file_type| file_type.is_dir())
-                .unwrap_or(false)
-        })
-        .build()
+    let mut override_builder = OverrideBuilder::new(path);
+    for ignore_glob in &config.ignore_glob_vec {
+        if let Err(err) = override_builder.add(&ignore_glob) {
+            eprintln!("nls: error with ignore-glob '{}': {}", ignore_glob, err);
+            process::exit(1);
+        }
+    }
+    match override_builder.build() {
+        Ok(overrides) => WalkBuilder::new(path)
+            .hidden(config.ignore_hidden)
+            .parents(config.git_ignore)
+            .ignore(config.ignore_file)
+            .git_exclude(config.git_ignore)
+            .git_global(config.git_ignore)
+            .git_ignore(config.git_ignore)
+            .max_depth(config.max_depth)
+            .overrides(overrides)
+            .sort_by_file_path(|path1, path2| path1.cmp(path2))
+            .filter_entry(|dent| {
+                dent.file_type()
+                    .map(|file_type| file_type.is_dir())
+                    .unwrap_or(false)
+            })
+            .build(),
+        Err(err) => {
+            eprintln!("nls: unable to build override builder: {}", err);
+            process::exit(1);
+        }
+    }
 }
