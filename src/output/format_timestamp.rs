@@ -4,32 +4,39 @@ use chrono::offset::{Local, TimeZone};
 use chrono::{Datelike, Timelike};
 use once_cell::sync::Lazy;
 
+use crate::config::Config;
 use crate::output::DisplayCell;
 use crate::utils::get_unix_timestamp_from_systemtime;
 
-pub fn format_timestamp(timestamp: i64) -> DisplayCell {
+pub fn format_timestamp(timestamp: i64, config: &Config) -> DisplayCell {
     match Local.timestamp_opt(timestamp, 0) {
         chrono::LocalResult::Single(datetime) => {
-            let mut timestamp_cell = DisplayCell::with_capacity(12);
+            let timestamp_style = config.theme.time_style();
 
             if timestamp > *SIX_MONTHS_AGO_UNIX_TIMESTAMP {
-                timestamp_cell.push_ascii_str(&format!(
-                    "{} {:>2} {:0>2}:{:0>2}",
-                    MONTH_TABLE[datetime.month0() as usize],
-                    datetime.day(),
-                    datetime.hour(),
-                    datetime.minute()
-                ));
+                DisplayCell::from_ascii_str_with_style(
+                    &format!(
+                        "{} {:>2} {:0>2}:{:0>2}",
+                        MONTH_TABLE[datetime.month0() as usize],
+                        datetime.day(),
+                        datetime.hour(),
+                        datetime.minute()
+                    ),
+                    timestamp_style,
+                    true,
+                )
             } else {
-                timestamp_cell.push_ascii_str(&format!(
-                    "{} {:>2}  {}",
-                    MONTH_TABLE[datetime.month0() as usize],
-                    datetime.day(),
-                    datetime.year()
-                ));
+                DisplayCell::from_ascii_str_with_style(
+                    &format!(
+                        "{} {:>2}  {}",
+                        MONTH_TABLE[datetime.month0() as usize],
+                        datetime.day(),
+                        datetime.year()
+                    ),
+                    timestamp_style,
+                    true,
+                )
             }
-
-            timestamp_cell
         }
         _ => DisplayCell::error_left_aligned(),
     }

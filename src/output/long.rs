@@ -16,13 +16,13 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
 
     for entrybuf in entrybuf_vec {
         if config.list_inode {
-            grid.add(entrybuf.ino_cell());
+            grid.add(entrybuf.ino_cell(config));
         }
         if config.list_allocated_size {
             grid.add(entrybuf.allocated_size_cell(config));
         }
         grid.add(entrybuf.mode_cell(config));
-        grid.add(entrybuf.nlink_cell());
+        grid.add(entrybuf.nlink_cell(config));
         if config.list_owner {
             grid.add(entrybuf.owner_cell(config));
         }
@@ -30,7 +30,7 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
             grid.add(entrybuf.group_cell(config));
         }
         grid.add(entrybuf.size_cell(config));
-        grid.add(entrybuf.timestamp_cell());
+        grid.add(entrybuf.timestamp_cell(config));
         grid.add(entrybuf.file_name_cell(config));
     }
 

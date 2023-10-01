@@ -38,6 +38,97 @@ impl DisplayCell {
             ..Default::default()
         }
     }
+
+    pub fn from_ascii_str_with_style(
+        value: &str,
+        ansi_style_str: Option<&str>,
+        left_aligned: bool,
+    ) -> Self {
+        let width = value.len();
+        match ansi_style_str {
+            Some(ansi_style_str) => Self {
+                contents: format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value),
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+            None => Self {
+                contents: value.to_string(),
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+        }
+    }
+
+    pub fn from_str_with_style(
+        value: &str,
+        ansi_style_str: Option<&str>,
+        left_aligned: bool,
+    ) -> Self {
+        let width = UnicodeWidthStr::width(value);
+        match ansi_style_str {
+            Some(ansi_style_str) => Self {
+                contents: format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value),
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+            None => Self {
+                contents: value.to_string(),
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+        }
+    }
+
+    pub fn from_num_with_style(
+        value: u64,
+        ansi_style_str: Option<&str>,
+        left_aligned: bool,
+    ) -> DisplayCell {
+        let value_string = value.to_string();
+        let width = UnicodeWidthStr::width(&*value_string);
+        match ansi_style_str {
+            Some(ansi_style_str) => Self {
+                contents: format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value_string),
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+            None => Self {
+                contents: value_string,
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+        }
+    }
+
+    #[cfg(windows)]
+    pub fn from_u128_with_style(
+        value: u128,
+        ansi_style_str: Option<&str>,
+        left_aligned: bool,
+    ) -> DisplayCell {
+        let value_string = value.to_string();
+        let width = UnicodeWidthStr::width(&*value_string);
+        match ansi_style_str {
+            Some(ansi_style_str) => Self {
+                contents: format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value_string),
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+            None => Self {
+                contents: value_string,
+                width: width,
+                pad_width: 0,
+                left_aligned: left_aligned,
+            },
+        }
+    }
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             contents: String::with_capacity(capacity),
@@ -84,6 +175,23 @@ impl DisplayCell {
     pub fn push_char(&mut self, ch: char) {
         self.contents.push(ch);
         self.width += 1;
+    }
+
+    pub fn push_char_with_style(&mut self, ch: char, ansi_style_str: Option<&str>) {
+        match ansi_style_str {
+            Some(ansi_style_str) => {
+                self.contents.push_str("\x1b[");
+                self.contents.push_str(ansi_style_str);
+                self.contents.push('m');
+                self.contents.push(ch);
+                self.contents.push_str("\x1b[0m");
+                self.width += 1;
+            }
+            None => {
+                self.contents.push(ch);
+                self.width += 1;
+            }
+        }
     }
 
     pub fn paint(&mut self, ansi_style_str: &str) {

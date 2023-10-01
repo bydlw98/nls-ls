@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process;
 
 use crate::ls_colors::LsColors;
+use crate::theme::ThemeConfig;
 use crate::utils;
 
 #[derive(Debug)]
@@ -29,6 +30,7 @@ pub struct Config {
     pub size_format: SizeFormat,
     pub sorting_order: SortingOrder,
     pub timestamp_used: TimestampUsed,
+    pub theme: ThemeConfig,
     pub width: usize,
 }
 
@@ -47,6 +49,7 @@ impl Config {
 
         if config.color {
             config.ls_colors.init();
+            config.theme = ThemeConfig::with_default_colors();
         }
 
         path_args_vec.sort();
@@ -256,7 +259,11 @@ impl Config {
                                 process::exit(1);
                             }
                         }
-                        None => self.color = true,
+                        None => {
+                            eprintln!("nls: '--mode' requires an argument");
+                            eprintln!("     possible arguments are ['native', 'pwsh', 'rwx']");
+                            process::exit(1);
+                        }
                     },
                     Ok("numeric-uid-gid") => {
                         self.numeric_uid_gid = true;
@@ -345,6 +352,7 @@ impl Default for Config {
             size_format: SizeFormat::default(),
             sorting_order: SortingOrder::default(),
             timestamp_used: TimestampUsed::default(),
+            theme: ThemeConfig::default(),
             width: 80,
         }
     }

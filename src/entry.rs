@@ -212,17 +212,21 @@ impl EntryBuf {
     }
 
     #[cfg(unix)]
-    pub fn ino_cell(&self) -> DisplayCell {
+    pub fn ino_cell(&self, config: &Config) -> DisplayCell {
+        let inode_style = config.theme.inode_style();
+
         match &self.ino {
-            Some(ino) => DisplayCell::from_ascii_string(ino.to_string(), false),
+            Some(ino) => DisplayCell::from_num_with_style(*ino, inode_style, false),
             None => DisplayCell::error_right_aligned(),
         }
     }
 
     #[cfg(windows)]
-    pub fn ino_cell(&self) -> DisplayCell {
+    pub fn ino_cell(&self, config: &Config) -> DisplayCell {
+        let inode_style = config.theme.inode_style();
+
         match get_file_id_by_path(&self.path) {
-            Ok(file_id) => DisplayCell::from_ascii_string(file_id.to_string(), false),
+            Ok(file_id) => DisplayCell::from_u128_with_style(file_id, inode_style, false),
             Err(err) => {
                 eprintln!(
                     "nls: unable to get inode number of '{}': {}",
@@ -236,9 +240,11 @@ impl EntryBuf {
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn ino_cell(&self) -> DisplayCell {
+    pub fn ino_cell(&self, config: &Config) -> DisplayCell {
+        let inode_style = config.theme.inode_style();
+
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_string('-'.to_string(), false),
+            Some(_) => DisplayCell::from_ascii_str_with_style('-', inode_style, false),
             None => DisplayCell::error_right_aligned(),
         }
     }
@@ -259,9 +265,9 @@ impl EntryBuf {
         match &self.metadata {
             Some(metadata) => {
                 if config.mode_format.is_rwx() {
-                    rwx_mode_cell(metadata.mode())
+                    rwx_mode_cell(metadata.mode(), config)
                 } else {
-                    pwsh_mode_cell(metadata.mode(), &self.file_name, &self.path)
+                    pwsh_mode_cell(metadata.mode(), &self.file_name, &self.path, config)
                 }
             }
             None => DisplayCell::from_ascii_string(String::from("??????????"), true),
@@ -276,6 +282,7 @@ impl EntryBuf {
                     .as_ref()
                     .map(|metadata| Some(metadata.file_attributes()))
                     .unwrap_or(None),
+                config,
             )
         } else {
             self.windows_metadata.rwx_mode_cell(
@@ -283,6 +290,7 @@ impl EntryBuf {
                     .as_ref()
                     .map(|metadata| Some(metadata.file_type()))
                     .unwrap_or(None),
+                config,
             )
         }
     }
@@ -307,22 +315,26 @@ impl EntryBuf {
     }
 
     #[cfg(unix)]
-    pub fn nlink_cell(&self) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+        let nlink_style = config.theme.nlink_style();
         match &self.metadata {
-            Some(metadata) => DisplayCell::from_ascii_string(metadata.nlink().to_string(), false),
+            Some(metadata) => {
+                DisplayCell::from_num_with_style(metadata.nlink(), nlink_style, false)
+            }
             None => DisplayCell::error_right_aligned(),
         }
     }
 
     #[cfg(windows)]
-    pub fn nlink_cell(&self) -> DisplayCell {
-        self.windows_metadata.nlink_cell()
+    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+        self.windows_metadata.nlink_cell(config)
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn nlink_cell(&self) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+        let nlink_style = config.theme.nlink_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_string(1.to_string(), false),
+            Some(_) => DisplayCell::from_ascii_str_with_style('1', nlink_style, false),
             None => DisplayCell::error_right_aligned(),
         }
     }
@@ -336,8 +348,8 @@ impl EntryBuf {
     }
 
     #[cfg(windows)]
-    pub fn owner_cell(&self, _config: &Config) -> DisplayCell {
-        self.windows_metadata.owner_cell()
+    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+        self.windows_metadata.owner_cell(config)
     }
 
     #[cfg(not(any(unix, windows)))]
@@ -357,8 +369,8 @@ impl EntryBuf {
     }
 
     #[cfg(windows)]
-    pub fn group_cell(&self, _config: &Config) -> DisplayCell {
-        self.windows_metadata.group_cell()
+    pub fn group_cell(&self, config: &Config) -> DisplayCell {
+        self.windows_metadata.group_cell(config)
     }
 
     #[cfg(not(any(unix, windows)))]
@@ -384,9 +396,9 @@ impl EntryBuf {
         self.timestamp
     }
 
-    pub fn timestamp_cell(&self) -> DisplayCell {
+    pub fn timestamp_cell(&self, config: &Config) -> DisplayCell {
         match &self.timestamp {
-            Some(timestamp) => format_timestamp(*timestamp),
+            Some(timestamp) => format_timestamp(*timestamp, config),
             None => DisplayCell::error_left_aligned(),
         }
     }

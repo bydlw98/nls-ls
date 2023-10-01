@@ -9,9 +9,8 @@ use super::sys_prelude::*;
 use super::utf16_until_null_to_string_lossy;
 
 use crate::config::Config;
-use crate::output::DisplayCell;
 
-pub fn get_accountname_cell_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> DisplayCell {
+pub fn get_accountname_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> String {
     static ACCOUNTS_CACHE: Lazy<Mutex<Vec<Account>>> =
         Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
     let mut accounts_cache = ACCOUNTS_CACHE.lock().unwrap();
@@ -20,29 +19,29 @@ pub fn get_accountname_cell_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> Dis
         .position(|account| account.sid_buf == sid_ptr);
 
     match cache_index_option {
-        Some(cache_index) => accounts_cache[cache_index].name_cell.clone(),
+        Some(cache_index) => accounts_cache[cache_index].name.clone(),
         None => match Account::from_sid_ptr(sid_ptr, config) {
             Some(account) => {
-                let name_cell = account.name_cell.clone();
-                log::debug!("account '{}' is not found in ACCOUNTS_CACHE", name_cell);
+                let accountname = account.name.clone();
+                log::debug!("account '{}' is not found in ACCOUNTS_CACHE", accountname);
                 accounts_cache.push(account);
 
-                name_cell
+                accountname
             }
-            None => internal_get_accountname_cell_by_sid_ptr(sid_ptr, config),
+            None => internal_get_accountname_by_sid_ptr(sid_ptr, config),
         },
     }
 }
 
-fn internal_get_accountname_cell_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> DisplayCell {
+fn internal_get_accountname_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> String {
     if config.numeric_uid_gid {
-        get_string_sid_cell_by_sid_ptr(sid_ptr)
+        convert_to_string_sid(sid_ptr)
     } else {
-        lookup_accountname_cell_by_sid_ptr(sid_ptr)
+        lookup_accountname(sid_ptr)
     }
 }
 
-fn lookup_accountname_cell_by_sid_ptr(sid_ptr: c::PSID) -> DisplayCell {
+fn lookup_accountname(sid_ptr: c::PSID) -> String {
     let mut wide_name_length: u32 = 32;
     let mut wide_domain_length: u32 = 32;
     let mut wide_name_buf: [u16; 32] = [0; 32];
@@ -62,17 +61,17 @@ fn lookup_accountname_cell_by_sid_ptr(sid_ptr: c::PSID) -> DisplayCell {
 
         // If LookupAccountSidW succeeds, return_code is non-zero
         if return_code != 0 {
-            DisplayCell::from(format!(
+            format!(
                 "{}\\{}",
                 utf16_until_null_to_string_lossy(&wide_domain_buf),
                 utf16_until_null_to_string_lossy(&wide_name_buf)
-            ))
+            )
         }
         // If GetLastError() returns ERROR_NONE_MAPPED, means
         // unable to get the name of SID
         else if c::GetLastError() == c::ERROR_NONE_MAPPED {
             log::debug!("no SID is mapped");
-            get_string_sid_cell_by_sid_ptr(sid_ptr)
+            convert_to_string_sid(sid_ptr)
         } else {
             // Retry lookup SID name with correct size
             let mut wide_name = vec![0; wide_name_length as usize];
@@ -88,24 +87,24 @@ fn lookup_accountname_cell_by_sid_ptr(sid_ptr: c::PSID) -> DisplayCell {
                 &mut sid_name_use,
             );
             if return_code != 0 {
-                DisplayCell::from(format!(
+                format!(
                     "{}\\{}",
                     utf16_until_null_to_string_lossy(&wide_domain),
                     utf16_until_null_to_string_lossy(&wide_name)
-                ))
+                )
             } else {
                 log::debug!(
                     "unable to lookup accountname: {}",
                     io::Error::last_os_error()
                 );
 
-                DisplayCell::error_left_aligned()
+                String::from('?')
             }
         }
     }
 }
 
-fn get_string_sid_cell_by_sid_ptr(sid_ptr: c::PSID) -> DisplayCell {
+fn convert_to_string_sid(sid_ptr: c::PSID) -> String {
     unsafe {
         let mut wide_cstring_ptr = MaybeUninit::<*mut u16>::uninit();
         let return_code = c::ConvertSidToStringSidW(sid_ptr, wide_cstring_ptr.as_mut_ptr());
@@ -116,29 +115,28 @@ fn get_string_sid_cell_by_sid_ptr(sid_ptr: c::PSID) -> DisplayCell {
             let wide_cstring_len = c::wcslen(wide_cstring_ptr);
             let wide_cstring_array = std::slice::from_raw_parts(wide_cstring_ptr, wide_cstring_len);
             let string_sid = String::from_utf16_lossy(wide_cstring_array);
-
             c::LocalFree(wide_cstring_ptr as c::HLOCAL);
 
-            DisplayCell::from(string_sid)
+            string_sid
         } else {
-            DisplayCell::error_left_aligned()
+            String::from('?')
         }
     }
 }
 
 #[derive(Debug, Default)]
 struct Account {
-    name_cell: DisplayCell,
+    name: String,
     sid_buf: SidBuf,
 }
 
 impl Account {
     fn from_sid_ptr(sid_ptr: c::PSID, config: &Config) -> Option<Self> {
         let sid_buf = SidBuf::from_sid_ptr(sid_ptr)?;
-        let name_cell = internal_get_accountname_cell_by_sid_ptr(sid_ptr, config);
+        let accountname = internal_get_accountname_by_sid_ptr(sid_ptr, config);
 
         Some(Self {
-            name_cell: name_cell,
+            name: accountname,
             sid_buf: sid_buf,
         })
     }

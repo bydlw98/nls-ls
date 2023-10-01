@@ -19,7 +19,7 @@ use std::ptr;
 use crate::config::{AllocatedSizeBlocks, Config};
 use crate::output::DisplayCell;
 
-use accounts::get_accountname_cell_by_sid_ptr;
+use accounts::get_accountname_by_sid_ptr;
 use permissions::get_rwx_permissions;
 use security_info::SecurityInfo;
 
@@ -27,12 +27,12 @@ pub use mode::pwsh_mode_cell;
 
 #[derive(Debug, Default)]
 pub struct WindowsMetadata {
-    nlink: Option<u32>,
+    nlink: Option<u64>,
     allocated_size: Option<u64>,
     size: Option<u64>,
     rwx_permissions: String,
-    owner_cell: DisplayCell,
-    group_cell: DisplayCell,
+    owner_string: String,
+    group_string: String,
 }
 
 impl WindowsMetadata {
@@ -84,7 +84,7 @@ impl WindowsMetadata {
             if return_code != 0 {
                 let file_standard_info = file_standard_info.assume_init();
                 self.allocated_size = Some(file_standard_info.AllocationSize as u64);
-                self.nlink = Some(file_standard_info.NumberOfLinks);
+                self.nlink = Some(file_standard_info.NumberOfLinks as u64);
                 self.size = Some(file_standard_info.EndOfFile as u64);
             } else {
                 eprintln!(
@@ -100,15 +100,15 @@ impl WindowsMetadata {
         match SecurityInfo::from_wide_path(wide_path) {
             Ok(security_info) => {
                 if config.mode_format.is_rwx() {
-                    self.rwx_permissions = get_rwx_permissions(&security_info);
+                    self.rwx_permissions = get_rwx_permissions(&security_info, config);
                 }
                 if config.list_owner {
-                    self.owner_cell =
-                        get_accountname_cell_by_sid_ptr(security_info.sid_owner_ptr(), config);
+                    self.owner_string =
+                        get_accountname_by_sid_ptr(security_info.sid_owner_ptr(), config);
                 }
                 if config.list_group {
-                    self.group_cell =
-                        get_accountname_cell_by_sid_ptr(security_info.sid_group_ptr(), config);
+                    self.group_string =
+                        get_accountname_by_sid_ptr(security_info.sid_group_ptr(), config);
                 }
             }
             Err(err) => {
@@ -118,8 +118,8 @@ impl WindowsMetadata {
                     err
                 );
                 self.rwx_permissions = String::from("?????????");
-                self.owner_cell = DisplayCell::error_left_aligned();
-                self.group_cell = DisplayCell::error_left_aligned();
+                self.owner_string = String::from('?');
+                self.group_string = String::from('?');
             }
         }
     }
@@ -137,9 +137,10 @@ impl WindowsMetadata {
         }
     }
 
-    pub fn nlink_cell(&self) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+        let nlink_style = config.theme.nlink_style();
         match &self.nlink {
-            Some(nlink) => DisplayCell::from_ascii_string(nlink.to_string(), false),
+            Some(nlink) => DisplayCell::from_num_with_style(*nlink, nlink_style, false),
             None => DisplayCell::error_right_aligned(),
         }
     }
@@ -148,16 +149,26 @@ impl WindowsMetadata {
         self.size
     }
 
-    pub fn owner_cell(&self) -> DisplayCell {
-        self.owner_cell.clone()
+    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+        let owner_style = config.theme.owner_style();
+        if self.owner_string == "?" {
+            DisplayCell::error_left_aligned()
+        } else {
+            DisplayCell::from_str_with_style(&self.owner_string, owner_style, true)
+        }
     }
 
-    pub fn group_cell(&self) -> DisplayCell {
-        self.group_cell.clone()
+    pub fn group_cell(&self, config: &Config) -> DisplayCell {
+        let group_style = config.theme.group_style();
+        if self.group_string == "?" {
+            DisplayCell::error_left_aligned()
+        } else {
+            DisplayCell::from_str_with_style(&self.group_string, group_style, true)
+        }
     }
 
-    pub fn rwx_mode_cell(&self, file_type: Option<FileType>) -> DisplayCell {
-        mode::rwx_mode_cell(file_type, &self.rwx_permissions)
+    pub fn rwx_mode_cell(&self, file_type: Option<FileType>, config: &Config) -> DisplayCell {
+        mode::rwx_mode_cell(file_type, &self.rwx_permissions, config)
     }
 }
 
@@ -209,21 +220,6 @@ impl WideString {
         wide_buf.push(0);
 
         Self(wide_buf)
-    }
-
-    pub fn from_utf16_parts(utf16_buf: &[u16], length: usize) -> Self {
-        let mut wide_buf = Self(utf16_buf[0..length].to_vec());
-
-        match wide_buf.last() {
-            Some(wch) => {
-                if *wch != 0 {
-                    wide_buf.0.push(0);
-                }
-            }
-            None => wide_buf.0.push(0),
-        }
-
-        wide_buf
     }
 }
 

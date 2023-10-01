@@ -6,14 +6,17 @@ use std::sync::OnceLock;
 use super::security_info::SecurityInfo;
 use super::sys_prelude::*;
 
+use crate::config::Config;
 use crate::utils::HasMaskSetExt;
 
-pub fn get_rwx_permissions(security_info: &SecurityInfo) -> String {
+pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> String {
     static OTHERS_SIDBUF: OnceLock<Option<Vec<u8>>> = OnceLock::new();
     let mut permissions_buf = String::with_capacity(9);
 
     match get_accessmask(security_info.dacl_ptr(), security_info.sid_owner_ptr()) {
-        Ok(owner_accessmask) => permissions_buf.push_str(&accessmask_to_rwx(owner_accessmask)),
+        Ok(owner_accessmask) => {
+            permissions_buf.push_str(&accessmask_to_rwx(owner_accessmask, config))
+        }
         Err(err) => {
             eprintln!("nls: unable to get owner permissions: {}", err);
             permissions_buf.push_str("???")
@@ -21,7 +24,9 @@ pub fn get_rwx_permissions(security_info: &SecurityInfo) -> String {
     }
 
     match get_accessmask(security_info.dacl_ptr(), security_info.sid_group_ptr()) {
-        Ok(group_accessmask) => permissions_buf.push_str(&accessmask_to_rwx(group_accessmask)),
+        Ok(group_accessmask) => {
+            permissions_buf.push_str(&accessmask_to_rwx(group_accessmask, config))
+        }
         Err(err) => {
             eprintln!("nls: unable to get group permissions: {}", err);
             permissions_buf.push_str("???")
@@ -32,7 +37,7 @@ pub fn get_rwx_permissions(security_info: &SecurityInfo) -> String {
         Some(others_sidbuf) => {
             match get_accessmask(security_info.dacl_ptr(), others_sidbuf.as_ptr() as c::PSID) {
                 Ok(others_accessmask) => {
-                    permissions_buf.push_str(&accessmask_to_rwx(others_accessmask))
+                    permissions_buf.push_str(&accessmask_to_rwx(others_accessmask, config))
                 }
                 Err(err) => {
                     eprintln!("nls: unable to get others permissions: {}", err);
@@ -70,22 +75,29 @@ pub fn create_others_sidbuf() -> Option<Vec<u8>> {
     }
 }
 
-fn accessmask_to_rwx(accessmask: u32) -> String {
-    let mut buf = vec![b'-', b'-', b'-'];
+fn accessmask_to_rwx(accessmask: u32, config: &Config) -> String {
+    let mut rwx_string = String::with_capacity(32);
+    let theme = &config.theme;
 
     if accessmask.has_mask_set(c::FILE_GENERIC_READ) {
-        buf[0] = b'r';
+        string_push_char_with_style(&mut rwx_string, 'r', theme.read_style());
+    } else {
+        string_push_char_with_style(&mut rwx_string, '-', theme.no_permission_style())
     }
 
     if accessmask.has_mask_set(c::FILE_GENERIC_WRITE) {
-        buf[1] = b'w';
+        string_push_char_with_style(&mut rwx_string, 'w', theme.write_style());
+    } else {
+        string_push_char_with_style(&mut rwx_string, '-', theme.no_permission_style())
     }
 
     if accessmask.has_mask_set(c::FILE_GENERIC_EXECUTE) {
-        buf[2] = b'x';
+        string_push_char_with_style(&mut rwx_string, 'x', theme.execute_style());
+    } else {
+        string_push_char_with_style(&mut rwx_string, '-', theme.no_permission_style())
     }
 
-    unsafe { String::from_utf8_unchecked(buf) }
+    rwx_string
 }
 
 pub fn get_accessmask(dacl_ptr: *const c::ACL, sid_ptr: c::PSID) -> Result<u32, io::Error> {
@@ -103,6 +115,21 @@ pub fn get_accessmask(dacl_ptr: *const c::ACL, sid_ptr: c::PSID) -> Result<u32, 
             Ok(accessmask)
         } else {
             Err(io::Error::from_raw_os_error(return_code as i32))
+        }
+    }
+}
+
+fn string_push_char_with_style(string: &mut String, ch: char, ansi_style_str: Option<&str>) {
+    match ansi_style_str {
+        Some(ansi_style_str) => {
+            string.push_str("\x1b[");
+            string.push_str(ansi_style_str);
+            string.push('m');
+            string.push(ch);
+            string.push_str("\x1b[0m");
+        }
+        None => {
+            string.push(ch);
         }
     }
 }

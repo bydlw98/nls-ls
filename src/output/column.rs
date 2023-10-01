@@ -21,7 +21,7 @@ pub fn single_column_format(entrybuf_vec: &[EntryBuf], config: &Config) {
         );
         for entrybuf in entrybuf_vec {
             if config.list_inode {
-                grid.add(entrybuf.ino_cell());
+                grid.add(entrybuf.ino_cell(config));
             }
             if config.list_allocated_size {
                 grid.add(entrybuf.allocated_size_cell(config));
@@ -66,7 +66,7 @@ fn complex_multi_column_grid_init(grid: &mut Grid, entrybuf_vec: &[EntryBuf], co
 
     for entrybuf in entrybuf_vec {
         if config.list_inode {
-            let ino_cell = entrybuf.ino_cell();
+            let ino_cell = entrybuf.ino_cell(config);
             max_ino_cell_width = max_ino_cell_width.max(ino_cell.width());
             ino_cell_vec.push(ino_cell);
         }

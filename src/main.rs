@@ -4,6 +4,7 @@ mod list_dir;
 mod ls_colors;
 mod os;
 mod output;
+mod theme;
 mod utils;
 
 use config::Config;
