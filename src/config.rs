@@ -10,6 +10,9 @@ use crate::utils;
 pub struct Config {
     pub is_atty: bool,
     pub color: bool,
+    pub dereference: bool,
+    pub dereference_cmdline_symlink: bool,
+    pub dereference_cmdline_symlink_dir: bool,
     pub git_ignore: bool,
     pub ignore_file: bool,
     pub ignore_glob_vec: Vec<String>,
@@ -22,7 +25,7 @@ pub struct Config {
     pub recursive: bool,
     pub max_depth: Option<usize>,
     pub reverse: bool,
-    pub show_current_and_parent_dirs: bool,
+    pub list_current_and_parent_dirs: bool,
     pub list_dir: bool,
     pub list_inode: bool,
     pub list_allocated_size: bool,
@@ -54,6 +57,12 @@ impl Config {
             config.theme = ThemeConfig::with_default_colors();
         }
 
+        if !config.dereference_cmdline_symlink_dir {
+            config.dereference_cmdline_symlink_dir = !(!config.list_dir
+                || config.indicator_style.is_classify()
+                || config.output_format.is_long())
+        }
+
         path_args_vec.sort();
 
         (config, path_args_vec)
@@ -76,11 +85,11 @@ impl Config {
                 while let Some(short) = shorts.next_flag() {
                     match short {
                         Ok('a') => {
-                            self.show_current_and_parent_dirs = true;
+                            self.list_current_and_parent_dirs = true;
                             self.ignore_hidden = false;
                         }
                         Ok('A') => {
-                            self.show_current_and_parent_dirs = false;
+                            self.list_current_and_parent_dirs = false;
                             self.ignore_hidden = false;
                         }
                         Ok('c') => {
@@ -103,6 +112,11 @@ impl Config {
                             self.size_format = SizeFormat::HumanReadable;
                             self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                         }
+                        Ok('H') => {
+                            self.dereference = false;
+                            self.dereference_cmdline_symlink = true;
+                            self.dereference_cmdline_symlink_dir = true;
+                        }
                         Ok('i') => {
                             self.list_inode = true;
                         }
@@ -123,6 +137,11 @@ impl Config {
                         }
                         Ok('l') => {
                             self.output_format = OutputFormat::Long;
+                        }
+                        Ok('L') => {
+                            self.dereference = true;
+                            self.dereference_cmdline_symlink = true;
+                            self.dereference_cmdline_symlink_dir = true;
                         }
                         Ok('n') => {
                             self.numeric_uid_gid = true;
@@ -172,11 +191,11 @@ impl Config {
             } else if let Some((long, value)) = arg.to_long() {
                 match long {
                     Ok("all") => {
-                        self.show_current_and_parent_dirs = true;
+                        self.list_current_and_parent_dirs = true;
                         self.ignore_hidden = false;
                     }
                     Ok("almost-all") => {
-                        self.show_current_and_parent_dirs = false;
+                        self.list_current_and_parent_dirs = false;
                         self.ignore_hidden = false;
                     }
                     Ok("allocated-bytes") => {
@@ -207,6 +226,16 @@ impl Config {
                     },
                     Ok("classify") => {
                         self.indicator_style = IndicatorStyle::Classify;
+                    }
+                    Ok("dereference") => {
+                        self.dereference = true;
+                        self.dereference_cmdline_symlink = true;
+                        self.dereference_cmdline_symlink_dir = true;
+                    }
+                    Ok("dereference-command-line") => {
+                        self.dereference = false;
+                        self.dereference_cmdline_symlink = true;
+                        self.dereference_cmdline_symlink_dir = true;
                     }
                     Ok("directory") => {
                         self.list_dir = false;
@@ -361,6 +390,9 @@ impl Default for Config {
         Self {
             is_atty: false,
             color: false,
+            dereference: false,
+            dereference_cmdline_symlink: false,
+            dereference_cmdline_symlink_dir: false,
             git_ignore: false,
             ignore_file: false,
             ignore_glob_vec: Vec::default(),
@@ -379,7 +411,7 @@ impl Default for Config {
             allocated_size_blocks: AllocatedSizeBlocks::default(),
             list_owner: true,
             list_group: true,
-            show_current_and_parent_dirs: false,
+            list_current_and_parent_dirs: false,
             size_format: SizeFormat::default(),
             sorting_order: SortingOrder::default(),
             timestamp_used: TimestampUsed::default(),
@@ -423,6 +455,10 @@ impl IndicatorStyle {
     }
 
     pub fn others(&self) -> bool {
+        *self == Self::Classify
+    }
+
+    pub fn is_classify(&self) -> bool {
         *self == Self::Classify
     }
 }

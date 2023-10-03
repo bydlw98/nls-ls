@@ -110,6 +110,14 @@ fn build_command() -> Command {
                 .help("Format size using factors of 1024 like 1.0K 200M 3.0G etc"),
         )
         .arg(
+            Arg::new("dereference-command-line")
+                .action(ArgAction::SetTrue)
+                .short('H')
+                .long("dereference-command-line")
+                .overrides_with("dereference")
+                .help("Use target information of symlinks passed as arguments on command line")
+        )
+        .arg(
             Arg::new("help")
                 .action(ArgAction::Help)
                 .long("help")
@@ -157,6 +165,14 @@ fn build_command() -> Command {
                 .short('l')
                 .overrides_with_all(["across", "single-column", "vertical"])
                 .help("List entries along with their metadata in long format"),
+        )
+        .arg(
+            Arg::new("dereference")
+                .action(ArgAction::SetTrue)
+                .short('L')
+                .long("dereference")
+                .overrides_with("dereference-command-line")
+                .help("Use target information when listing symlink entries")
         )
         .arg(
             Arg::new("max-depth")

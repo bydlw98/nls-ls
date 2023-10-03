@@ -15,27 +15,21 @@ pub fn list_dir(path: &Path, config: &Config) {
         match result {
             Ok(dent) => {
                 if dent.depth() == 0 {
-                    continue;
+                    if config.list_current_and_parent_dirs {
+                        entrybuf_vec.push(EntryBuf::from_direntry(dent, config));
+                        entrybuf_vec.push(EntryBuf::from_parent_of_path(path, config));
+                    }
+                } else {
+                    entrybuf_vec.push(EntryBuf::from_direntry(dent, config));
                 }
-                entrybuf_vec.push(EntryBuf::from_direntry(dent, config));
             }
             Err(err) => {
                 eprintln!("nls: {}", err);
-                if err.is_io() {
+                if !err.is_partial() && err.is_io() {
                     return;
                 }
             }
         }
-    }
-    if config.show_current_and_parent_dirs {
-        let current_dir_entrybuf =
-            EntryBuf::from_path_with_file_name(String::from("."), path, config);
-        let parent_dir_path = path.join("..");
-        let parent_dir_entrybuf =
-            EntryBuf::from_path_with_file_name(String::from(".."), &parent_dir_path, config);
-
-        entrybuf_vec.insert(0, current_dir_entrybuf);
-        entrybuf_vec.insert(1, parent_dir_entrybuf);
     }
 
     if config.output_format.is_long() || config.list_allocated_size {
@@ -78,6 +72,7 @@ fn walk_dir(path: &Path, config: &Config) -> Walk {
             .git_exclude(config.git_ignore)
             .git_global(config.git_ignore)
             .git_ignore(config.git_ignore)
+            .follow_links(config.dereference)
             .max_depth(Some(1))
             .overrides(overrides)
             .build(),
@@ -104,6 +99,7 @@ fn recursive_walk_dir(path: &Path, config: &Config) -> Walk {
             .git_exclude(config.git_ignore)
             .git_global(config.git_ignore)
             .git_ignore(config.git_ignore)
+            .follow_links(config.dereference)
             .max_depth(config.max_depth)
             .overrides(overrides)
             .sort_by_file_path(|path1, path2| path1.cmp(path2))

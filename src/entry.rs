@@ -30,17 +30,31 @@ pub struct EntryBuf {
 
 impl EntryBuf {
     pub fn from_direntry(dent: ignore::DirEntry, config: &Config) -> Self {
-        let file_name = dent.file_name().to_string_lossy().to_string();
-        let metadata = match dent.metadata() {
-            Ok(metadata) => Some(metadata),
-            Err(err) => {
-                eprintln!("nls: unable to get metadata of '{}': {}", file_name, err);
-                None
+        let file_name = if dent.depth() == 0 {
+            String::from(".")
+        } else {
+            dent.file_name().to_string_lossy().to_string()
+        };
+        let metadata = if config.dereference {
+            match dent.path().metadata() {
+                Ok(metadata) => Some(metadata),
+                Err(err) => {
+                    eprintln!("nls: unable to get metadata of '{}': {}", file_name, err);
+                    None
+                }
+            }
+        } else {
+            match dent.metadata() {
+                Ok(metadata) => Some(metadata),
+                Err(err) => {
+                    eprintln!("nls: unable to get metadata of '{}': {}", file_name, err);
+                    None
+                }
             }
         };
 
         #[cfg(unix)]
-        let ino = dent.ino();
+        let ino = if config.dereference { None } else { dent.ino() };
 
         let mut entrybuf = Self {
             file_name_key: file_name.to_ascii_lowercase(),
@@ -56,9 +70,14 @@ impl EntryBuf {
         entrybuf
     }
 
-    pub fn from_path(path: &Path, config: &Config) -> Self {
+    pub fn from_cmdline_path(path: &Path, config: &Config) -> Self {
         let file_name = path.display().to_string();
-        let metadata = match path.symlink_metadata() {
+        let metadata_result = if config.dereference_cmdline_symlink {
+            path.metadata()
+        } else {
+            path.symlink_metadata()
+        };
+        let metadata = match metadata_result {
             Ok(metadata) => Some(metadata),
             Err(err) => {
                 eprintln!("nls: unable to get metadata of '{}': {}", file_name, err);
@@ -78,19 +97,25 @@ impl EntryBuf {
         entrybuf
     }
 
-    pub fn from_path_with_file_name(file_name: String, path: &Path, config: &Config) -> Self {
-        let metadata = match path.symlink_metadata() {
+    pub fn from_parent_of_path(path: &Path, config: &Config) -> Self {
+        let parent_path = path.join("..");
+        let metadata_result = if config.dereference_cmdline_symlink {
+            parent_path.metadata()
+        } else {
+            parent_path.symlink_metadata()
+        };
+        let metadata = match metadata_result {
             Ok(metadata) => Some(metadata),
             Err(err) => {
-                eprintln!("nls: unable to get metadata of '{}': {}", file_name, err);
+                eprintln!("nls: unable to get metadata of '..': {}", err);
                 None
             }
         };
 
         let mut entrybuf = Self {
-            file_name_key: file_name.to_ascii_lowercase(),
-            file_name: file_name,
-            path: path.to_path_buf(),
+            file_name_key: String::from(".."),
+            file_name: String::from(".."),
+            path: parent_path,
             metadata: metadata,
             ..Default::default()
         };

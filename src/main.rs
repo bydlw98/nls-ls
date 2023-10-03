@@ -31,7 +31,7 @@ fn main() {
 
 fn zero_path_args(config: &Config) {
     if !config.list_dir {
-        let entrybuf = EntryBuf::from_path(Path::new("."), config);
+        let entrybuf = EntryBuf::from_cmdline_path(Path::new("."), config);
         let mut entrybuf_vec = vec![entrybuf];
 
         if config.list_allocated_size {
@@ -46,7 +46,13 @@ fn zero_path_args(config: &Config) {
 }
 
 fn one_path_arg(path: &Path, config: &Config) {
-    match path.metadata() {
+    let metadata_result = if config.dereference_cmdline_symlink_dir {
+        path.metadata()
+    } else {
+        path.symlink_metadata()
+    };
+
+    match metadata_result {
         Ok(metadata) => {
             if metadata.is_dir() && config.list_dir {
                 if config.recursive {
@@ -55,7 +61,7 @@ fn one_path_arg(path: &Path, config: &Config) {
                     list_dir::list_dir(path, config);
                 }
             } else {
-                let entrybuf = EntryBuf::from_path(path, config);
+                let entrybuf = EntryBuf::from_cmdline_path(path, config);
                 let mut entrybuf_vec = vec![entrybuf];
 
                 if config.list_allocated_size {
@@ -77,7 +83,7 @@ fn multiple_path_args(path_args_vec: Vec<PathBuf>, config: &Config) {
     if !list_non_dir_paths_vec.is_empty() {
         let mut entrybuf_vec: Vec<EntryBuf> = Vec::with_capacity(list_non_dir_paths_vec.len());
         for path in list_non_dir_paths_vec {
-            entrybuf_vec.push(EntryBuf::from_path(&path, config));
+            entrybuf_vec.push(EntryBuf::from_cmdline_path(&path, config));
         }
 
         if config.list_allocated_size {
@@ -122,19 +128,39 @@ fn split_path_args_vec(
     let mut list_dir_paths_vec: Vec<PathBuf> = Vec::with_capacity(num_path_args);
 
     for path in &path_args_vec {
-        match path.metadata() {
-            Ok(metadata) => {
-                if metadata.is_dir() && config.list_dir {
-                    list_dir_paths_vec.push(path.to_path_buf());
-                } else {
-                    list_non_dir_paths_vec.push(path.to_path_buf());
-                }
-            }
-            Err(err) => {
-                eprintln!("nls: unable to access '{}': {}", path.display(), err);
-            }
-        }
+        inner_split_path_args_vec(
+            path,
+            &mut list_dir_paths_vec,
+            &mut list_non_dir_paths_vec,
+            config,
+        );
     }
 
     (list_non_dir_paths_vec, list_dir_paths_vec)
+}
+
+fn inner_split_path_args_vec(
+    path: &Path,
+    list_dir_paths_vec: &mut Vec<PathBuf>,
+    list_non_dir_paths_vec: &mut Vec<PathBuf>,
+    config: &Config,
+) {
+    let metadata_result = if config.dereference_cmdline_symlink_dir {
+        path.metadata()
+    } else {
+        path.symlink_metadata()
+    };
+
+    match metadata_result {
+        Ok(metadata) => {
+            if metadata.is_dir() && config.list_dir {
+                list_dir_paths_vec.push(path.to_path_buf());
+            } else {
+                list_non_dir_paths_vec.push(path.to_path_buf());
+            }
+        }
+        Err(err) => {
+            eprintln!("nls: unable to access '{}': {}", path.display(), err);
+        }
+    }
 }
