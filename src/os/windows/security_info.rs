@@ -13,13 +13,13 @@ pub struct SecurityInfo {
 }
 
 impl SecurityInfo {
-    pub fn from_wide_path(wide_path: &[u16]) -> Result<Self, io::Error> {
-        let file_handle = FileHandle::open(wide_path, c::READ_CONTROL)?;
+    pub fn from_wide_path(wide_path: &[u16], follow_links: bool) -> Result<Self, io::Error> {
+        let file_handle = FileHandle::open(wide_path, c::READ_CONTROL, follow_links)?;
         let mut security_info = Self::default();
 
         unsafe {
             let return_code = c::GetSecurityInfo(
-                file_handle.raw_handle(),
+                file_handle.as_raw_handle(),
                 c::SE_FILE_OBJECT,
                 c::OWNER_SECURITY_INFORMATION
                     | c::GROUP_SECURITY_INFORMATION

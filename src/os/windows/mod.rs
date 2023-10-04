@@ -36,7 +36,7 @@ pub struct WindowsMetadata {
 }
 
 impl WindowsMetadata {
-    pub fn get(path: &Path, config: &Config) -> Self {
+    pub fn get(path: &Path, follow_links: bool, config: &Config) -> Self {
         let wide_path = WideString::from_path(path);
         let mut windows_metadata = Self::default();
 
@@ -44,60 +44,31 @@ impl WindowsMetadata {
             || config.sorting_order.is_size()
             || config.list_allocated_size
         {
-            windows_metadata.init_file_standard_info(&wide_path, path);
+            windows_metadata.init_from_file_standard_info(&wide_path, path, follow_links);
         }
 
         if config.output_format.is_long() {
-            windows_metadata.init_security_info(&wide_path, path, config);
+            windows_metadata.init_from_security_info(&wide_path, path, follow_links, config);
         }
 
         windows_metadata
     }
 
-    fn init_file_standard_info(&mut self, wide_path: &[u16], path: &Path) {
-        match FileHandle::open(&wide_path, 0) {
-            Ok(file_handle) => self.get_file_standard_info_by_handle(&file_handle, path),
-            Err(err) => {
-                eprintln!(
-                    "nls: unable to get nlink, allocated size for '{}': {}",
-                    path.display(),
-                    err
-                );
-
-                return;
-            }
-        }
-    }
-
-    fn get_file_standard_info_by_handle(&mut self, file_handle: &FileHandle, path: &Path) {
-        unsafe {
-            let mut file_standard_info = MaybeUninit::<c::FILE_STANDARD_INFO>::uninit();
-
-            // On success, return_code is non-zero
-            let return_code = c::GetFileInformationByHandleEx(
-                file_handle.raw_handle(),
-                c::FileStandardInfo,
-                file_standard_info.as_mut_ptr() as *mut c_void,
-                mem::size_of::<c::FILE_STANDARD_INFO>() as u32,
-            );
-
-            if return_code != 0 {
-                let file_standard_info = file_standard_info.assume_init();
+    fn init_from_file_standard_info(&mut self, wide_path: &[u16], path: &Path, follow_links: bool) {
+        match get_file_standard_info(wide_path, follow_links) {
+            Ok(file_standard_info) => {
                 self.allocated_size = Some(file_standard_info.AllocationSize as u64);
                 self.nlink = Some(file_standard_info.NumberOfLinks as u64);
                 self.size = Some(file_standard_info.EndOfFile as u64);
-            } else {
-                eprintln!(
-                    "nls: unable to get nlink, allocated size for '{}': {}",
-                    path.display(),
-                    io::Error::last_os_error()
-                );
+            },
+            Err(err) => {
+                eprintln!("nls: unable to get file standard info for '{}': {}", path.display(), err);
             }
         }
     }
 
-    fn init_security_info(&mut self, wide_path: &[u16], path: &Path, config: &Config) {
-        match SecurityInfo::from_wide_path(wide_path) {
+    fn init_from_security_info(&mut self, wide_path: &[u16], path: &Path, follow_links: bool, config: &Config) {
+        match SecurityInfo::from_wide_path(wide_path, follow_links) {
             Ok(security_info) => {
                 if config.mode_format.is_rwx() {
                     self.rwx_permissions = get_rwx_permissions(&security_info, config);
@@ -175,8 +146,16 @@ impl WindowsMetadata {
 struct FileHandle(c::HANDLE);
 
 impl FileHandle {
-    pub fn open(wide_path: &[u16], desired_access: u32) -> Result<Self, io::Error> {
-        let flags_and_attributes = c::FILE_FLAG_BACKUP_SEMANTICS | c::FILE_FLAG_OPEN_REPARSE_POINT;
+    pub fn open(
+        wide_path: &[u16],
+        desired_access: u32,
+        follow_links: bool,
+    ) -> Result<Self, io::Error> {
+        let flags_and_attributes = if follow_links {
+            c::FILE_FLAG_BACKUP_SEMANTICS
+        } else {
+            c::FILE_FLAG_BACKUP_SEMANTICS | c::FILE_FLAG_OPEN_REPARSE_POINT
+        };
         unsafe {
             let hfile = c::CreateFileW(
                 wide_path.as_ptr(),
@@ -196,7 +175,7 @@ impl FileHandle {
         }
     }
 
-    pub fn raw_handle(&self) -> c::HANDLE {
+    pub fn as_raw_handle(&self) -> c::HANDLE {
         self.0
     }
 }
@@ -247,14 +226,14 @@ pub fn utf16_until_null_to_string_lossy(utf16_buf: &[u16]) -> String {
     )
 }
 
-pub fn get_file_id_by_path(path: &Path) -> Result<u128, io::Error> {
+pub fn get_file_id_identifier(path: &Path, follow_links: bool) -> Result<u128, io::Error> {
     let wide_path = WideString::from_path(path);
-    let file_handle = FileHandle::open(&wide_path, 0)?;
+    let file_handle = FileHandle::open(&wide_path, 0, follow_links)?;
 
     unsafe {
         let mut file_id_info = MaybeUninit::<c::FILE_ID_INFO>::uninit();
         let return_code = c::GetFileInformationByHandleEx(
-            file_handle.raw_handle(),
+            file_handle.as_raw_handle(),
             c::FileIdInfo,
             file_id_info.as_mut_ptr() as *mut c_void,
             mem::size_of::<c::FILE_ID_INFO>() as u32,
@@ -264,6 +243,33 @@ pub fn get_file_id_by_path(path: &Path) -> Result<u128, io::Error> {
             let file_id_info = file_id_info.assume_init();
 
             Ok(u128::from_le_bytes(file_id_info.FileId.Identifier))
+        } else {
+            Err(io::Error::last_os_error())
+        }
+    }
+}
+
+fn get_file_standard_info(
+    wide_path: &[u16],
+    follow_links: bool,
+) -> Result<c::FILE_STANDARD_INFO, io::Error> {
+    let file_handle = FileHandle::open(wide_path, 0, follow_links)?;
+
+    unsafe {
+        let mut file_standard_info = MaybeUninit::<c::FILE_STANDARD_INFO>::uninit();
+
+        let return_code = c::GetFileInformationByHandleEx(
+            file_handle.as_raw_handle(),
+            c::FileStandardInfo,
+            file_standard_info.as_mut_ptr() as *mut c_void,
+            mem::size_of::<c::FILE_STANDARD_INFO>() as u32,
+        );
+
+        // On success, return_code is non-zero
+        if return_code != 0 {
+            let file_standard_info = file_standard_info.assume_init();
+
+            Ok(file_standard_info)
         } else {
             Err(io::Error::last_os_error())
         }

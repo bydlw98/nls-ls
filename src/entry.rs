@@ -26,6 +26,8 @@ pub struct EntryBuf {
     ino: Option<u64>,
     #[cfg(windows)]
     windows_metadata: WindowsMetadata,
+    #[cfg(windows)]
+    follow_links: bool,
 }
 
 impl EntryBuf {
@@ -35,7 +37,13 @@ impl EntryBuf {
         } else {
             dent.file_name().to_string_lossy().to_string()
         };
-        let metadata = if config.dereference {
+
+        let follow_links = if cfg!(windows) {
+            dent.path_is_symlink() && config.dereference
+        } else {
+            config.dereference
+        };
+        let metadata = if follow_links {
             match dent.path().metadata() {
                 Ok(metadata) => Some(metadata),
                 Err(err) => {
@@ -62,6 +70,8 @@ impl EntryBuf {
             metadata: metadata,
             #[cfg(unix)]
             ino: ino,
+            #[cfg(windows)]
+            follow_links: follow_links,
             ..Default::default()
         };
         entrybuf.load_metadata(config);
@@ -88,6 +98,8 @@ impl EntryBuf {
             file_name: file_name,
             path: path.to_path_buf(),
             metadata: metadata,
+            #[cfg(windows)]
+            follow_links: config.dereference_cmdline_symlink,
             ..Default::default()
         };
         entrybuf.load_metadata(config);
@@ -114,6 +126,8 @@ impl EntryBuf {
             file_name: String::from(".."),
             path: parent_path,
             metadata: metadata,
+            #[cfg(windows)]
+            follow_links: config.dereference_cmdline_symlink,
             ..Default::default()
         };
         entrybuf.load_metadata(config);
@@ -163,7 +177,7 @@ impl EntryBuf {
             };
         }
 
-        self.windows_metadata = WindowsMetadata::get(&self.path, config);
+        self.windows_metadata = WindowsMetadata::get(&self.path, self.follow_links, config);
         self.allocated_size = self.windows_metadata.allocated_size(config);
 
         if let Some(size) = self.windows_metadata.size() {
@@ -248,7 +262,7 @@ impl EntryBuf {
     pub fn ino_cell(&self, config: &Config) -> DisplayCell {
         let inode_style = config.theme.inode_style();
 
-        match get_file_id_by_path(&self.path) {
+        match get_file_id_identifier(&self.path, self.follow_links) {
             Ok(file_id) => DisplayCell::from_u128_with_style(file_id, inode_style, false),
             Err(err) => {
                 eprintln!(
