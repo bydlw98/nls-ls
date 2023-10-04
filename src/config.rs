@@ -434,7 +434,7 @@ impl Default for AllocatedSizeBlocks {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IndicatorStyle {
     Classify,
     Slash,
@@ -476,21 +476,15 @@ pub enum ModeFormat {
 }
 
 impl ModeFormat {
-    #[cfg(unix)]
     pub fn set_native(&mut self) {
-        *self = Self::Rwx;
+        if cfg!(windows) {
+            *self = Self::Pwsh
+        } else {
+            *self = Self::Rwx;
+        }
     }
 
     #[cfg(windows)]
-    pub fn set_native(&mut self) {
-        *self = Self::Pwsh
-    }
-
-    #[cfg(not(any(unix, windows)))]
-    pub fn set_native(&mut self) {
-        *self = Self::Rwx
-    }
-
     pub fn is_pwsh(&self) -> bool {
         *self == Self::Pwsh
     }
@@ -501,23 +495,16 @@ impl ModeFormat {
 }
 
 impl Default for ModeFormat {
-    #[cfg(unix)]
     fn default() -> Self {
-        Self::Rwx
-    }
-
-    #[cfg(windows)]
-    fn default() -> Self {
-        Self::Pwsh
-    }
-
-    #[cfg(not(any(unix, windows)))]
-    fn default() -> Self {
-        Self::Rwx
+        if cfg!(windows) {
+            Self::Pwsh
+        } else {
+            Self::Rwx
+        }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SizeFormat {
     Raw,
     HumanReadable,
@@ -545,6 +532,7 @@ pub enum SortingOrder {
 }
 
 impl SortingOrder {
+    #[cfg(windows)]
     pub fn is_size(&self) -> bool {
         *self == Self::Size
     }

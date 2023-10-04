@@ -11,7 +11,7 @@ use crate::os::unix::*;
 #[cfg(windows)]
 use crate::os::windows::*;
 use crate::output::*;
-use crate::utils::get_unix_timestamp_from_systemtime;
+use crate::utils::systemtime_to_unix_timestamp;
 
 #[derive(Debug, Default)]
 pub struct EntryBuf {
@@ -57,7 +57,6 @@ impl EntryBuf {
         let ino = if config.dereference { None } else { dent.ino() };
 
         let mut entrybuf = Self {
-            file_name_key: file_name.to_ascii_lowercase(),
             file_name: file_name,
             path: dent.into_path(),
             metadata: metadata,
@@ -86,7 +85,6 @@ impl EntryBuf {
         };
 
         let mut entrybuf = Self {
-            file_name_key: file_name.to_ascii_lowercase(),
             file_name: file_name,
             path: path.to_path_buf(),
             metadata: metadata,
@@ -113,7 +111,6 @@ impl EntryBuf {
         };
 
         let mut entrybuf = Self {
-            file_name_key: String::from(".."),
             file_name: String::from(".."),
             path: parent_path,
             metadata: metadata,
@@ -125,6 +122,7 @@ impl EntryBuf {
     }
 
     pub fn load_metadata(&mut self, config: &Config) {
+        self.file_name_key = self.file_name.to_lowercase();
         if let Some(metadata) = &self.metadata {
             self.size = Some(metadata.len());
         }
@@ -148,7 +146,7 @@ impl EntryBuf {
             self.timestamp = match config.timestamp_used {
                 TimestampUsed::Accessed => Some(metadata.atime()),
                 TimestampUsed::Changed => Some(metadata.ctime()),
-                TimestampUsed::Created => get_unix_timestamp_from_systemtime(metadata.created()),
+                TimestampUsed::Created => systemtime_to_unix_timestamp(metadata.created()),
                 TimestampUsed::Modified => Some(metadata.mtime()),
             };
         }
@@ -158,10 +156,10 @@ impl EntryBuf {
     pub fn load_windows_metadata(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.timestamp = match config.timestamp_used {
-                TimestampUsed::Accessed => get_unix_timestamp_from_systemtime(metadata.accessed()),
+                TimestampUsed::Accessed => systemtime_to_unix_timestamp(metadata.accessed()),
                 TimestampUsed::Changed => None,
-                TimestampUsed::Created => get_unix_timestamp_from_systemtime(metadata.created()),
-                TimestampUsed::Modified => get_unix_timestamp_from_systemtime(metadata.modified()),
+                TimestampUsed::Created => systemtime_to_unix_timestamp(metadata.created()),
+                TimestampUsed::Modified => systemtime_to_unix_timestamp(metadata.modified()),
             };
         }
 
@@ -177,10 +175,10 @@ impl EntryBuf {
     pub fn load_other_metadata(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.timestamp = match config.timestamp_used {
-                TimestampUsed::Accessed => get_unix_timestamp_from_systemtime(metadata.accessed()),
+                TimestampUsed::Accessed => systemtime_to_unix_timestamp(metadata.accessed()),
                 TimestampUsed::Changed => None,
-                TimestampUsed::Created => get_unix_timestamp_from_systemtime(metadata.created()),
-                TimestampUsed::Modified => get_unix_timestamp_from_systemtime(metadata.modified()),
+                TimestampUsed::Created => systemtime_to_unix_timestamp(metadata.created()),
+                TimestampUsed::Modified => systemtime_to_unix_timestamp(metadata.modified()),
             };
         }
     }

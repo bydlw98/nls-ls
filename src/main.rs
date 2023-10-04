@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_field_names)]
+
 mod config;
 mod entry;
 mod list_dir;

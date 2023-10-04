@@ -22,9 +22,7 @@ impl HasMaskSetExt for u32 {
     }
 }
 
-pub fn get_unix_timestamp_from_systemtime(
-    systemtime: Result<SystemTime, io::Error>,
-) -> Option<i64> {
+pub fn systemtime_to_unix_timestamp(systemtime: Result<SystemTime, io::Error>) -> Option<i64> {
     systemtime
         .map(
             |sys_time| match sys_time.duration_since(SystemTime::UNIX_EPOCH) {

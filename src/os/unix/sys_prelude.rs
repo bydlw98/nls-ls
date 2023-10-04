@@ -1,3 +1,4 @@
+#[allow(clippy::unnecessary_cast)]
 pub mod c {
     pub const S_IFMT: u32 = libc::S_IFMT as u32;
     pub const S_IFBLK: u32 = libc::S_IFBLK as u32;

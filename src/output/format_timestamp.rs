@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 
 use crate::config::Config;
 use crate::output::DisplayCell;
-use crate::utils::get_unix_timestamp_from_systemtime;
+use crate::utils::systemtime_to_unix_timestamp;
 
 pub fn format_timestamp(timestamp: i64, config: &Config) -> DisplayCell {
     match Local.timestamp_opt(timestamp, 0) {
@@ -51,5 +51,5 @@ const MONTH_TABLE: [&str; 12] = [
 fn get_six_months_ago_unix_timestamp() -> i64 {
     const SIX_MONTHS_IN_SECS: i64 = 60 * 60 * 24 * 30 * 6;
 
-    get_unix_timestamp_from_systemtime(Ok(SystemTime::now())).unwrap() - SIX_MONTHS_IN_SECS
+    systemtime_to_unix_timestamp(Ok(SystemTime::now())).unwrap() - SIX_MONTHS_IN_SECS
 }
