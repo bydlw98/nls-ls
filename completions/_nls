@@ -1,0 +1,91 @@
+#compdef nls
+
+autoload -U is-at-least
+
+_nls() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'--color=[Flag to control when to use color for output]' \
+'*-I+[Ignore entries matching glob pattern]:PATTERN: ' \
+'*--ignore-glob=[Ignore entries matching glob pattern]:PATTERN: ' \
+'--max-depth=[Set the max depth to recurse into]:NUM: ' \
+'--mode=[Set the mode format to be used in long format]:WORD:((native\:"Use the platform default mode format"
+pwsh\:"Use powershell mode format e.g. '\''darhsl'\''. This is the default on windows"
+rwx\:"Use symbolic format e.g. '\''drwxrwxrwx'\''. This is the default on unix like platforms"))' \
+'--time=[Set timestamp to use for sorting by timestamp or/and listing in long format]:WORD:((accessed\:"Use timestamp of when entry was last accessed (-u)"
+changed\:"Use timestamp of when entry status was last changed (-c)"
+created\:"Use timestamp of when entry was created"
+modified\:"Use timestamp of when entry was last modified"
+atime\:"Alias to '\''accessed'\''"
+ctime\:"Alias to '\''changed'\''"
+btime\:"Alias to '\''created'\''"
+mtime\:"Alias to '\''modified'\''"))' \
+'-a[Include hidden entries in listing]' \
+'--all[Include hidden entries in listing]' \
+'-A[Like -a, --all but do not list implied . and .. entries]' \
+'--almost-all[Like -a, --all but do not list implied . and .. entries]' \
+'--allocated-bytes[Use raw allocated size]' \
+'-c[Use timestamp of when entry status was last changed]' \
+'-C[List entries top-to-bottom in a grid]' \
+'-d[Do not list directory contents, instead list the directory itself]' \
+'--directory[Do not list directory contents, instead list the directory itself]' \
+'-F[Append filetype indicator (either */=@|) to entry file names]' \
+'--classify[Append filetype indicator (either */=@|) to entry file names]' \
+'-g[Like -l but do not list the owner column]' \
+'--gitignore[Ignore files set in '\''.gitignore'\'' files]' \
+'-h[Format size using factors of 1024 like 1.0K 200M 3.0G etc]' \
+'--human-readable[Format size using factors of 1024 like 1.0K 200M 3.0G etc]' \
+'-H[Use target information of symlinks passed as arguments on command line]' \
+'--dereference-command-line[Use target information of symlinks passed as arguments on command line]' \
+'--help[Print help information]' \
+'-i[List entries along with their file inode number]' \
+'--inode[List entries along with their file inode number]' \
+'--iec[Format size using factors of 1024 like 1.0Ki 200Mi 3.0Gi etc]' \
+'--ignore-file[Ignore files set in '\''.ignore'\'' files]' \
+'-k[Use 1024 byte blocks for allocated size]' \
+'--kibibytes[Use 1024 byte blocks for allocated size]' \
+'-l[List entries along with their metadata in long format]' \
+'-L[Use target information when listing symlink entries]' \
+'--dereference[Use target information when listing symlink entries]' \
+'-n[Like -l but list the owner and group names as their respective uid and gid]' \
+'--numeric-uid-gid[Like -l but list the owner and group names as their respective uid and gid]' \
+'-o[Like -l but do not list the group column]' \
+'-p[Append filetype indicator / to directory entry file names]' \
+'-r[Reverse sorting order]' \
+'--reverse[Reverse sorting order]' \
+'-R[Recurse into directories]' \
+'--recursive[Recurse into directories]' \
+'-s[List entries along with their allocated size]' \
+'--size[List entries along with their allocated size]' \
+'-S[Sort entries by largest size first]' \
+'--si[Format size using factors of 1000 like 1.0K 200M 3.0G etc]' \
+'-t[Sort entries by most recent timestamp first]' \
+'-u[Use timestamp of when entry was last accessed]' \
+'--version[Print version information]' \
+'-x[List entries left-to-right in a grid]' \
+'-1[List one entry per line]' \
+'::file -- Paths to list. List the current directory if no paths are provided:_files' \
+&& ret=0
+}
+
+(( $+functions[_nls_commands] )) ||
+_nls_commands() {
+    local commands; commands=()
+    _describe -t commands 'nls commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_nls" ]; then
+    _nls "$@"
+else
+    compdef _nls nls
+fi

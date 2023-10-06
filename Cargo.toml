@@ -11,6 +11,7 @@ path = "src/main.rs"
 
 [build-dependencies]
 clap = { version = "4.4.6", features = ["cargo", "wrap_help"] }
+clap_complete = "4.4.3"
 
 [dependencies]
 chrono = { version = "0.4.31", default-features = false, features = [

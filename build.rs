@@ -1,11 +1,14 @@
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 
 use clap::builder::PossibleValue;
 use clap::*;
+use clap_complete::generate_to;
+use clap_complete::shells::*;
 
 fn main() {
-    let out_dir: PathBuf = std::env::var("OUT_DIR")
+    let out_dir: PathBuf = env::var("OUT_DIR")
         .expect("OUT_DIR environment variable does not exist")
         .into();
 
@@ -13,6 +16,24 @@ fn main() {
 
     fs::write(out_dir.join("help-page.txt"), cmd.render_help().to_string())
         .expect("Failed to generate help page");
+
+    generate_completions();
+}
+
+fn generate_completions() {
+    let mut cmd = build_command();
+    let bin_name = "nls";
+    let completions_dir: PathBuf = PathBuf::from("./completions");
+    if !completions_dir.exists() {
+        fs::create_dir(&completions_dir).expect("Unable to create completion dir");
+    }
+
+    generate_to(Bash, &mut cmd, bin_name, &completions_dir)
+        .expect("Failed to generate Bash completions");
+    generate_to(Fish, &mut cmd, bin_name, &completions_dir)
+        .expect("Failed to generate Fish completions");
+    generate_to(Zsh, &mut cmd, bin_name, &completions_dir)
+        .expect("Failed to generate Zsh completions");
 }
 
 fn build_command() -> Command {
@@ -68,7 +89,11 @@ fn build_command() -> Command {
             Arg::new("color")
                 .action(ArgAction::Set)
                 .long("color")
-                .value_parser(value_parser!(ColorWhen))
+                .value_parser([
+                    PossibleValue::new("always").help("Always use color for output"),
+                    PossibleValue::new("auto").help("Color for output only if stdout is a tty"),
+                    PossibleValue::new("never").help("Never use color for output"),
+                ])
                 .value_name("WHEN")
                 .default_missing_value("always")
                 .num_args(0..=1)
@@ -306,26 +331,4 @@ fn build_command() -> Command {
                 .overrides_with_all(["across", "long", "vertical"])
                 .help("List one entry per line"),
         )
-}
-
-#[derive(Debug, Clone, Copy)]
-enum ColorWhen {
-    Always,
-    Auto,
-    Never,
-}
-
-impl ValueEnum for ColorWhen {
-    fn value_variants<'a>() -> &'a [Self] {
-        &[Self::Always, Self::Auto, Self::Never]
-    }
-    fn to_possible_value(&self) -> Option<PossibleValue> {
-        Some(match self {
-            Self::Always => PossibleValue::new("always").help("Always use color for output"),
-            Self::Auto => {
-                PossibleValue::new("auto").help("Color for output only if stdout is a tty")
-            }
-            Self::Never => PossibleValue::new("never").help("Never use color for output"),
-        })
-    }
 }
