@@ -18,6 +18,7 @@ fn main() {
         .expect("Failed to generate help page");
 
     generate_completions();
+    generate_manpage();
 }
 
 fn generate_completions() {
@@ -36,9 +37,22 @@ fn generate_completions() {
         .expect("Failed to generate Zsh completions");
 }
 
+fn generate_manpage() {
+    let doc_dir: PathBuf = PathBuf::from("./doc");
+    if !doc_dir.exists() {
+        fs::create_dir(&doc_dir).expect("Unable to create doc dir");
+    }
+    let cmd = build_command();
+
+    let man = clap_mangen::Man::new(cmd).date("2023-10-06");
+    let mut buffer: Vec<u8> = Default::default();
+    man.render(&mut buffer).expect("Unable to render man page to buffer");
+    fs::write(doc_dir.join("nls.1"), buffer).expect("Unable to create man page nls.1");
+}
+
 fn build_command() -> Command {
     command!()
-        .bin_name("nls")
+        .name("nls")
         .term_width(80)
         .disable_help_flag(true)
         .disable_version_flag(true)

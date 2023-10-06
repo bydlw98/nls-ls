@@ -1,0 +1,168 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH nls 1 2023-10-06 "nls 0.1.0" 
+.SH NAME
+nls
+.SH SYNOPSIS
+\fBnls\fR [\fB\-a\fR|\fB\-\-all\fR] [\fB\-A\fR|\fB\-\-almost\-all\fR] [\fB\-\-allocated\-bytes\fR] [\fB\-c \fR] [\fB\-C \fR] [\fB\-\-color\fR] [\fB\-d\fR|\fB\-\-directory\fR] [\fB\-F\fR|\fB\-\-classify\fR] [\fB\-g \fR] [\fB\-\-gitignore\fR] [\fB\-h\fR|\fB\-\-human\-readable\fR] [\fB\-H\fR|\fB\-\-dereference\-command\-line\fR] [\fB\-\-help\fR] [\fB\-i\fR|\fB\-\-inode\fR] [\fB\-I\fR|\fB\-\-ignore\-glob\fR] [\fB\-\-iec\fR] [\fB\-\-ignore\-file\fR] [\fB\-k\fR|\fB\-\-kibibytes\fR] [\fB\-l \fR] [\fB\-L\fR|\fB\-\-dereference\fR] [\fB\-\-max\-depth\fR] [\fB\-\-mode\fR] [\fB\-n\fR|\fB\-\-numeric\-uid\-gid\fR] [\fB\-o \fR] [\fB\-p \fR] [\fB\-r\fR|\fB\-\-reverse\fR] [\fB\-R\fR|\fB\-\-recursive\fR] [\fB\-s\fR|\fB\-\-size\fR] [\fB\-S \fR] [\fB\-\-si\fR] [\fB\-t \fR] [\fB\-\-time\fR] [\fB\-u \fR] [\fB\-\-version\fR] [\fB\-x \fR] [\fB\-1 \fR] [\fIFILE\fR] 
+.SH DESCRIPTION
+.SH OPTIONS
+.TP
+\fB\-a\fR, \fB\-\-all\fR
+Include hidden entries in listing
+.TP
+\fB\-A\fR, \fB\-\-almost\-all\fR
+Like \-a, \-\-all but do not list implied . and .. entries
+.TP
+\fB\-\-allocated\-bytes\fR
+Use raw allocated size
+.TP
+\fB\-c\fR
+Use timestamp of when entry status was last changed
+.TP
+\fB\-C\fR
+List entries top\-to\-bottom in a grid
+.TP
+\fB\-\-color\fR=\fIWHEN\fR
+Flag to control when to use color for output
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+always: Always use color for output
+.IP \(bu 2
+auto: Color for output only if stdout is a tty
+.IP \(bu 2
+never: Never use color for output
+.RE
+.TP
+\fB\-d\fR, \fB\-\-directory\fR
+Do not list directory contents, instead list the directory itself
+.TP
+\fB\-F\fR, \fB\-\-classify\fR
+Append filetype indicator (either */=@|) to entry file names
+.TP
+\fB\-g\fR
+Like \-l but do not list the owner column
+.TP
+\fB\-\-gitignore\fR
+Ignore files set in \*(Aq.gitignore\*(Aq files
+.TP
+\fB\-h\fR, \fB\-\-human\-readable\fR
+Format size using factors of 1024 like 1.0K 200M 3.0G etc
+.TP
+\fB\-H\fR, \fB\-\-dereference\-command\-line\fR
+Use target information of symlinks passed as arguments on command line
+.TP
+\fB\-\-help\fR
+Print help information
+.TP
+\fB\-i\fR, \fB\-\-inode\fR
+List entries along with their file inode number
+.TP
+\fB\-I\fR, \fB\-\-ignore\-glob\fR=\fIPATTERN\fR
+Ignore entries matching glob pattern
+.TP
+\fB\-\-iec\fR
+Format size using factors of 1024 like 1.0Ki 200Mi 3.0Gi etc
+.TP
+\fB\-\-ignore\-file\fR
+Ignore files set in \*(Aq.ignore\*(Aq files
+.TP
+\fB\-k\fR, \fB\-\-kibibytes\fR
+Use 1024 byte blocks for allocated size
+.TP
+\fB\-l\fR
+List entries along with their metadata in long format
+.TP
+\fB\-L\fR, \fB\-\-dereference\fR
+Use target information when listing symlink entries
+.TP
+\fB\-\-max\-depth\fR=\fINUM\fR
+Set the max depth to recurse into
+.TP
+\fB\-\-mode\fR=\fIWORD\fR
+Set the mode format to be used in long format
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+native: Use the platform default mode format
+.IP \(bu 2
+pwsh: Use powershell mode format e.g. \*(Aqdarhsl\*(Aq. This is the default on windows
+.IP \(bu 2
+rwx: Use symbolic format e.g. \*(Aqdrwxrwxrwx\*(Aq. This is the default on unix like platforms
+.RE
+.TP
+\fB\-n\fR, \fB\-\-numeric\-uid\-gid\fR
+Like \-l but list the owner and group names as their respective uid and gid
+.TP
+\fB\-o\fR
+Like \-l but do not list the group column
+.TP
+\fB\-p\fR
+Append filetype indicator / to directory entry file names
+.TP
+\fB\-r\fR, \fB\-\-reverse\fR
+Reverse sorting order
+.TP
+\fB\-R\fR, \fB\-\-recursive\fR
+Recurse into directories
+.TP
+\fB\-s\fR, \fB\-\-size\fR
+List entries along with their allocated size
+.TP
+\fB\-S\fR
+Sort entries by largest size first
+.TP
+\fB\-\-si\fR
+Format size using factors of 1000 like 1.0K 200M 3.0G etc
+.TP
+\fB\-t\fR
+Sort entries by most recent timestamp first
+.TP
+\fB\-\-time\fR=\fIWORD\fR
+Set timestamp to use for sorting by timestamp or/and listing in long format
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+accessed: Use timestamp of when entry was last accessed (\-u)
+.IP \(bu 2
+changed: Use timestamp of when entry status was last changed (\-c)
+.IP \(bu 2
+created: Use timestamp of when entry was created
+.IP \(bu 2
+modified: Use timestamp of when entry was last modified
+.IP \(bu 2
+atime: Alias to \*(Aqaccessed\*(Aq
+.IP \(bu 2
+ctime: Alias to \*(Aqchanged\*(Aq
+.IP \(bu 2
+btime: Alias to \*(Aqcreated\*(Aq
+.IP \(bu 2
+mtime: Alias to \*(Aqmodified\*(Aq
+.RE
+.TP
+\fB\-u\fR
+Use timestamp of when entry was last accessed
+.TP
+\fB\-\-version\fR
+Print version information
+.TP
+\fB\-x\fR
+List entries left\-to\-right in a grid
+.TP
+\fB\-1\fR
+List one entry per line
+.TP
+[\fIFILE\fR]
+Paths to list. List the current directory if no paths are provided
+.SH VERSION
+v0.1.0
