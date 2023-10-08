@@ -46,7 +46,8 @@ fn generate_manpage() {
 
     let man = clap_mangen::Man::new(cmd).date("2023-10-06");
     let mut buffer: Vec<u8> = Default::default();
-    man.render(&mut buffer).expect("Unable to render man page to buffer");
+    man.render(&mut buffer)
+        .expect("Unable to render man page to buffer");
     fs::write(doc_dir.join("nls.1"), buffer).expect("Unable to create man page nls.1");
 }
 

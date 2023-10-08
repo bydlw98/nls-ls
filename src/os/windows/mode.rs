@@ -52,7 +52,7 @@ pub fn pwsh_mode_cell(file_attributes: Option<u32>, config: &Config) -> DisplayC
 
             cell
         }
-        None => DisplayCell::from_ascii_string(String::from("??????"), true),
+        None => DisplayCell::from_ascii_str_with_style("??????", None),
     }
 }
 

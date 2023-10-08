@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::io::{self, IsTerminal};
 use std::path::PathBuf;
 use std::process;
 
@@ -43,12 +44,11 @@ impl Config {
     pub fn init() -> (Self, Vec<PathBuf>) {
         let mut config = Self::default();
         let mut path_args_vec = Vec::with_capacity(4);
-
-        if let Some(term_width) = utils::terminal_width() {
+        if io::stdout().is_terminal() {
             config.is_atty = true;
             config.color = true;
             config.output_format = OutputFormat::Vertical;
-            config.width = term_width;
+            config.width = utils::terminal_width().unwrap_or(80);
         }
         config.parse_args(std::env::args_os(), &mut path_args_vec);
 

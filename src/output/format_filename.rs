@@ -82,7 +82,7 @@ pub fn internal_format_filename_with_color(
 
         c::S_IFLNK => {
             let mut filename_cell =
-                DisplayCell::from_str_with_style(file_name, ls_colors.symlink_style(), true);
+                DisplayCell::from_str_with_style(file_name, ls_colors.symlink_style());
             if indicator_style.others() && !config.output_format.is_long() {
                 filename_cell.push_char(IndicatorStyle::SYMLINK);
             }
@@ -92,7 +92,7 @@ pub fn internal_format_filename_with_color(
 
         c::S_IFIFO => {
             let mut filename_cell =
-                DisplayCell::from_str_with_style(file_name, ls_colors.fifo_style(), true);
+                DisplayCell::from_str_with_style(file_name, ls_colors.fifo_style());
             if indicator_style.others() {
                 filename_cell.push_char(IndicatorStyle::FIFO);
             }
@@ -102,7 +102,7 @@ pub fn internal_format_filename_with_color(
 
         c::S_IFSOCK => {
             let mut filename_cell =
-                DisplayCell::from_str_with_style(file_name, ls_colors.socket_style(), true);
+                DisplayCell::from_str_with_style(file_name, ls_colors.socket_style());
             if indicator_style.others() {
                 filename_cell.push_char(IndicatorStyle::SOCKET);
             }
@@ -126,25 +126,24 @@ fn file_format_with_color(
     let ls_colors = &config.ls_colors;
 
     if st_mode.has_mask_set(c::S_ISUID) {
-        DisplayCell::from_str_with_style(file_name, ls_colors.setuid_style(), true)
+        DisplayCell::from_str_with_style(file_name, ls_colors.setuid_style())
     } else if st_mode.has_mask_set(c::S_ISGID) {
-        DisplayCell::from_str_with_style(file_name, ls_colors.setgid_style(), true)
+        DisplayCell::from_str_with_style(file_name, ls_colors.setgid_style())
     } else if st_mode.has_mask_set(EXEC_MASK) {
-        let mut filename_cell =
-            DisplayCell::from_str_with_style(file_name, ls_colors.exec_style(), true);
+        let mut filename_cell = DisplayCell::from_str_with_style(file_name, ls_colors.exec_style());
         if indicator_style.others() && st_mode.has_bit_in_mask_set(EXEC_MASK) {
             filename_cell.push_char(IndicatorStyle::EXEC);
         }
 
         filename_cell
     } else if nlink > 1 {
-        DisplayCell::from_str_with_style(file_name, ls_colors.multiple_hard_links_style(), true)
+        DisplayCell::from_str_with_style(file_name, ls_colors.multiple_hard_links_style())
     } else {
         let extension = get_file_extension(file_name);
         if extension.is_empty() {
-            DisplayCell::from_str_with_style(file_name, ls_colors.file_style(), true)
+            DisplayCell::from_str_with_style(file_name, ls_colors.file_style())
         } else {
-            DisplayCell::from_str_with_style(file_name, ls_colors.extension_style(extension), true)
+            DisplayCell::from_str_with_style(file_name, ls_colors.extension_style(extension))
         }
     }
 }
@@ -158,17 +157,14 @@ fn dir_format_with_color(file_name: &str, st_mode: u32, config: &Config) -> Disp
         st_mode.has_mask_set(c::S_ISVTX),
         st_mode.has_mask_set(c::S_IWOTH),
     ) {
-        (false, false) => DisplayCell::from_str_with_style(file_name, ls_colors.dir_style(), true),
-        (true, false) => {
-            DisplayCell::from_str_with_style(file_name, ls_colors.dir_sticky_style(), true)
-        }
+        (false, false) => DisplayCell::from_str_with_style(file_name, ls_colors.dir_style()),
+        (true, false) => DisplayCell::from_str_with_style(file_name, ls_colors.dir_sticky_style()),
         (false, true) => {
-            DisplayCell::from_str_with_style(file_name, ls_colors.dir_other_writeable_style(), true)
+            DisplayCell::from_str_with_style(file_name, ls_colors.dir_other_writeable_style())
         }
         _ => DisplayCell::from_str_with_style(
             file_name,
             ls_colors.dir_sticky_and_other_writable_style(),
-            true,
         ),
     };
 
@@ -223,8 +219,7 @@ pub fn internal_format_filename_with_color(
     let ls_colors = &config.ls_colors;
 
     if file_type.is_dir() {
-        let mut filename_cell =
-            DisplayCell::from_str_with_style(file_name, ls_colors.dir_style(), true);
+        let mut filename_cell = DisplayCell::from_str_with_style(file_name, ls_colors.dir_style());
         if indicator_style.dir() {
             filename_cell.push_char(IndicatorStyle::DIR);
         }
@@ -232,7 +227,7 @@ pub fn internal_format_filename_with_color(
         return filename_cell;
     } else if file_type.is_symlink() {
         let mut filename_cell =
-            DisplayCell::from_str_with_style(file_name, ls_colors.symlink_style(), true);
+            DisplayCell::from_str_with_style(file_name, ls_colors.symlink_style());
         if indicator_style.others() && !config.output_format.is_long() {
             filename_cell.push_char(IndicatorStyle::SYMLINK);
         }
@@ -241,12 +236,12 @@ pub fn internal_format_filename_with_color(
     } else if file_type.is_file() {
         let extension = get_file_extension(file_name);
         if extension.is_empty() {
-            return DisplayCell::from_str_with_style(file_name, ls_colors.file_style(), true);
+            return DisplayCell::from_str_with_style(file_name, ls_colors.file_style());
         } else {
             #[cfg(windows)]
             if ["exe", "bat", "cmd"].contains(&&extension.as_str()) {
                 let mut filename_cell =
-                    DisplayCell::from_str_with_style(file_name, ls_colors.exec_style(), true);
+                    DisplayCell::from_str_with_style(file_name, ls_colors.exec_style());
                 if indicator_style.others() {
                     filename_cell.push_char(IndicatorStyle::EXEC);
                 }
@@ -256,7 +251,6 @@ pub fn internal_format_filename_with_color(
             return DisplayCell::from_str_with_style(
                 file_name,
                 ls_colors.extension_style(extension),
-                true,
             );
         }
     } else {

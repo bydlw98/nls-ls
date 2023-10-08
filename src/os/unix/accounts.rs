@@ -2,6 +2,7 @@ use super::sys_prelude::*;
 
 use std::ffi::{c_char, CStr};
 use std::mem;
+use std::ptr;
 use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
@@ -80,14 +81,14 @@ impl Account {
 
         if config.numeric_uid_gid {
             Self {
-                name_cell: DisplayCell::from_num_with_style(uid as u64, owner_style, true),
+                name_cell: DisplayCell::from_num_with_style(uid as u64, owner_style),
                 numeric_id: uid,
             }
         } else {
             let mut pwd: c::passwd = unsafe { mem::zeroed() };
             const BUFLEN: usize = 2048;
             let mut buf: [c_char; BUFLEN] = [0; BUFLEN];
-            let mut result: *mut c::passwd = std::ptr::null_mut();
+            let mut result: *mut c::passwd = ptr::null_mut();
 
             unsafe {
                 let return_code =
@@ -98,16 +99,12 @@ impl Account {
                     let username_string = CStr::from_ptr(pwd.pw_name).to_string_lossy();
 
                     Self {
-                        name_cell: DisplayCell::from_str_with_style(
-                            &username_string,
-                            owner_style,
-                            true,
-                        ),
+                        name_cell: DisplayCell::from_str_with_style(&username_string, owner_style),
                         numeric_id: uid,
                     }
                 } else {
                     Self {
-                        name_cell: DisplayCell::from_num_with_style(uid as u64, owner_style, true),
+                        name_cell: DisplayCell::from_num_with_style(uid as u64, owner_style),
                         numeric_id: uid,
                     }
                 }
@@ -120,14 +117,14 @@ impl Account {
 
         if config.numeric_uid_gid {
             Self {
-                name_cell: DisplayCell::from_num_with_style(gid as u64, group_style, true),
+                name_cell: DisplayCell::from_num_with_style(gid as u64, group_style),
                 numeric_id: gid,
             }
         } else {
             let mut grp: c::group = unsafe { mem::zeroed() };
             const BUFLEN: usize = 2048;
             let mut buf: [c_char; BUFLEN] = [0; BUFLEN];
-            let mut result: *mut c::group = std::ptr::null_mut();
+            let mut result: *mut c::group = ptr::null_mut();
 
             unsafe {
                 let return_code =
@@ -137,7 +134,7 @@ impl Account {
                 if return_code == 0 && (result == &mut grp) {
                     let groupname_string = CStr::from_ptr(grp.gr_name).to_string_lossy();
                     let groupname_cell =
-                        DisplayCell::from_str_with_style(&groupname_string, group_style, true);
+                        DisplayCell::from_str_with_style(&groupname_string, group_style);
 
                     Self {
                         name_cell: groupname_cell,
@@ -145,7 +142,7 @@ impl Account {
                     }
                 } else {
                     Self {
-                        name_cell: DisplayCell::from_num_with_style(gid as u64, group_style, true),
+                        name_cell: DisplayCell::from_num_with_style(gid as u64, group_style),
                         numeric_id: gid,
                     }
                 }

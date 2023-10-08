@@ -1,4 +1,4 @@
-use std::fs::Metadata;
+use std::fs::{self, Metadata};
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 #[cfg(windows)]
@@ -74,7 +74,7 @@ impl EntryBuf {
             follow_links: follow_links,
             ..Default::default()
         };
-        entrybuf.load_metadata(config);
+        entrybuf.init(config);
 
         entrybuf
     }
@@ -102,7 +102,7 @@ impl EntryBuf {
             follow_links: config.dereference_cmdline_symlink,
             ..Default::default()
         };
-        entrybuf.load_metadata(config);
+        entrybuf.init(config);
 
         entrybuf
     }
@@ -130,29 +130,29 @@ impl EntryBuf {
             follow_links: config.dereference_cmdline_symlink,
             ..Default::default()
         };
-        entrybuf.load_metadata(config);
+        entrybuf.init(config);
 
         entrybuf
     }
 
-    pub fn load_metadata(&mut self, config: &Config) {
+    pub fn init(&mut self, config: &Config) {
         self.file_name_key = self.file_name.to_lowercase();
         if let Some(metadata) = &self.metadata {
             self.size = Some(metadata.len());
         }
 
         #[cfg(unix)]
-        self.load_unix_metadata(config);
+        self.init_unix(config);
 
         #[cfg(windows)]
-        self.load_windows_metadata(config);
+        self.init_windows(config);
 
         #[cfg(not(any(unix, windows)))]
-        self.load_other_metadata(config);
+        self.init_others(config);
     }
 
     #[cfg(unix)]
-    pub fn load_unix_metadata(&mut self, config: &Config) {
+    fn init_unix(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.ino = Some(metadata.ino());
             self.allocated_size = Some(get_allocated_size(metadata, config));
@@ -167,7 +167,7 @@ impl EntryBuf {
     }
 
     #[cfg(windows)]
-    pub fn load_windows_metadata(&mut self, config: &Config) {
+    fn init_windows(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.timestamp = match config.timestamp_used {
                 TimestampUsed::Accessed => systemtime_to_unix_timestamp(metadata.accessed()),
@@ -186,7 +186,7 @@ impl EntryBuf {
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn load_other_metadata(&mut self, config: &Config) {
+    fn init_others(&mut self, config: &Config) {
         if let Some(metadata) = &self.metadata {
             self.timestamp = match config.timestamp_used {
                 TimestampUsed::Accessed => systemtime_to_unix_timestamp(metadata.accessed()),
@@ -199,20 +199,17 @@ impl EntryBuf {
 
     fn get_symlink_target_cell(&self, config: &Config) -> DisplayCell {
         let mut symlink_target_cell = DisplayCell::with_capacity(128);
-        symlink_target_cell.push_ascii_str(" -> ");
+        symlink_target_cell.push_str_with_width(" -> ", 4);
 
-        match std::fs::read_link(&self.path) {
-            Ok(symlink_target_name) => match self.path.metadata() {
-                Ok(symlink_target_metadata) => {
-                    let symlink_target_file_name_cell = format_filename(
-                        &symlink_target_name.to_string_lossy(),
-                        &symlink_target_metadata,
-                        config,
-                    );
-                    symlink_target_cell.append(symlink_target_file_name_cell);
+        match fs::read_link(&self.path) {
+            Ok(target_name) => match self.path.metadata() {
+                Ok(target_metadata) => {
+                    let target_file_name_cell =
+                        format_filename(&target_name.to_string_lossy(), &target_metadata, config);
+                    symlink_target_cell.append(target_file_name_cell);
                 }
                 Err(err) => {
-                    symlink_target_cell.push_str(&symlink_target_name.to_string_lossy());
+                    symlink_target_cell.push_str(&target_name.to_string_lossy());
                     eprintln!(
                         "nls: unable to get link metadata of '{}': {}",
                         self.path.display(),
@@ -253,8 +250,8 @@ impl EntryBuf {
         let inode_style = config.theme.inode_style();
 
         match &self.ino {
-            Some(ino) => DisplayCell::from_num_with_style(*ino, inode_style, false),
-            None => DisplayCell::error_right_aligned(),
+            Some(ino) => DisplayCell::from_num_with_style(*ino, inode_style),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -263,7 +260,7 @@ impl EntryBuf {
         let inode_style = config.theme.inode_style();
 
         match get_file_id_identifier(&self.path, self.follow_links) {
-            Ok(file_id) => DisplayCell::from_u128_with_style(file_id, inode_style, false),
+            Ok(file_id) => DisplayCell::from_u128_with_style(file_id, inode_style),
             Err(err) => {
                 eprintln!(
                     "nls: unable to get inode number of '{}': {}",
@@ -271,7 +268,7 @@ impl EntryBuf {
                     err
                 );
 
-                DisplayCell::error_right_aligned()
+                DisplayCell::error_cell(false)
             }
         }
     }
@@ -281,8 +278,8 @@ impl EntryBuf {
         let inode_style = config.theme.inode_style();
 
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_str_with_style('-', inode_style, false),
-            None => DisplayCell::error_right_aligned(),
+            Some(_) => DisplayCell::from_ascii_str_with_style('-', inode_style),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -293,7 +290,7 @@ impl EntryBuf {
     pub fn allocated_size_cell(&self, config: &Config) -> DisplayCell {
         match &self.allocated_size {
             Some(allocated_size) => format_size(*allocated_size, config),
-            None => DisplayCell::error_right_aligned(),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -307,7 +304,7 @@ impl EntryBuf {
                     pwsh_mode_cell(metadata.mode(), &self.file_name, &self.path, config)
                 }
             }
-            None => DisplayCell::from_ascii_string(String::from("??????????"), true),
+            None => DisplayCell::from_ascii_str_with_style("??????????", None),
         }
     }
 
@@ -337,17 +334,18 @@ impl EntryBuf {
         match &self.metadata {
             Some(metadata) => {
                 let file_type = metadata.file_type();
+                let ls_colors = &config.ls_colors;
                 if file_type.is_file() {
-                    DisplayCell::from_ascii_string(String::from("-"), true)
+                    DisplayCell::from_ascii_str_with_style("-", ls_colors.file_style())
                 } else if file_type.is_dir() {
-                    DisplayCell::from_ascii_string(String::from("d"), true)
+                    DisplayCell::from_ascii_str_with_style("d", ls_colors.dir_style())
                 } else if file_type.is_symlink() {
-                    DisplayCell::from_ascii_string(String::from("l"), true)
+                    DisplayCell::from_ascii_str_with_style("l", ls_colors.symlink_style())
                 } else {
-                    DisplayCell::from_ascii_string(String::from("?"), true)
+                    DisplayCell::from_ascii_str_with_style("?", None)
                 }
             }
-            None => DisplayCell::from_ascii_string(String::from("?"), true),
+            None => DisplayCell::from_ascii_str_with_style("?", None),
         }
     }
 
@@ -355,10 +353,8 @@ impl EntryBuf {
     pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
         let nlink_style = config.theme.nlink_style();
         match &self.metadata {
-            Some(metadata) => {
-                DisplayCell::from_num_with_style(metadata.nlink(), nlink_style, false)
-            }
-            None => DisplayCell::error_right_aligned(),
+            Some(metadata) => DisplayCell::from_num_with_style(metadata.nlink(), nlink_style),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -371,8 +367,8 @@ impl EntryBuf {
     pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
         let nlink_style = config.theme.nlink_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_str_with_style('1', nlink_style, false),
-            None => DisplayCell::error_right_aligned(),
+            Some(_) => DisplayCell::from_ascii_str_with_style('1', nlink_style),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -380,7 +376,7 @@ impl EntryBuf {
     pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => get_username_cell_by_uid(metadata.uid(), config),
-            None => DisplayCell::error_left_aligned(),
+            None => DisplayCell::error_cell(true),
         }
     }
 
@@ -391,9 +387,10 @@ impl EntryBuf {
 
     #[cfg(not(any(unix, windows)))]
     pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+        let owner_style = config.theme.owner_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
-            None => DisplayCell::error_left_aligned(),
+            Some(_) => DisplayCell::from_ascii_str_with_style("-", owner_style),
+            None => DisplayCell::error_cell(true),
         }
     }
 
@@ -401,7 +398,7 @@ impl EntryBuf {
     pub fn group_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => get_groupname_cell_by_gid(metadata.gid(), config),
-            None => DisplayCell::error_left_aligned(),
+            None => DisplayCell::error_cell(true),
         }
     }
 
@@ -412,9 +409,10 @@ impl EntryBuf {
 
     #[cfg(not(any(unix, windows)))]
     pub fn group_cell(&self, config: &Config) -> DisplayCell {
+        let group_style = config.theme.group_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_string(String::from("-"), true),
-            None => DisplayCell::error_left_aligned(),
+            Some(_) => DisplayCell::from_ascii_str_with_style("-", group_style),
+            None => DisplayCell::error_cell(true),
         }
     }
 
@@ -425,7 +423,7 @@ impl EntryBuf {
     pub fn size_cell(&self, config: &Config) -> DisplayCell {
         match &self.size {
             Some(size) => format_size(*size, config),
-            None => DisplayCell::error_right_aligned(),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -436,7 +434,7 @@ impl EntryBuf {
     pub fn timestamp_cell(&self, config: &Config) -> DisplayCell {
         match &self.timestamp {
             Some(timestamp) => format_timestamp(*timestamp, config),
-            None => DisplayCell::error_left_aligned(),
+            None => DisplayCell::error_cell(false),
         }
     }
 }

@@ -82,7 +82,7 @@ impl ThemeConfig {
             inode: Some(String::from("32;1")),
             nlink: Some(String::from("36;1")),
             owner: Some(String::from("31")),
-            group: Some(String::from("31")),
+            group: Some(String::from("35")),
             size: Some(String::from("36")),
             time: Some(String::from("33")),
             read: Some(String::from("33;1")),

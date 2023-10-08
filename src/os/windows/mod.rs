@@ -60,14 +60,24 @@ impl WindowsMetadata {
                 self.allocated_size = Some(file_standard_info.AllocationSize as u64);
                 self.nlink = Some(file_standard_info.NumberOfLinks as u64);
                 self.size = Some(file_standard_info.EndOfFile as u64);
-            },
+            }
             Err(err) => {
-                eprintln!("nls: unable to get file standard info for '{}': {}", path.display(), err);
+                eprintln!(
+                    "nls: unable to get file standard info for '{}': {}",
+                    path.display(),
+                    err
+                );
             }
         }
     }
 
-    fn init_from_security_info(&mut self, wide_path: &[u16], path: &Path, follow_links: bool, config: &Config) {
+    fn init_from_security_info(
+        &mut self,
+        wide_path: &[u16],
+        path: &Path,
+        follow_links: bool,
+        config: &Config,
+    ) {
         match SecurityInfo::from_wide_path(wide_path, follow_links) {
             Ok(security_info) => {
                 if config.mode_format.is_rwx() {
@@ -111,8 +121,8 @@ impl WindowsMetadata {
     pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
         let nlink_style = config.theme.nlink_style();
         match &self.nlink {
-            Some(nlink) => DisplayCell::from_num_with_style(*nlink, nlink_style, false),
-            None => DisplayCell::error_right_aligned(),
+            Some(nlink) => DisplayCell::from_num_with_style(*nlink, nlink_style),
+            None => DisplayCell::error_cell(false),
         }
     }
 
@@ -123,18 +133,18 @@ impl WindowsMetadata {
     pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         let owner_style = config.theme.owner_style();
         if self.owner_string == "?" {
-            DisplayCell::error_left_aligned()
+            DisplayCell::error_cell(true)
         } else {
-            DisplayCell::from_str_with_style(&self.owner_string, owner_style, true)
+            DisplayCell::from_str_with_style(&self.owner_string, owner_style)
         }
     }
 
     pub fn group_cell(&self, config: &Config) -> DisplayCell {
         let group_style = config.theme.group_style();
         if self.group_string == "?" {
-            DisplayCell::error_left_aligned()
+            DisplayCell::error_cell(true)
         } else {
-            DisplayCell::from_str_with_style(&self.group_string, group_style, true)
+            DisplayCell::from_str_with_style(&self.group_string, group_style)
         }
     }
 

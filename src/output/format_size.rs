@@ -5,7 +5,7 @@ pub fn format_size(size: u64, config: &Config) -> DisplayCell {
     let size_style = config.theme.size_style();
 
     match config.size_format {
-        SizeFormat::Raw => DisplayCell::from_num_with_style(size, size_style, false),
+        SizeFormat::Raw => DisplayCell::from_num_with_style(size, size_style),
         SizeFormat::HumanReadable => human_readable(size, size_style),
         SizeFormat::Si => si(size, size_style),
         SizeFormat::Iec => iec(size, size_style),
@@ -29,7 +29,7 @@ const EXBIBYTE: u64 = 1024u64.pow(6);
 /// format size using factors of 1024 like 1.0K 200M 3.0G etc
 fn human_readable(size: u64, size_style: Option<&str>) -> DisplayCell {
     if size < 1024 {
-        DisplayCell::from_num_with_style(size, size_style, false)
+        DisplayCell::from_num_with_style(size, size_style)
     } else if size < MEBIBYTE {
         format_size_with_prefix(size, KIBIBYTE, "K", size_style)
     } else if size < GIBIBYTE {
@@ -48,7 +48,7 @@ fn human_readable(size: u64, size_style: Option<&str>) -> DisplayCell {
 /// format size using factors of 1000 like 1.0k 200M 3.0G etc
 fn si(size: u64, size_style: Option<&str>) -> DisplayCell {
     if size < 1000 {
-        DisplayCell::from_num_with_style(size, size_style, false)
+        DisplayCell::from_num_with_style(size, size_style)
     } else if size < MEGABYTE {
         format_size_with_prefix(size, KILOBYTE, "k", size_style)
     } else if size < GIGABYTE {
@@ -67,7 +67,7 @@ fn si(size: u64, size_style: Option<&str>) -> DisplayCell {
 /// format size using factors of 1024 like 1.0Ki 200Mi 3.0Gi etc
 fn iec(size: u64, size_style: Option<&str>) -> DisplayCell {
     if size < 1024 {
-        DisplayCell::from_num_with_style(size, size_style, false)
+        DisplayCell::from_num_with_style(size, size_style)
     } else if size < MEBIBYTE {
         format_size_with_prefix(size, KIBIBYTE, "Ki", size_style)
     } else if size < GIBIBYTE {
@@ -86,15 +86,15 @@ fn iec(size: u64, size_style: Option<&str>) -> DisplayCell {
 fn format_size_with_prefix(
     num: u64,
     factor: u64,
-    symbol: &str,
+    prefix: &str,
     size_style: Option<&str>,
 ) -> DisplayCell {
     let num_f64 = (num as f64) / (factor as f64);
 
     if num_f64 >= 10.0 {
-        let size_string = format!("{}{}", num_f64.ceil() as u64, symbol);
+        let size_string = format!("{}{}", num_f64.ceil() as u64, prefix);
 
-        DisplayCell::from_ascii_str_with_style(&size_string, size_style, false)
+        DisplayCell::from_ascii_str_with_style(&size_string, size_style).left_aligned(false)
     } else {
         // E.g 123.456
         // multiply by 10 first to move the first decimal digit in front of decimal point
@@ -103,8 +103,8 @@ fn format_size_with_prefix(
         //      123.456.ceil() = 124
         // divide by 10
         //      124 / 10 = 12.4
-        let size_string = format!("{:.1}{}", ((num_f64 * 10.0).ceil() / 10.0), symbol);
+        let size_string = format!("{:.1}{}", ((num_f64 * 10.0).ceil() / 10.0), prefix);
 
-        DisplayCell::from_ascii_str_with_style(&size_string, size_style, false)
+        DisplayCell::from_ascii_str_with_style(&size_string, size_style).left_aligned(false)
     }
 }
