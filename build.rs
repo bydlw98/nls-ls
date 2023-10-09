@@ -24,7 +24,11 @@ fn main() {
 fn generate_completions() {
     let mut cmd = build_command();
     let bin_name = "nls";
-    let completions_dir: PathBuf = PathBuf::from("./completions");
+    let mut completions_dir: PathBuf = env::var("OUT_DIR")
+        .expect("OUT_DIR environment variable does not exist")
+        .into();
+    completions_dir.push("completions");
+
     if !completions_dir.exists() {
         fs::create_dir(&completions_dir).expect("Unable to create completion dir");
     }
@@ -38,7 +42,10 @@ fn generate_completions() {
 }
 
 fn generate_manpage() {
-    let doc_dir: PathBuf = PathBuf::from("./doc");
+    let mut doc_dir: PathBuf = env::var("OUT_DIR")
+        .expect("OUT_DIR environment variable does not exist")
+        .into();
+    doc_dir.push("doc");
     if !doc_dir.exists() {
         fs::create_dir(&doc_dir).expect("Unable to create doc dir");
     }
