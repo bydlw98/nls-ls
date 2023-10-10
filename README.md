@@ -1,5 +1,7 @@
 # nls-ls (nls)
 
+[![Crates.io](https://img.shields.io/crates/v/nls-ls)](https://crates.io/crates/nls-ls)
+
 Yet another ls(1) implementation
 
 ![screenshot](https://github.com/bydlw98/nls-ls/assets/108581910/8d37adbe-929e-4c02-95aa-fcf996059bfb)
