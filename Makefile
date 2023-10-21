@@ -27,6 +27,10 @@ install:
 	$(INSTALL) -Dm644 ${COMPLETIONS_DIR}/_nls $(DESTDIR)/$(ZSH_COMPLETION_DIR)/_nls
 	$(INSTALL) -Dm644 doc/nls.1 $(DESTDIR)/$(MAN1_DIR)/nls.1
 
+.PHONY: test
+test:
+	$(CARGO) test
+
 .PHONY: uninstall
 uninstall:
 	$(RM) $(DESTDIR)/$(bindir)/nls

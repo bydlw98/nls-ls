@@ -5,6 +5,7 @@ pub struct LsColors {
     file: Option<String>,
     dir: Option<String>,
     symlink: Option<String>,
+    exec: Option<String>,
     #[cfg(unix)]
     block_device: Option<String>,
     #[cfg(unix)]
@@ -25,7 +26,6 @@ pub struct LsColors {
     dir_other_writeable: Option<String>,
     #[cfg(unix)]
     dir_sticky: Option<String>,
-    exec: Option<String>,
     extension: HashMap<String, String>,
 }
 
@@ -57,6 +57,9 @@ impl LsColors {
                     "ln" => {
                         self.symlink = Some(v.to_string());
                     }
+                    "ex" => {
+                        self.exec = Some(v.to_string());
+                    }
                     #[cfg(unix)]
                     "bd" => {
                         self.block_device = Some(v.to_string());
@@ -82,7 +85,7 @@ impl LsColors {
                         self.setgid = Some(v.to_string());
                     }
                     #[cfg(unix)]
-                    "mg" => {
+                    "mh" => {
                         self.multiple_hard_links = Some(v.to_string());
                     }
                     #[cfg(unix)]
@@ -96,9 +99,6 @@ impl LsColors {
                     #[cfg(unix)]
                     "st" => {
                         self.dir_sticky = Some(v.to_string());
-                    }
-                    "ex" => {
-                        self.exec = Some(v.to_string());
                     }
                     _ => {
                         if k.starts_with("*.") {
@@ -119,6 +119,9 @@ impl LsColors {
     }
     pub fn symlink_style(&self) -> Option<&str> {
         self.symlink.as_deref()
+    }
+    pub fn exec_style(&self) -> Option<&str> {
+        self.exec.as_deref()
     }
     #[cfg(unix)]
     pub fn block_device_style(&self) -> Option<&str> {
@@ -160,9 +163,6 @@ impl LsColors {
     pub fn dir_sticky_style(&self) -> Option<&str> {
         self.dir_sticky.as_deref()
     }
-    pub fn exec_style(&self) -> Option<&str> {
-        self.exec.as_deref()
-    }
     pub fn extension_style(&self, extension: String) -> Option<&str> {
         if self.extension.is_empty() {
             self.file_style()
@@ -175,25 +175,13 @@ impl LsColors {
     }
 }
 
-pub fn get_file_extension(file_name: &str) -> String {
-    match file_name.rsplit_once('.') {
-        Some((file_name_without_extension, extension)) => {
-            if file_name_without_extension.is_empty() {
-                String::default()
-            } else {
-                extension.to_string()
-            }
-        }
-        None => String::default(),
-    }
-}
-
 impl Default for LsColors {
     fn default() -> Self {
         Self {
             file: None,
             dir: None,
             symlink: None,
+            exec: None,
             #[cfg(unix)]
             block_device: None,
             #[cfg(unix)]
@@ -214,9 +202,24 @@ impl Default for LsColors {
             dir_other_writeable: None,
             #[cfg(unix)]
             dir_sticky: None,
-            exec: None,
             extension: HashMap::with_capacity(128),
         }
+    }
+}
+
+pub fn get_file_extension(file_name: &str) -> String {
+    match file_name.rsplit_once('.') {
+        Some((file_name_without_extension, extension)) => {
+            if file_name_without_extension.is_empty()
+                || file_name_without_extension.ends_with('/')
+                || file_name_without_extension.ends_with(std::path::MAIN_SEPARATOR_STR)
+            {
+                String::default()
+            } else {
+                extension.to_string()
+            }
+        }
+        None => String::default(),
     }
 }
 
@@ -262,3 +265,100 @@ const DEFAULT_LS_COLORS: &str = "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:\
                                     *.mpc=00;36:*.ogg=00;36:*.ra=00;36:\
                                     *.wav=00;36:*.oga=00;36:*.opus=00;36:\
                                     *.spx=00;36:*.xspf=00;36:";
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_lscolor_non_extension_style() {
+        let mut ls_colors = LsColors::default();
+        ls_colors.parse(String::from(DEFAULT_LS_COLORS));
+
+        assert_eq!(ls_colors.file_style(), None);
+        assert_eq!(ls_colors.dir_style(), Some("01;34"));
+        assert_eq!(ls_colors.symlink_style(), Some("01;36"));
+        assert_eq!(ls_colors.exec_style(), Some("01;32"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.block_device_style(), Some("40;33;01"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.char_device_style(), Some("40;33;01"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.fifo_style(), Some("40;33"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.socket_style(), Some("01;35"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.setuid_style(), Some("37;41"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.setgid_style(), Some("30;43"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.multiple_hard_links_style(), Some("00"));
+
+        #[cfg(unix)]
+        assert_eq!(
+            ls_colors.dir_sticky_and_other_writable_style(),
+            Some("30;42")
+        );
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.dir_other_writeable_style(), Some("34;42"));
+
+        #[cfg(unix)]
+        assert_eq!(ls_colors.dir_sticky_style(), Some("37;44"));
+    }
+
+    #[test]
+    fn test_lscolor_extension_style() {
+        let mut ls_colors = LsColors::default();
+        ls_colors.parse(String::from(DEFAULT_LS_COLORS));
+
+        assert_eq!(ls_colors.extension_style(String::from("gz")), Some("01;31"));
+        assert_eq!(ls_colors.extension_style(String::from("")), None);
+
+        // "xyz" extension is not set in DEFAULT_LS_COLORS
+        assert_eq!(ls_colors.extension_style(String::from("xyz")), None);
+    }
+
+    #[test]
+    fn test_get_file_extension() {
+        use std::path::MAIN_SEPARATOR_STR;
+
+        assert_eq!(get_file_extension("Makefile"), "");
+        assert_eq!(get_file_extension("dir1/Makefile"), "");
+        assert_eq!(get_file_extension("dir1/dir2/Makefile"), "");
+        assert_eq!(
+            get_file_extension(&format!(
+                "dir1{}dir2{}Makefile",
+                MAIN_SEPARATOR_STR, MAIN_SEPARATOR_STR
+            )),
+            ""
+        );
+
+        assert_eq!(get_file_extension(".gitignore"), "");
+        assert_eq!(get_file_extension("dir1/.gitignore"), "");
+        assert_eq!(
+            get_file_extension(&format!(
+                "dir1{}dir2{}.gitignore",
+                MAIN_SEPARATOR_STR, MAIN_SEPARATOR_STR
+            )),
+            ""
+        );
+
+        assert_eq!(get_file_extension("main.rs"), "rs");
+        assert_eq!(get_file_extension("dir1/main.rs"), "rs");
+        assert_eq!(
+            get_file_extension(&format!(
+                "dir1{}dir2{}main.rs",
+                MAIN_SEPARATOR_STR, MAIN_SEPARATOR_STR
+            )),
+            "rs"
+        );
+    }
+}
