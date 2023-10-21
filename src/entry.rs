@@ -1,6 +1,6 @@
 use std::fs::{self, Metadata};
 #[cfg(unix)]
-use std::os::unix::fs::MetadataExt;
+use std::os::unix::fs::{FileTypeExt, MetadataExt};
 #[cfg(windows)]
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
@@ -421,6 +421,14 @@ impl EntryBuf {
     }
 
     pub fn size_cell(&self, config: &Config) -> DisplayCell {
+        #[cfg(unix)]
+        if let Some(metadata) = &self.metadata {
+            let file_type = metadata.file_type();
+            if file_type.is_block_device() || file_type.is_char_device() {
+                return format_rdev(metadata.rdev(), config);
+            }
+        }
+
         match &self.size {
             Some(size) => format_size(*size, config),
             None => DisplayCell::error_cell(false),

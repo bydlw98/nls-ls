@@ -27,5 +27,7 @@ pub mod c {
     pub use libc::getgrgid_r;
     pub use libc::getpwuid_r;
     pub use libc::group;
+    pub use libc::major;
+    pub use libc::minor;
     pub use libc::passwd;
 }
