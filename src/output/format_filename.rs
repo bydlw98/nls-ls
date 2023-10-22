@@ -90,6 +90,9 @@ pub fn internal_format_filename_with_color(
             filename_cell
         }
 
+        c::S_IFBLK => DisplayCell::from_str_with_style(file_name, ls_colors.block_device_style()),
+        c::S_IFCHR => DisplayCell::from_str_with_style(file_name, ls_colors.char_device_style()),
+
         c::S_IFIFO => {
             let mut filename_cell =
                 DisplayCell::from_str_with_style(file_name, ls_colors.fifo_style());
