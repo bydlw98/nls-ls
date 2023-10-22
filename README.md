@@ -1,5 +1,6 @@
 # nls-ls (nls)
 
+[![CICD](https://github.com/bydlw98/nls-ls/actions/workflows/CICD.yml/badge.svg)](https://github.com/bydlw98/nls-ls/actions/workflows/CICD.yml)
 [![Crates.io](https://img.shields.io/crates/v/nls-ls)](https://crates.io/crates/nls-ls)
 
 Yet another ls(1) implementation
