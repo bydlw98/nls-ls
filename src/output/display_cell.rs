@@ -314,7 +314,7 @@ mod test {
         };
         assert_eq!(cell_no_style, correct_cell_no_style);
 
-        let cell_with_style = DisplayCell::from_u128_with_style_with_style(4096, Some("36"));
+        let cell_with_style = DisplayCell::from_u128_with_style(4096, Some("36"));
         let correct_cell_with_style = DisplayCell {
             contents: String::from("\x1b[36m4096\x1b[0m"),
             width: 4,
