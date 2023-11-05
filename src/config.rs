@@ -50,7 +50,7 @@ impl Config {
             config.output_format = OutputFormat::Vertical;
             config.width = utils::terminal_width().unwrap_or(80);
         }
-        config.parse_args(std::env::args_os(), &mut path_args_vec);
+        config.parse_args(std::env::args_os().skip(1), &mut path_args_vec);
 
         if config.color {
             config.ls_colors.init();
@@ -75,7 +75,7 @@ impl Config {
     ) {
         let raw = clap_lex::RawArgs::new(raw);
         let mut cursor = raw.cursor();
-        raw.next(&mut cursor); // Skip the bin
+        // raw.next(&mut cursor); // Skip the bin
 
         while let Some(arg) = raw.next(&mut cursor) {
             // if arg is "--"

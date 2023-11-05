@@ -152,7 +152,7 @@ impl LsColors {
         self.multiple_hard_links.as_deref()
     }
     #[cfg(unix)]
-    pub fn dir_sticky_and_other_writable_style(&self) -> Option<&str> {
+    pub fn dir_sticky_and_other_writeable_style(&self) -> Option<&str> {
         self.dir_sticky_and_other_writable.as_deref()
     }
     #[cfg(unix)]
@@ -303,7 +303,7 @@ mod test {
 
         #[cfg(unix)]
         assert_eq!(
-            ls_colors.dir_sticky_and_other_writable_style(),
+            ls_colors.dir_sticky_and_other_writeable_style(),
             Some("30;42")
         );
 

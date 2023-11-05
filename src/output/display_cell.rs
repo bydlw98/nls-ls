@@ -103,6 +103,10 @@ impl DisplayCell {
         self.width
     }
 
+    pub fn set_width(&mut self, width: usize) {
+        self.width = width;
+    }
+
     pub fn append(&mut self, other: Self) {
         self.contents.push_str(&other.contents);
         self.width += other.width;
