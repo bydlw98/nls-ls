@@ -1261,12 +1261,10 @@ mod test {
         correct_filename_cell_with_color.push_str(" -> ");
         correct_filename_cell_with_color.append(target_name_cell);
 
-        correct_filename_cell_with_color.set_width(
-            UnicodeWidthStr::width(&*symlink_path_string)
+        correct_filename_cell_with_color.width = UnicodeWidthStr::width(&*symlink_path_string)
                 + 4 // " -> " is 4 chars long
                 + UnicodeWidthStr::width(&*target_path_string)
-                + correct_filename_has_indicator as usize,
-        );
+                + correct_filename_has_indicator as usize;
         assert_eq!(filename_cell_with_color, correct_filename_cell_with_color);
     }
 
@@ -1384,7 +1382,7 @@ mod test {
             None => DisplayCell::from(path_string.clone()),
         };
 
-        correct_filename_cell_with_color.set_width(UnicodeWidthStr::width(&*path_string));
+        correct_filename_cell_with_color.width = UnicodeWidthStr::width(&*path_string);
         if correct_filename_has_indicator {
             correct_filename_cell_with_color.push_char(indicator_symbol);
         }

@@ -214,7 +214,7 @@ impl EntryBuf {
 
         match &self.ino {
             Some(ino) => DisplayCell::from_num_with_style(*ino, inode_style),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Right),
         }
     }
 
@@ -231,7 +231,7 @@ impl EntryBuf {
                     err
                 );
 
-                DisplayCell::error_cell(false)
+                DisplayCell::error_cell(Alignment::Right)
             }
         }
     }
@@ -253,7 +253,7 @@ impl EntryBuf {
     pub fn allocated_size_cell(&self, config: &Config) -> DisplayCell {
         match &self.allocated_size {
             Some(allocated_size) => format_size(*allocated_size, config),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Right),
         }
     }
 
@@ -317,7 +317,7 @@ impl EntryBuf {
         let nlink_style = config.theme.nlink_style();
         match &self.metadata {
             Some(metadata) => DisplayCell::from_num_with_style(metadata.nlink(), nlink_style),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Right),
         }
     }
 
@@ -331,7 +331,7 @@ impl EntryBuf {
         let nlink_style = config.theme.nlink_style();
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_str_with_style('1', nlink_style),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Right),
         }
     }
 
@@ -339,7 +339,7 @@ impl EntryBuf {
     pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => get_username_cell_by_uid(metadata.uid(), config),
-            None => DisplayCell::error_cell(true),
+            None => DisplayCell::error_cell(Alignment::Left),
         }
     }
 
@@ -353,7 +353,7 @@ impl EntryBuf {
         let owner_style = config.theme.owner_style();
         match &self.metadata {
             Some(_) => DisplayCell::from_ascii_str_with_style("-", owner_style),
-            None => DisplayCell::error_cell(true),
+            None => DisplayCell::error_cell(Alignment::Left),
         }
     }
 
@@ -361,7 +361,7 @@ impl EntryBuf {
     pub fn group_cell(&self, config: &Config) -> DisplayCell {
         match &self.metadata {
             Some(metadata) => get_groupname_cell_by_gid(metadata.gid(), config),
-            None => DisplayCell::error_cell(true),
+            None => DisplayCell::error_cell(Alignment::Left),
         }
     }
 
@@ -394,7 +394,7 @@ impl EntryBuf {
 
         match &self.size {
             Some(size) => format_size(*size, config),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Right),
         }
     }
 
@@ -405,7 +405,7 @@ impl EntryBuf {
     pub fn timestamp_cell(&self, config: &Config) -> DisplayCell {
         match &self.timestamp {
             Some(timestamp) => format_timestamp(*timestamp, config),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Left),
         }
     }
 }

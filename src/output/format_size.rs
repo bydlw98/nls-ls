@@ -1,4 +1,4 @@
-use super::DisplayCell;
+use super::display_cell::{Alignment, DisplayCell};
 use crate::config::{Config, SizeFormat};
 
 pub fn format_size(size: u64, config: &Config) -> DisplayCell {
@@ -94,7 +94,10 @@ fn format_size_with_prefix(
     if num_f64 >= 10.0 {
         let size_string = format!("{}{}", num_f64.ceil() as u64, prefix);
 
-        DisplayCell::from_ascii_str_with_style(&size_string, size_style).left_aligned(false)
+        let mut size_cell = DisplayCell::from_ascii_str_with_style(&size_string, size_style);
+        size_cell.alignment = Alignment::Right;
+
+        size_cell
     } else {
         // E.g 123.456
         // multiply by 10 first to move the first decimal digit in front of decimal point
@@ -105,6 +108,9 @@ fn format_size_with_prefix(
         //      124 / 10 = 12.4
         let size_string = format!("{:.1}{}", ((num_f64 * 10.0).ceil() / 10.0), prefix);
 
-        DisplayCell::from_ascii_str_with_style(&size_string, size_style).left_aligned(false)
+        let mut size_cell = DisplayCell::from_ascii_str_with_style(&size_string, size_style);
+        size_cell.alignment = Alignment::Right;
+
+        size_cell
     }
 }

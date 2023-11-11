@@ -5,7 +5,7 @@ use chrono::{Datelike, LocalResult, Timelike};
 use once_cell::sync::Lazy;
 
 use crate::config::Config;
-use crate::output::DisplayCell;
+use crate::output::{Alignment, DisplayCell};
 use crate::utils::systemtime_to_unix_timestamp;
 
 pub fn format_timestamp(timestamp: i64, config: &Config) -> DisplayCell {
@@ -33,7 +33,7 @@ pub fn format_timestamp(timestamp: i64, config: &Config) -> DisplayCell {
 
             DisplayCell::from_ascii_str_with_style(&timestamp_string, timestamp_style)
         }
-        _ => DisplayCell::error_cell(true),
+        _ => DisplayCell::error_cell(Alignment::Left),
     }
 }
 

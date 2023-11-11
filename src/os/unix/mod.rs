@@ -11,7 +11,7 @@ use std::os::unix::fs::MetadataExt;
 use sys_prelude::*;
 
 use crate::config::{AllocatedSizeBlocks, Config};
-use crate::output::DisplayCell;
+use crate::output::{Alignment, DisplayCell};
 
 pub fn get_allocated_size(metadata: &Metadata, config: &Config) -> u64 {
     match config.allocated_size_blocks {
@@ -29,5 +29,8 @@ pub fn format_rdev(rdev: u64, config: &Config) -> DisplayCell {
     let major_minor_string = format!("{},{:>4}", major, minor);
     let rdev_style = config.theme.size_style();
 
-    DisplayCell::from_ascii_str_with_style(&major_minor_string, rdev_style).left_aligned(false)
+    let mut rdev_cell = DisplayCell::from_ascii_str_with_style(&major_minor_string, rdev_style);
+    rdev_cell.alignment = Alignment::Right;
+
+    rdev_cell
 }

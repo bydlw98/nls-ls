@@ -6,7 +6,7 @@ mod format_timestamp;
 mod long;
 mod sort;
 
-pub use display_cell::DisplayCell;
+pub use display_cell::{Alignment, DisplayCell};
 pub use format_filename::format_filename;
 pub use format_size::format_size;
 pub use format_timestamp::format_timestamp;
@@ -39,5 +39,5 @@ pub fn print_total(entrybuf_vec: &[EntryBuf], config: &Config) {
         .map(|entrybuf| entrybuf.allocated_size().unwrap_or(0))
         .sum();
 
-    println!("total {}", format_size(total, config));
+    println!("total {}", format_size(total, config).contents);
 }

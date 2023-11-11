@@ -59,7 +59,7 @@ impl LongFormatGrid {
 
     pub fn add(&mut self, display_cell: DisplayCell) {
         self.column_widths[self.column_index] =
-            self.column_widths[self.column_index].max(display_cell.width());
+            self.column_widths[self.column_index].max(display_cell.width);
         self.display_cells_vec.push(display_cell);
 
         if self.column_index < (self.num_columns - 1) {
@@ -76,13 +76,12 @@ impl fmt::Display for LongFormatGrid {
 
         for _ in 0..self.num_entries {
             for i in 0..(self.num_columns - 1) {
-                let mut cell = self.display_cells_vec[cell_index].clone();
-                cell.pad_to_width(self.column_widths[i]);
-
-                write!(f, "{} ", cell)?;
+                let cell = &self.display_cells_vec[cell_index];
+                cell.write(f, self.column_widths[i])?;
+                write!(f, " ")?;
                 cell_index += 1;
             }
-            writeln!(f, "{}", self.display_cells_vec[cell_index])?;
+            writeln!(f, "{}", self.display_cells_vec[cell_index].contents)?;
             cell_index += 1;
         }
         Ok(())

@@ -31,7 +31,7 @@ pub fn single_column_format(entrybuf_vec: &[EntryBuf], config: &Config) {
         print!("{}", grid);
     } else {
         for entrybuf in entrybuf_vec {
-            println!("{}", entrybuf.file_name_cell(config));
+            println!("{}", entrybuf.file_name_cell(config).contents);
         }
     }
 }
@@ -67,32 +67,29 @@ fn complex_multi_column_grid_init(grid: &mut Grid, entrybuf_vec: &[EntryBuf], co
     for entrybuf in entrybuf_vec {
         if config.list_inode {
             let ino_cell = entrybuf.ino_cell(config);
-            max_ino_cell_width = max_ino_cell_width.max(ino_cell.width());
+            max_ino_cell_width = max_ino_cell_width.max(ino_cell.width);
             ino_cell_vec.push(ino_cell);
         }
         if config.list_allocated_size {
             let allocated_size_cell = entrybuf.allocated_size_cell(config);
             max_allocated_size_cell_width =
-                max_allocated_size_cell_width.max(allocated_size_cell.width());
+                max_allocated_size_cell_width.max(allocated_size_cell.width);
             allocated_size_cell_vec.push(allocated_size_cell);
         }
     }
 
     for i in 0..entrybuf_count {
-        let mut cell = DisplayCell::with_capacity(64);
+        let mut cell = DisplayCell::with_capacity(128);
         if config.list_inode {
-            let ino_cell = &mut ino_cell_vec[i];
-            ino_cell.pad_to_width(max_ino_cell_width);
-            cell.push_str_with_width(&ino_cell_vec[i].to_string(), max_ino_cell_width);
+            let ino_cell = &ino_cell_vec[i];
+            let _ = ino_cell.write(&mut cell.contents, max_ino_cell_width);
+            cell.width += max_ino_cell_width;
             cell.push_char(' ');
         }
         if config.list_allocated_size {
-            let allocated_size_cell = &mut allocated_size_cell_vec[i];
-            allocated_size_cell.pad_to_width(max_allocated_size_cell_width);
-            cell.push_str_with_width(
-                &allocated_size_cell.to_string(),
-                max_allocated_size_cell_width,
-            );
+            let allocated_size_cell = &allocated_size_cell_vec[i];
+            let _ = allocated_size_cell.write(&mut cell.contents, max_allocated_size_cell_width);
+            cell.width += max_allocated_size_cell_width;
             cell.push_char(' ');
         }
         cell.append(entrybuf_vec[i].file_name_cell(config));

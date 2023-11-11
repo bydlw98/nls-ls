@@ -17,7 +17,7 @@ use std::path::Path;
 use std::ptr;
 
 use crate::config::{AllocatedSizeBlocks, Config};
-use crate::output::DisplayCell;
+use crate::output::{Alignment, DisplayCell};
 
 use accounts::get_accountname_by_sid_ptr;
 use permissions::get_rwx_permissions;
@@ -122,7 +122,7 @@ impl WindowsMetadata {
         let nlink_style = config.theme.nlink_style();
         match &self.nlink {
             Some(nlink) => DisplayCell::from_num_with_style(*nlink, nlink_style),
-            None => DisplayCell::error_cell(false),
+            None => DisplayCell::error_cell(Alignment::Right),
         }
     }
 
@@ -133,7 +133,7 @@ impl WindowsMetadata {
     pub fn owner_cell(&self, config: &Config) -> DisplayCell {
         let owner_style = config.theme.owner_style();
         if self.owner_string == "?" {
-            DisplayCell::error_cell(true)
+            DisplayCell::error_cell(Alignment::Left)
         } else {
             DisplayCell::from_str_with_style(&self.owner_string, owner_style)
         }
@@ -142,7 +142,7 @@ impl WindowsMetadata {
     pub fn group_cell(&self, config: &Config) -> DisplayCell {
         let group_style = config.theme.group_style();
         if self.group_string == "?" {
-            DisplayCell::error_cell(true)
+            DisplayCell::error_cell(Alignment::Left)
         } else {
             DisplayCell::from_str_with_style(&self.group_string, group_style)
         }
