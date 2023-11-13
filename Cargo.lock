@@ -371,7 +371,6 @@ dependencies = [
  "log",
  "once_cell",
  "tempfile",
- "term_grid",
  "terminal_size",
  "unicode-width",
  "windows-sys",
@@ -524,15 +523,6 @@ dependencies = [
  "redox_syscall",
  "rustix",
  "windows-sys",
-]
-
-[[package]]
-name = "term_grid"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "230d3e804faaed5a39b08319efb797783df2fd9671b39b7596490cb486d702cf"
-dependencies = [
- "unicode-width",
 ]
 
 [[package]]

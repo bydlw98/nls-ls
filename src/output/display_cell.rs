@@ -160,15 +160,6 @@ impl From<String> for DisplayCell {
     }
 }
 
-impl From<DisplayCell> for term_grid::Cell {
-    fn from(value: DisplayCell) -> Self {
-        Self {
-            contents: value.contents,
-            width: value.width,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -335,17 +326,5 @@ mod test {
         };
 
         assert_eq!(cell, correct_cell);
-    }
-
-    #[test]
-    fn test_displaycell_from_displaycell_for_term_grid_cell() {
-        let cell = DisplayCell::from(String::from("src"));
-        let term_grid_cell = term_grid::Cell::from(cell);
-        let correct_term_grid_cell = term_grid::Cell {
-            contents: String::from("src"),
-            width: 3,
-        };
-
-        assert_eq!(term_grid_cell, correct_term_grid_cell);
     }
 }

@@ -5,7 +5,6 @@ use std::process;
 
 use crate::ls_colors::LsColors;
 use crate::theme::ThemeConfig;
-use crate::utils;
 
 #[derive(Debug)]
 pub struct Config {
@@ -37,7 +36,6 @@ pub struct Config {
     pub sorting_order: SortingOrder,
     pub timestamp_used: TimestampUsed,
     pub theme: ThemeConfig,
-    pub width: usize,
 }
 
 impl Config {
@@ -48,7 +46,6 @@ impl Config {
             config.is_atty = true;
             config.color = true;
             config.output_format = OutputFormat::Vertical;
-            config.width = utils::terminal_width().unwrap_or(80);
         }
         config.parse_args(std::env::args_os().skip(1), &mut path_args_vec);
 
@@ -416,7 +413,6 @@ impl Default for Config {
             sorting_order: SortingOrder::default(),
             timestamp_used: TimestampUsed::default(),
             theme: ThemeConfig::default(),
-            width: 80,
         }
     }
 }

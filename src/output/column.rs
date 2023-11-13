@@ -1,24 +1,28 @@
-use term_grid::{Direction, Filling, Grid, GridOptions};
+use super::grid::*;
 
-use super::long::LongFormatGrid;
-use super::DisplayCell;
 use crate::config::Config;
 use crate::entry::EntryBuf;
 
 pub fn vertical_format(entrybuf_vec: &[EntryBuf], config: &Config) {
-    internal_multi_column_format(Direction::TopToBottom, entrybuf_vec, config);
+    multi_column_format(Direction::TopToBottom, entrybuf_vec, config)
 }
 
 pub fn across_format(entrybuf_vec: &[EntryBuf], config: &Config) {
-    internal_multi_column_format(Direction::LeftToRight, entrybuf_vec, config);
+    multi_column_format(Direction::LeftToRight, entrybuf_vec, config)
 }
 
 pub fn single_column_format(entrybuf_vec: &[EntryBuf], config: &Config) {
-    if config.list_inode || config.list_allocated_size {
-        let mut grid = LongFormatGrid::new(
-            1 + (config.list_inode as usize) + (config.list_allocated_size as usize),
-            entrybuf_vec.len(),
-        );
+    let num_columns: usize =
+        1 + (config.list_inode as usize) + (config.list_allocated_size as usize);
+
+    if num_columns == 1 {
+        for entrybuf in entrybuf_vec {
+            let file_name_cell = entrybuf.file_name_cell(config);
+            println!("{}", file_name_cell.contents);
+        }
+    } else {
+        let mut grid = Grid::new(entrybuf_vec.len(), 1, Direction::LeftToRight);
+
         for entrybuf in entrybuf_vec {
             if config.list_inode {
                 grid.add(entrybuf.ino_cell(config));
@@ -28,36 +32,34 @@ pub fn single_column_format(entrybuf_vec: &[EntryBuf], config: &Config) {
             }
             grid.add(entrybuf.file_name_cell(config));
         }
-        print!("{}", grid);
-    } else {
-        for entrybuf in entrybuf_vec {
-            println!("{}", entrybuf.file_name_cell(config).contents);
-        }
+
+        print!("{}", grid.fit_into_columns(num_columns));
     }
 }
 
-fn internal_multi_column_format(direction: Direction, entrybuf_vec: &[EntryBuf], config: &Config) {
-    let mut grid = Grid::new(GridOptions {
-        direction: direction,
-        filling: Filling::Spaces(2),
-    });
-    grid.reserve(entrybuf_vec.len() + 1);
+fn multi_column_format(direction: Direction, entrybuf_vec: &[EntryBuf], config: &Config) {
+    use crate::utils::terminal_width;
+
+    let mut grid = Grid::new(entrybuf_vec.len(), 2, direction);
 
     if config.list_inode || config.list_allocated_size {
         complex_multi_column_grid_init(&mut grid, entrybuf_vec, config);
     } else {
         for entrybuf in entrybuf_vec {
-            grid.add(entrybuf.file_name_cell(config).into());
+            grid.add(entrybuf.file_name_cell(config));
         }
     }
 
-    match grid.fit_into_width(config.width) {
+    let display_width = terminal_width().unwrap_or(80);
+    match grid.fit_into_width(display_width) {
         Some(display) => print!("{}", display),
-        None => print!("{}", grid.fit_into_columns(1)),
+        None => single_column_format(entrybuf_vec, config),
     }
 }
 
 fn complex_multi_column_grid_init(grid: &mut Grid, entrybuf_vec: &[EntryBuf], config: &Config) {
+    use super::DisplayCell;
+
     let entrybuf_count = entrybuf_vec.len();
     let mut ino_cell_vec: Vec<DisplayCell> = Vec::with_capacity(entrybuf_count);
     let mut max_ino_cell_width: usize = 0;
@@ -93,6 +95,6 @@ fn complex_multi_column_grid_init(grid: &mut Grid, entrybuf_vec: &[EntryBuf], co
             cell.push_char(' ');
         }
         cell.append(entrybuf_vec[i].file_name_cell(config));
-        grid.add(cell.into());
+        grid.add(cell);
     }
 }
