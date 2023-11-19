@@ -11,19 +11,23 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.job.os }}
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-2022
+        job:
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
+          - { target: x86_64-pc-windows-msvc  , os: windows-2022  }
 
     steps:
     - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        targets: ${{ matrix.job.target }}
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --locked --verbose --target=${{ matrix.job.target }}
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --locked --verbose --target=${{ matrix.job.target }}
 
 
   rustfmt:
