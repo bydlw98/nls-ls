@@ -14,12 +14,7 @@ pub fn list_dir(path: &Path, config: &Config) {
     for result in walk_dir(path, config) {
         match result {
             Ok(dent) => {
-                if dent.depth() == 0 {
-                    if config.list_current_and_parent_dirs {
-                        entrybuf_vec.push(EntryBuf::from_direntry(dent, config));
-                        entrybuf_vec.push(EntryBuf::from_parent_of_path(path, config));
-                    }
-                } else {
+                if dent.depth() != 0 {
                     entrybuf_vec.push(EntryBuf::from_direntry(dent, config));
                 }
             }
@@ -30,6 +25,12 @@ pub fn list_dir(path: &Path, config: &Config) {
                 }
             }
         }
+    }
+
+    if config.list_current_and_parent_dirs {
+        entrybuf_vec.push(EntryBuf::from_named_path(".", path, config));
+        let parent_path = path.join("..");
+        entrybuf_vec.push(EntryBuf::from_named_path("..", &parent_path, config));
     }
 
     if config.output_format.is_long() || config.list_allocated_size {

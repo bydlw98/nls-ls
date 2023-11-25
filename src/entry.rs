@@ -107,12 +107,11 @@ impl EntryBuf {
         entrybuf
     }
 
-    pub fn from_parent_of_path(path: &Path, config: &Config) -> Self {
-        let parent_path = path.join("..");
+    pub fn from_named_path(path_name: &str, path: &Path, config: &Config) -> Self {
         let metadata_result = if config.dereference_cmdline_symlink {
-            parent_path.metadata()
+            path.metadata()
         } else {
-            parent_path.symlink_metadata()
+            path.symlink_metadata()
         };
         let metadata = match metadata_result {
             Ok(metadata) => Some(metadata),
@@ -123,8 +122,8 @@ impl EntryBuf {
         };
 
         let mut entrybuf = Self {
-            file_name: String::from(".."),
-            path: parent_path,
+            file_name: String::from(path_name),
+            path: path.to_path_buf(),
             metadata: metadata,
             #[cfg(windows)]
             follow_links: config.dereference_cmdline_symlink,
