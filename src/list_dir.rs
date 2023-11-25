@@ -8,7 +8,7 @@ use crate::config::Config;
 use crate::entry::EntryBuf;
 use crate::output::{output, print_total};
 
-pub fn list_dir(path: &Path, config: &Config) {
+pub fn list_dir(path: &Path, config: &Config) -> Result<(), ()> {
     let mut entrybuf_vec: Vec<EntryBuf> = Vec::with_capacity(16);
 
     for result in walk_dir(path, config) {
@@ -21,7 +21,7 @@ pub fn list_dir(path: &Path, config: &Config) {
             Err(err) => {
                 eprintln!("nls: {}", err);
                 if !err.is_partial() && err.is_io() {
-                    return;
+                    return Err(());
                 }
             }
         }
@@ -38,20 +38,23 @@ pub fn list_dir(path: &Path, config: &Config) {
     }
 
     output(&mut entrybuf_vec, config);
+
+    Ok(())
 }
 
 pub fn recursive_list_dir(path: &Path, config: &Config) {
-    for result in recursive_walk_dir(path, config) {
-        match result {
-            Ok(dent) => {
-                if dent.depth() != 0 {
-                    println!("\n{}:", dent.path().display());
+    if list_dir(path, config).is_ok() {
+        for result in recursive_walk_dir(path, config) {
+            match result {
+                Ok(dent) => {
+                    if dent.depth() != 0 {
+                        println!("\n{}:", dent.path().display());
+                        let _ = list_dir(dent.path(), config);
+                    }
                 }
-
-                list_dir(dent.path(), config);
-            }
-            Err(err) => {
-                eprintln!("nls: {}", err);
+                Err(err) => {
+                    eprintln!("nls: {}", err);
+                }
             }
         }
     }

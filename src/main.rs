@@ -43,7 +43,7 @@ fn zero_path_args(config: &Config) {
     } else if config.recursive {
         list_dir::recursive_list_dir(Path::new("."), config);
     } else {
-        list_dir::list_dir(Path::new("."), config);
+        let _ = list_dir::list_dir(Path::new("."), config);
     }
 }
 
@@ -60,7 +60,7 @@ fn one_path_arg(path: &Path, config: &Config) {
                 if config.recursive {
                     list_dir::recursive_list_dir(path, config);
                 } else {
-                    list_dir::list_dir(path, config);
+                    let _ = list_dir::list_dir(path, config);
                 }
             } else {
                 let entrybuf = EntryBuf::from_cmdline_path(path, config);
@@ -110,12 +110,12 @@ fn multiple_path_args(path_args_vec: Vec<PathBuf>, config: &Config) {
                 list_dir::recursive_list_dir(path, config);
             }
         } else {
-            list_dir::list_dir(&list_dir_paths_vec[0], config);
+            let _ = list_dir::list_dir(&list_dir_paths_vec[0], config);
 
             let remainding_dir_paths_vec = &list_dir_paths_vec[1..];
             for path in remainding_dir_paths_vec {
                 println!("\n{}:", path.display());
-                list_dir::list_dir(path, config);
+                let _ = list_dir::list_dir(path, config);
             }
         }
     }
