@@ -1,7 +1,7 @@
 pub mod c {
     pub use libc::wcslen;
     pub use windows_sys::Win32::Foundation::{
-        CloseHandle, GetLastError, ERROR_NONE_MAPPED, ERROR_SUCCESS, HANDLE, HLOCAL,
+        CloseHandle, GetLastError, LocalFree, ERROR_NONE_MAPPED, ERROR_SUCCESS, HANDLE, HLOCAL,
         INVALID_HANDLE_VALUE, PSID,
     };
     pub use windows_sys::Win32::Security::Authorization::{
@@ -21,5 +21,4 @@ pub mod c {
         FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_ID_INFO, FILE_SHARE_READ, FILE_STANDARD_INFO,
         OPEN_EXISTING, READ_CONTROL,
     };
-    pub use windows_sys::Win32::System::Memory::LocalFree;
 }
