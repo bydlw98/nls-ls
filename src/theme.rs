@@ -103,3 +103,36 @@ impl ThemeConfig {
         }
     }
 }
+
+#[derive(Debug, Default)]
+pub struct IconTheme {
+    pub file: Option<char>,
+    pub dir: Option<char>,
+    pub symlink: Option<char>,
+    #[cfg(unix)]
+    pub block_device: Option<char>,
+    #[cfg(unix)]
+    pub char_device: Option<char>,
+    #[cfg(unix)]
+    pub fifo: Option<char>,
+    #[cfg(unix)]
+    pub socket: Option<char>,
+}
+
+impl IconTheme {
+    pub fn with_default_icons() -> Self {
+        Self {
+            file: Some('\u{f4a5}'),
+            dir: Some('\u{f4d3}'),
+            symlink: Some('\u{f481}'),
+            #[cfg(unix)]
+            block_device: Some('\u{f129f}'),
+            #[cfg(unix)]
+            char_device: Some('\u{f065c}'),
+            #[cfg(unix)]
+            fifo: Some('|'),
+            #[cfg(unix)]
+            socket: Some('='),
+        }
+    }
+}

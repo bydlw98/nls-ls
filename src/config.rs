@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process;
 
 use crate::ls_colors::LsColors;
-use crate::theme::ThemeConfig;
+use crate::theme::{IconTheme, ThemeConfig};
 
 #[derive(Debug)]
 pub struct Config {
@@ -35,6 +35,7 @@ pub struct Config {
     pub size_format: SizeFormat,
     pub sorting_order: SortingOrder,
     pub timestamp_used: TimestampUsed,
+    pub icons: IconTheme,
     pub theme: ThemeConfig,
 }
 
@@ -45,6 +46,7 @@ impl Config {
         if io::stdout().is_terminal() {
             config.is_atty = true;
             config.color = true;
+            config.icons = IconTheme::with_default_icons();
             config.output_format = OutputFormat::Vertical;
         }
         config.parse_args(std::env::args_os().skip(1), &mut path_args_vec);
@@ -251,6 +253,30 @@ impl Config {
                         self.size_format = SizeFormat::HumanReadable;
                         self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                     }
+
+                    Ok("icons") => match value {
+                        Some(when) => {
+                            if when == "always" {
+                                self.icons = IconTheme::with_default_icons();
+                            } else if when == "auto" {
+                                if self.is_atty {
+                                    self.icons = IconTheme::with_default_icons();
+                                } else {
+                                    self.icons = IconTheme::default();
+                                }
+                            } else if when == "never" {
+                                self.icons = IconTheme::default();
+                            } else {
+                                eprintln!(
+                                    "nls: '{}' is an invalid argument for '--icons'\n\
+                                          possible arguments are ['always', 'auto', 'never']",
+                                    when.to_string_lossy()
+                                );
+                                process::exit(1);
+                            }
+                        }
+                        None => self.icons = IconTheme::with_default_icons(),
+                    },
                     Ok("iec") => {
                         self.size_format = SizeFormat::Iec;
                         self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
@@ -412,6 +438,7 @@ impl Default for Config {
             size_format: SizeFormat::default(),
             sorting_order: SortingOrder::default(),
             timestamp_used: TimestampUsed::default(),
+            icons: IconTheme::default(),
             theme: ThemeConfig::default(),
         }
     }
