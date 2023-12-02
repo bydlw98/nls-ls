@@ -53,20 +53,11 @@ fn internal_format_unix_file_type_exts(
     let icon = &config.icons;
 
     if file_type.is_block_device() {
-        return create_filename_cell(
-            file_name,
-            ls_colors.block_device_style(),
-            icon.block_device,
-        );
+        return create_filename_cell(file_name, ls_colors.block_device_style(), icon.block_device);
     } else if file_type.is_char_device() {
-        return create_filename_cell(
-            file_name,
-            ls_colors.char_device_style(),
-            icon.char_device,
-        );
+        return create_filename_cell(file_name, ls_colors.char_device_style(), icon.char_device);
     } else if file_type.is_fifo() {
-        let mut filename_cell =
-            create_filename_cell(file_name, ls_colors.fifo_style(), icon.fifo);
+        let mut filename_cell = create_filename_cell(file_name, ls_colors.fifo_style(), icon.fifo);
         if indicator_style.others() {
             filename_cell.push_char(IndicatorStyle::FIFO);
         }
@@ -128,20 +119,21 @@ fn internal_format_regular_file(
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let extension = get_file_extension(file_name);
+    let icon = config.icons.file;
+
     if extension.is_empty() {
-        return DisplayCell::from_str_with_style(file_name, ls_colors.file_style());
+        return create_filename_cell(file_name, ls_colors.file_style(), icon);
     } else {
         #[cfg(windows)]
         if ["exe", "bat", "cmd"].contains(&&extension.as_str()) {
-            let mut filename_cell =
-                DisplayCell::from_str_with_style(file_name, ls_colors.exec_style());
+            let mut filename_cell = create_filename_cell(file_name, ls_colors.exec_style(), icon);
             if indicator_style.others() {
                 filename_cell.push_char(IndicatorStyle::EXEC);
             }
             return filename_cell;
         }
 
-        return DisplayCell::from_str_with_style(file_name, ls_colors.extension_style(extension));
+        return create_filename_cell(file_name, ls_colors.extension_style(extension), icon);
     }
 }
 
@@ -166,7 +158,7 @@ fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -
                 ),
             };
         } else {
-            let mut filename_cell = DisplayCell::from_str_with_style(&name, ls_colors.dir_style());
+            let mut filename_cell = create_filename_cell(file_name, ls_colors.dir_style(), icon);
         }
     }
 
