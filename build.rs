@@ -17,17 +17,16 @@ fn main() {
     fs::write(out_dir.join("help-page.txt"), cmd.render_help().to_string())
         .expect("Failed to generate help page");
 
-    generate_completions();
-    generate_manpage();
+    if env::var_os("BUILD_DATA_FILES").is_some() {
+        generate_completions();
+        generate_manpage();
+    }
 }
 
 fn generate_completions() {
     let mut cmd = build_command();
     let bin_name = "nls";
-    let mut completions_dir: PathBuf = env::var("OUT_DIR")
-        .expect("OUT_DIR environment variable does not exist")
-        .into();
-    completions_dir.push("completions");
+    let completions_dir = PathBuf::from("completions");
 
     if !completions_dir.exists() {
         fs::create_dir(&completions_dir).expect("Unable to create completion dir");
@@ -42,16 +41,13 @@ fn generate_completions() {
 }
 
 fn generate_manpage() {
-    let mut doc_dir: PathBuf = env::var("OUT_DIR")
-        .expect("OUT_DIR environment variable does not exist")
-        .into();
-    doc_dir.push("doc");
+    let doc_dir = PathBuf::from("doc");
     if !doc_dir.exists() {
         fs::create_dir(&doc_dir).expect("Unable to create doc dir");
     }
     let cmd = build_command();
 
-    let man = clap_mangen::Man::new(cmd).date("2023-10-06");
+    let man = clap_mangen::Man::new(cmd).date("2023-12-02");
     let mut buffer: Vec<u8> = Default::default();
     man.render(&mut buffer)
         .expect("Unable to render man page to buffer");
@@ -185,6 +181,20 @@ fn build_command() -> Command {
                 .value_parser(value_parser!(String))
                 .value_name("PATTERN")
                 .help("Ignore entries matching glob pattern")
+        )
+        .arg(
+            Arg::new("icons")
+                .action(ArgAction::Set)
+                .long("icons")
+                .value_parser([
+                    PossibleValue::new("always").help("Always display icons"),
+                    PossibleValue::new("auto").help("Display icons only if stdout is a tty"),
+                    PossibleValue::new("never").help("Never display icons"),
+                ])
+                .value_name("WHEN")
+                .default_missing_value("always")
+                .num_args(0..=1)
+                .help("Flag to control when to display icons")
         )
         .arg(
             Arg::new("iec")

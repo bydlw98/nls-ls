@@ -1,5 +1,6 @@
 complete -c nls -l color -d 'Flag to control when to use color for output' -r -f -a "{always	'Always use color for output',auto	'Color for output only if stdout is a tty',never	'Never use color for output'}"
 complete -c nls -s I -l ignore-glob -d 'Ignore entries matching glob pattern' -r
+complete -c nls -l icons -d 'Flag to control when to display icons' -r -f -a "{always	'Always display icons',auto	'Display icons only if stdout is a tty',never	'Never display icons'}"
 complete -c nls -l max-depth -d 'Set the max depth to recurse into' -r
 complete -c nls -l mode -d 'Set the mode format to be used in long format' -r -f -a "{native	'Use the platform default mode format',pwsh	'Use powershell mode format e.g. \'darhsl\'. This is the default on windows',rwx	'Use symbolic format e.g. \'drwxrwxrwx\'. This is the default on unix like platforms'}"
 complete -c nls -l time -d 'Set timestamp to use for sorting by timestamp or/and listing in long format' -r -f -a "{accessed	'Use timestamp of when entry was last accessed (-u)',changed	'Use timestamp of when entry status was last changed (-c)',created	'Use timestamp of when entry was created',modified	'Use timestamp of when entry was last modified',atime	'Alias to \'accessed\'',ctime	'Alias to \'changed\'',btime	'Alias to \'created\'',mtime	'Alias to \'modified\''}"

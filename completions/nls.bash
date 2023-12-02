@@ -19,7 +19,7 @@ _nls() {
 
     case "${cmd}" in
         nls)
-            opts="-a -A -c -C -d -F -g -h -H -i -I -k -l -L -n -o -p -r -R -s -S -t -u -x -1 --all --almost-all --allocated-bytes --color --directory --classify --gitignore --human-readable --dereference-command-line --help --inode --ignore-glob --iec --ignore-file --kibibytes --dereference --max-depth --mode --numeric-uid-gid --reverse --recursive --size --si --time --version [FILE]..."
+            opts="-a -A -c -C -d -F -g -h -H -i -I -k -l -L -n -o -p -r -R -s -S -t -u -x -1 --all --almost-all --allocated-bytes --color --directory --classify --gitignore --human-readable --dereference-command-line --help --inode --ignore-glob --icons --iec --ignore-file --kibibytes --dereference --max-depth --mode --numeric-uid-gid --reverse --recursive --size --si --time --version [FILE]..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -35,6 +35,10 @@ _nls() {
                     ;;
                 -I)
                     COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --icons)
+                    COMPREPLY=($(compgen -W "always auto never" -- "${cur}"))
                     return 0
                     ;;
                 --max-depth)

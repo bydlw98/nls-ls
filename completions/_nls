@@ -18,6 +18,7 @@ _nls() {
 '--color=[Flag to control when to use color for output]' \
 '*-I+[Ignore entries matching glob pattern]:PATTERN: ' \
 '*--ignore-glob=[Ignore entries matching glob pattern]:PATTERN: ' \
+'--icons=[Flag to control when to display icons]' \
 '--max-depth=[Set the max depth to recurse into]:NUM: ' \
 '--mode=[Set the mode format to be used in long format]:WORD:((native\:"Use the platform default mode format"
 pwsh\:"Use powershell mode format e.g. '\''darhsl'\''. This is the default on windows"

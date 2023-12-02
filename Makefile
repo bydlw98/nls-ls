@@ -13,7 +13,7 @@ MAN1_DIR=$(datadir)/man/man1
 
 .PHONY: build
 build:
-	$(CARGO) build --profile $(PROFILE)
+	BUILD_DATA_FILES=1 $(CARGO) build --profile $(PROFILE)
 
 .PHONY: clean
 clean:
