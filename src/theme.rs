@@ -121,8 +121,12 @@ pub struct IconTheme {
 
 impl IconTheme {
     const COMPRESSED: Option<char> = Some('\u{f410}');
+    const GIT: Option<char> = Some('\u{e702}');
     const IMAGE: Option<char> = Some('\u{f1c5}');
+    const PYTHON: Option<char> = Some('\u{e73c}');
+    const RUST: Option<char> = Some('\u{e7a8}');
     const SHELL: Option<char> = Some('\u{ebca}');
+    const VIM: Option<char> = Some('\u{e7c5}');
 
     pub fn with_default_icons() -> Self {
         Self {
@@ -140,10 +144,45 @@ impl IconTheme {
         }
     }
 
-    pub fn file_icon(&self, extension: &str) -> Option<char> {
+    pub fn file_icon(&self, file_name: &str, extension: &str) -> Option<char> {
         if self.file.is_none() {
             None
-        } else if extension.is_empty() {
+        } else {
+            match file_name {
+                ".bash_aliases" => Self::SHELL,
+                ".bash_history" => Self::SHELL,
+                ".bash_login" => Self::SHELL,
+                ".bash_logout" => Self::SHELL,
+                ".bash_profile" => Self::SHELL,
+                ".bashrc" => Self::SHELL,
+                "Cargo.lock" => Self::RUST,
+                "Cargo.toml" => Self::RUST,
+                "Cargo.toml.orig" => Self::RUST,
+                ".gitattributes" => Self::GIT,
+                ".gitconfig" => Self::GIT,
+                ".gitignore" => Self::GIT,
+                ".gitmodules" => Self::GIT,
+                ".login" => Self::SHELL,
+                ".logout" => Self::SHELL,
+                "profile" => Self::SHELL,
+                ".profile" => Self::SHELL,
+                "requirements.txt" => Self::PYTHON,
+                ".vimrc" => Self::VIM,
+                "_vimrc" => Self::VIM,
+                ".zlogin" => Self::SHELL,
+                ".zlogout" => Self::SHELL,
+                ".zprofile" => Self::SHELL,
+                ".zshenv" => Self::SHELL,
+                ".zshrc" => Self::SHELL,
+                ".zsh_history" => Self::SHELL,
+                ".zsh_sessions" => Self::SHELL,
+                _ => self.file_icon_by_extension(extension),
+            }
+        }
+    }
+
+    fn file_icon_by_extension(&self, extension: &str) -> Option<char> {
+        if extension.is_empty() {
             self.file
         } else {
             match extension {
@@ -166,10 +205,10 @@ impl IconTheme {
                 "mp4" => Some('\u{f03d}'),
                 "pdf" => Some('\u{f1c1}'),
                 "png" => Self::IMAGE,
-                "py" => Some('\u{e73c}'),
-                "rs" => Some('\u{e7a8}'),
+                "py" => Self::PYTHON,
+                "rs" => Self::RUST,
                 "sh" => Self::SHELL,
-                "vim" => Some('\u{e7c5}'),
+                "vim" => Self::VIM,
                 "xz" => Self::COMPRESSED,
                 "zip" => Self::COMPRESSED,
                 "zsh" => Self::SHELL,
@@ -178,8 +217,24 @@ impl IconTheme {
         }
     }
 
-    pub fn dir_icon(&self) -> Option<char> {
-        self.dir
+    pub fn dir_icon(&self, file_name: &str) -> Option<char> {
+        if self.dir.is_none() {
+            None
+        } else {
+            match file_name {
+                "bash-completion" => Self::SHELL,
+                ".cargo" => Self::RUST,
+                ".git" => Some('\u{e5fb}'),
+                ".github" => Some('\u{e65b}'),
+                "__pycache__" => Self::PYTHON,
+                ".rustup" => Self::RUST,
+                ".venv" => Self::PYTHON,
+                "vim" => Self::VIM,
+                ".vim" => Self::VIM,
+                "zsh" => Self::SHELL,
+                _ => self.dir,
+            }
+        }
     }
 
     pub fn symlink_icon(&self) -> Option<char> {

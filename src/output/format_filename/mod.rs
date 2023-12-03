@@ -94,7 +94,7 @@ fn internal_format_regular_file(
     let ls_colors = &config.ls_colors;
     let st_mode = metadata.mode();
     let extension = get_file_extension(file_name);
-    let icon = config.icons.file_icon(&extension);
+    let icon = config.icons.file_icon(file_name, &extension);
 
     let mut filename_cell = if st_mode.has_mask_set(c::S_ISUID) {
         create_filename_cell(file_name, ls_colors.setuid_style(), icon)
@@ -126,7 +126,7 @@ fn internal_format_regular_file(
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let extension = get_file_extension(file_name);
-    let icon = config.icons.file_icon(&extension);
+    let icon = config.icons.file_icon(file_name, &extension);
 
     if extension.is_empty() {
         return create_filename_cell(file_name, ls_colors.file_style(), icon);
@@ -147,7 +147,7 @@ fn internal_format_regular_file(
 fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -> DisplayCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
-    let icon = config.icons.dir_icon();
+    let icon = config.icons.dir_icon(file_name);
 
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
