@@ -50,21 +50,30 @@ fn internal_format_unix_file_type_exts(
 ) -> DisplayCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
-    let icon = &config.icons;
+    let icons = &config.icons;
 
     if file_type.is_block_device() {
-        return create_filename_cell(file_name, ls_colors.block_device_style(), icon.block_device);
+        return create_filename_cell(
+            file_name,
+            ls_colors.block_device_style(),
+            icons.block_device_icon(),
+        );
     } else if file_type.is_char_device() {
-        return create_filename_cell(file_name, ls_colors.char_device_style(), icon.char_device);
+        return create_filename_cell(
+            file_name,
+            ls_colors.char_device_style(),
+            icons.char_device_icon(),
+        );
     } else if file_type.is_fifo() {
-        let mut filename_cell = create_filename_cell(file_name, ls_colors.fifo_style(), icon.fifo);
+        let mut filename_cell =
+            create_filename_cell(file_name, ls_colors.fifo_style(), icons.fifo_icon());
         if indicator_style.others() {
             filename_cell.push_char(IndicatorStyle::FIFO);
         }
         return filename_cell;
     } else if file_type.is_socket() {
         let mut filename_cell =
-            create_filename_cell(file_name, ls_colors.socket_style(), icon.socket);
+            create_filename_cell(file_name, ls_colors.socket_style(), icons.socket_icon());
         if indicator_style.others() {
             filename_cell.push_char(IndicatorStyle::SOCKET);
         }
@@ -84,7 +93,8 @@ fn internal_format_regular_file(
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let st_mode = metadata.mode();
-    let icon = config.icons.file;
+    let extension = get_file_extension(file_name);
+    let icon = config.icons.file_icon(&extension);
 
     let mut filename_cell = if st_mode.has_mask_set(c::S_ISUID) {
         create_filename_cell(file_name, ls_colors.setuid_style(), icon)
@@ -94,13 +104,10 @@ fn internal_format_regular_file(
         create_filename_cell(file_name, ls_colors.exec_style(), icon)
     } else if metadata.nlink() > 1 {
         create_filename_cell(file_name, ls_colors.multiple_hard_links_style(), icon)
+    } else if extension.is_empty() {
+        create_filename_cell(file_name, ls_colors.file_style(), icon)
     } else {
-        let extension = get_file_extension(file_name);
-        if extension.is_empty() {
-            create_filename_cell(file_name, ls_colors.file_style(), icon)
-        } else {
-            create_filename_cell(file_name, ls_colors.extension_style(extension), icon)
-        }
+        create_filename_cell(file_name, ls_colors.extension_style(extension), icon)
     };
 
     if indicator_style.others() && st_mode.has_bit_in_mask_set(EXEC_MASK) {
@@ -119,7 +126,7 @@ fn internal_format_regular_file(
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let extension = get_file_extension(file_name);
-    let icon = config.icons.file;
+    let icon = config.icons.file_icon(&extension);
 
     if extension.is_empty() {
         return create_filename_cell(file_name, ls_colors.file_style(), icon);
@@ -140,7 +147,7 @@ fn internal_format_regular_file(
 fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -> DisplayCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
-    let icon = config.icons.dir;
+    let icon = config.icons.dir_icon();
 
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
@@ -172,7 +179,7 @@ fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -
 fn internal_format_symlink(path: &Path, file_name: &str, config: &Config) -> DisplayCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
-    let icon = config.icons.symlink;
+    let icon = config.icons.symlink_icon();
 
     let mut filename_cell = create_filename_cell(file_name, ls_colors.symlink_style(), icon);
 

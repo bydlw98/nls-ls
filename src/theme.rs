@@ -106,20 +106,24 @@ impl ThemeConfig {
 
 #[derive(Debug, Default)]
 pub struct IconTheme {
-    pub file: Option<char>,
-    pub dir: Option<char>,
-    pub symlink: Option<char>,
+    file: Option<char>,
+    dir: Option<char>,
+    symlink: Option<char>,
     #[cfg(unix)]
-    pub block_device: Option<char>,
+    block_device: Option<char>,
     #[cfg(unix)]
-    pub char_device: Option<char>,
+    char_device: Option<char>,
     #[cfg(unix)]
-    pub fifo: Option<char>,
+    fifo: Option<char>,
     #[cfg(unix)]
-    pub socket: Option<char>,
+    socket: Option<char>,
 }
 
 impl IconTheme {
+    const COMPRESSED: Option<char> = Some('\u{f410}');
+    const IMAGE: Option<char> = Some('\u{f1c5}');
+    const SHELL: Option<char> = Some('\u{ebca}');
+
     pub fn with_default_icons() -> Self {
         Self {
             file: Some('\u{f4a5}'),
@@ -134,5 +138,71 @@ impl IconTheme {
             #[cfg(unix)]
             socket: Some('='),
         }
+    }
+
+    pub fn file_icon(&self, extension: &str) -> Option<char> {
+        if self.file.is_none() {
+            None
+        } else if extension.is_empty() {
+            self.file
+        } else {
+            match extension {
+                "7z" => Self::COMPRESSED,
+                "bash" => Self::SHELL,
+                "bz2" => Self::COMPRESSED,
+                "c" => Some('\u{e649}'),
+                "cpp" => Some('\u{e646}'),
+                "css" => Some('\u{e749}'),
+                "gz" => Self::COMPRESSED,
+                "html" => Some('\u{e736}'),
+                "json" => Some('\u{e60b}'),
+                "jpeg" => Self::IMAGE,
+                "jpg" => Self::IMAGE,
+                "js" => Some('\u{e74e}'),
+                "lock" => Some('\u{e672}'),
+                "lua" => Some('\u{e620}'),
+                "md" => Some('\u{e73e}'),
+                "mp3" => Some('\u{f001}'),
+                "mp4" => Some('\u{f03d}'),
+                "pdf" => Some('\u{f1c1}'),
+                "png" => Self::IMAGE,
+                "py" => Some('\u{e73c}'),
+                "rs" => Some('\u{e7a8}'),
+                "sh" => Self::SHELL,
+                "vim" => Some('\u{e7c5}'),
+                "xz" => Self::COMPRESSED,
+                "zip" => Self::COMPRESSED,
+                "zsh" => Self::SHELL,
+                _ => self.file,
+            }
+        }
+    }
+
+    pub fn dir_icon(&self) -> Option<char> {
+        self.dir
+    }
+
+    pub fn symlink_icon(&self) -> Option<char> {
+        self.symlink
+    }
+
+    #[cfg(unix)]
+    pub fn block_device_icon(&self) -> Option<char> {
+        self.block_device
+    }
+
+    #[cfg(unix)]
+    pub fn char_device_icon(&self) -> Option<char> {
+        self.char_device
+    }
+
+    #[cfg(unix)]
+    pub fn fifo_icon(&self) -> Option<char> {
+        self.fifo
+    }
+
+    #[cfg(unix)]
+    pub fn socket_icon(&self) -> Option<char> {
+        self.socket
     }
 }
