@@ -121,6 +121,7 @@ pub struct IconTheme {
 
 impl IconTheme {
     const COMPRESSED: Option<char> = Some('\u{f410}');
+    const FONT: Option<char> = Some('\u{e659}');
     const GIT: Option<char> = Some('\u{e702}');
     const IMAGE: Option<char> = Some('\u{f1c5}');
     const PYTHON: Option<char> = Some('\u{e73c}');
@@ -203,11 +204,13 @@ impl IconTheme {
                 "md" => Some('\u{e73e}'),
                 "mp3" => Some('\u{f001}'),
                 "mp4" => Some('\u{f03d}'),
+                "otf" => Self::FONT,
                 "pdf" => Some('\u{f1c1}'),
                 "png" => Self::IMAGE,
                 "py" => Self::PYTHON,
                 "rs" => Self::RUST,
                 "sh" => Self::SHELL,
+                "ttf" => Self::FONT,
                 "vim" => Self::VIM,
                 "xz" => Self::COMPRESSED,
                 "zip" => Self::COMPRESSED,
@@ -224,6 +227,7 @@ impl IconTheme {
             match file_name {
                 "bash-completion" => Self::SHELL,
                 ".cargo" => Self::RUST,
+                "fonts" => Self::FONT,
                 ".git" => Some('\u{e5fb}'),
                 ".github" => Some('\u{e65b}'),
                 "__pycache__" => Self::PYTHON,
