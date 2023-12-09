@@ -138,7 +138,6 @@ impl fmt::Display for Display<'_> {
 
         for row_index in 0..self.dimentions.num_rows {
             for column_index in 0..num_columns {
-                cell_count += 1;
                 let cell_index = match self.grid.direction {
                     Direction::LeftToRight => row_index * num_columns + column_index,
                     Direction::TopToBottom => row_index + self.dimentions.num_rows * column_index,
@@ -150,6 +149,7 @@ impl fmt::Display for Display<'_> {
                     continue;
                 }
 
+                cell_count += 1;
                 let cell = &self.grid.cells_vec[cell_index];
 
                 // if (the current column is the last column or is the last cell)
