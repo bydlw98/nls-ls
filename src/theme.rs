@@ -121,9 +121,15 @@ pub struct IconTheme {
 
 impl IconTheme {
     const COMPRESSED: Option<char> = Some('\u{f410}');
+    const CONFIG: Option<char> = Some('\u{e615}');
+    const CPP: Option<char> = Some('\u{e646}');
+    const CSHARP: Option<char> = Some('\u{e648}');
+    const EMACS: Option<char> = Some('\u{e632}');
     const FONT: Option<char> = Some('\u{e659}');
     const GIT: Option<char> = Some('\u{e702}');
+    const HEADER: Option<char> = Some('\u{f0fd}');
     const IMAGE: Option<char> = Some('\u{f1c5}');
+    const JAVA: Option<char> = Some('\u{e738}');
     const PYTHON: Option<char> = Some('\u{e73c}');
     const RUST: Option<char> = Some('\u{e7a8}');
     const SHELL: Option<char> = Some('\u{ebca}');
@@ -150,6 +156,7 @@ impl IconTheme {
             None
         } else {
             match file_name {
+                "bash.bashrc" => Self::SHELL,
                 ".bash_aliases" => Self::SHELL,
                 ".bash_history" => Self::SHELL,
                 ".bash_login" => Self::SHELL,
@@ -159,6 +166,8 @@ impl IconTheme {
                 "Cargo.lock" => Self::RUST,
                 "Cargo.toml" => Self::RUST,
                 "Cargo.toml.orig" => Self::RUST,
+                "config" => Self::CONFIG,
+                ".csproj" => Self::CSHARP,
                 ".gitattributes" => Self::GIT,
                 ".gitconfig" => Self::GIT,
                 ".gitignore" => Self::GIT,
@@ -191,10 +200,28 @@ impl IconTheme {
                 "bash" => Self::SHELL,
                 "bz2" => Self::COMPRESSED,
                 "c" => Some('\u{e649}'),
-                "cpp" => Some('\u{e646}'),
+                "cc" => Self::CPP,
+                "cfg" => Self::CONFIG,
+                "class" => Self::JAVA,
+                "conf" => Self::CONFIG,
+                "cpp" => Self::CPP,
+                "cs" => Self::CSHARP,
                 "css" => Some('\u{e749}'),
+                "csx" => Self::CSHARP,
+                "cxx" => Self::CPP,
+                "db" => Some('\u{e706}'),
+                "diff" => Some('\u{e728}'),
+                "el" => Self::EMACS,
+                "elc" => Self::EMACS,
                 "gz" => Self::COMPRESSED,
+                "h" => Self::HEADER,
+                "hh" => Self::HEADER,
+                "hpp" => Self::HEADER,
+                "hxx" => Self::HEADER,
                 "html" => Some('\u{e736}'),
+                "ini" => Self::CONFIG,
+                "jar" => Self::JAVA,
+                "java" => Self::JAVA,
                 "json" => Some('\u{e60b}'),
                 "jpeg" => Self::IMAGE,
                 "jpg" => Self::IMAGE,
@@ -208,11 +235,21 @@ impl IconTheme {
                 "pdf" => Some('\u{f1c1}'),
                 "png" => Self::IMAGE,
                 "py" => Self::PYTHON,
+                "pyc" => Self::PYTHON,
+                "pyd" => Self::PYTHON,
+                "pyi" => Self::PYTHON,
+                "pyo" => Self::PYTHON,
+                "pyw" => Self::PYTHON,
+                "pyx" => Self::PYTHON,
+                "pyz" => Self::PYTHON,
                 "rs" => Self::RUST,
                 "sh" => Self::SHELL,
                 "ttf" => Self::FONT,
+                "toml" => Self::CONFIG,
                 "vim" => Self::VIM,
+                "whl" => Self::PYTHON,
                 "xz" => Self::COMPRESSED,
+                "yml" => Self::CONFIG,
                 "zip" => Self::COMPRESSED,
                 "zsh" => Self::SHELL,
                 _ => self.file,
@@ -227,6 +264,8 @@ impl IconTheme {
             match file_name {
                 "bash-completion" => Self::SHELL,
                 ".cargo" => Self::RUST,
+                "emacs" => Self::EMACS,
+                ".emacs.d" => Self::EMACS,
                 "fonts" => Self::FONT,
                 ".git" => Some('\u{e5fb}'),
                 ".github" => Some('\u{e65b}'),
@@ -235,6 +274,7 @@ impl IconTheme {
                 ".venv" => Self::PYTHON,
                 "vim" => Self::VIM,
                 ".vim" => Self::VIM,
+                "vimfiles" => Self::VIM,
                 "zsh" => Self::SHELL,
                 _ => self.dir,
             }
