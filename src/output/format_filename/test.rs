@@ -8,6 +8,84 @@ use std::path::Path;
 use unicode_width::UnicodeWidthStr;
 
 use crate::ls_colors::LsColors;
+use crate::output::Alignment;
+use crate::theme::IconTheme;
+
+#[test]
+fn test_create_filename_cell() {
+    let file_name = "dir1";
+
+    let cell = create_filename_cell(file_name, None, None);
+    let correct_cell = DisplayCell {
+        contents: String::from(file_name),
+        width: 4,
+        alignment: Alignment::Left,
+    };
+
+    assert_eq!(cell, correct_cell);
+}
+
+#[test]
+fn test_create_filename_cell_with_color() {
+    let mut config = Config::default();
+    config.ls_colors.init();
+    let ls_colors = &config.ls_colors;
+    let file_name = "dir1";
+
+    let cell = create_filename_cell(file_name, ls_colors.dir_style(), None);
+    let correct_cell = DisplayCell {
+        contents: format!(
+            "\x1b[{}m{}\x1b[0m",
+            ls_colors.dir_style().unwrap(),
+            file_name
+        ),
+        width: 4,
+        alignment: Alignment::Left,
+    };
+
+    assert_eq!(cell, correct_cell);
+}
+
+#[test]
+fn test_create_filename_cell_with_icon() {
+    let mut config = Config::default();
+    config.icons = IconTheme::with_default_icons();
+    let icons = &config.icons;
+    let file_name = "dir1";
+
+    let cell = create_filename_cell(file_name, None, icons.dir_icon(file_name));
+    let correct_cell = DisplayCell {
+        contents: format!("{} {}", icons.dir_icon(file_name).unwrap(), file_name),
+        width: 6,
+        alignment: Alignment::Left,
+    };
+
+    assert_eq!(cell, correct_cell);
+}
+
+#[test]
+fn test_create_filename_cell_with_icon_and_color() {
+    let mut config = Config::default();
+    config.ls_colors.init();
+    let ls_colors = &config.ls_colors;
+    config.icons = IconTheme::with_default_icons();
+    let icons = &config.icons;
+    let file_name = "dir1";
+
+    let cell = create_filename_cell(file_name, ls_colors.dir_style(), icons.dir_icon(file_name));
+    let correct_cell = DisplayCell {
+        contents: format!(
+            "\x1b[{}m{} {}\x1b[0m",
+            ls_colors.dir_style().unwrap(),
+            icons.dir_icon(file_name).unwrap(),
+            file_name
+        ),
+        width: 6,
+        alignment: Alignment::Left,
+    };
+
+    assert_eq!(cell, correct_cell);
+}
 
 #[test]
 fn test_format_filename_regular_file() {
