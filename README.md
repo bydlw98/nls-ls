@@ -5,7 +5,7 @@
 
 Yet another ls(1) implementation
 
-![screenshot](https://github.com/bydlw98/nls-ls/assets/108581910/8d37adbe-929e-4c02-95aa-fcf996059bfb)
+![screenshot](https://github.com/bydlw98/nls-ls/assets/108581910/f1b1dcc6-198b-41a4-a840-92d37c5a0913)
 
 ## Features
 
