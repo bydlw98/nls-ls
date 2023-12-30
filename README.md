@@ -10,6 +10,7 @@ Yet another ls(1) implementation
 ## Features
 
 * Color support for all columns
+* Icons support (through ![Nerd Fonts](https://www.nerdfonts.com))
 * Ignore files set in '.gitignore' files (through '--gitignore' flag)
 * Cross-platform support (Linux and Windows)
 
@@ -52,6 +53,9 @@ Options:
           List entries along with their file inode number
   -I, --ignore-glob <PATTERN>
           Ignore entries matching glob pattern
+      --icons [<WHEN>]
+          Flag to control when to display icons [possible values: always, auto,
+          never]
       --iec
           Format size using factors of 1024 like 1.0Ki 200Mi 3.0Gi etc
       --ignore-file
