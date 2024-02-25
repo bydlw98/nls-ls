@@ -743,8 +743,7 @@ fn test_format_filename_executable_setgid_file() {
 #[cfg(windows)]
 #[test]
 fn test_format_filename_executable_regular_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.exec_style();
 
     let file_name = "file.exe";
