@@ -28,7 +28,7 @@ fn test_create_filename_cell() {
 #[test]
 fn test_create_filename_cell_with_color() {
     let mut config = Config::default();
-    config.ls_colors.init();
+    config.ls_colors = LsColors::with_colors();
     let ls_colors = &config.ls_colors;
     let file_name = "dir1";
 
@@ -66,7 +66,7 @@ fn test_create_filename_cell_with_icon() {
 #[test]
 fn test_create_filename_cell_with_icon_and_color() {
     let mut config = Config::default();
-    config.ls_colors.init();
+    config.ls_colors = LsColors::with_colors();
     let ls_colors = &config.ls_colors;
     config.icons = IconTheme::with_default_icons();
     let icons = &config.icons;
@@ -89,8 +89,7 @@ fn test_create_filename_cell_with_icon_and_color() {
 
 #[test]
 fn test_format_filename_regular_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.file_style();
     let file_name = "file";
 
@@ -119,8 +118,7 @@ fn test_format_filename_regular_file() {
 
 #[test]
 fn test_format_filename_file_with_extension() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.extension_style(String::from("jpeg"));
     let file_name = "file.jpeg";
 
@@ -150,8 +148,7 @@ fn test_format_filename_file_with_extension() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_setuid_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.setuid_style();
     let mode: Option<u32> = Some(0o644 | c::S_ISUID);
     let file_name = "file";
@@ -182,8 +179,7 @@ fn test_format_filename_setuid_file() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_setgid_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.setgid_style();
     let mode: Option<u32> = Some(0o644 | c::S_ISGID);
     let file_name = "file";
@@ -214,8 +210,7 @@ fn test_format_filename_setgid_file() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_multiple_hard_links_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.multiple_hard_links_style();
 
     internal_test_format_filename_multiple_hard_links_file(
@@ -238,8 +233,7 @@ fn test_format_filename_multiple_hard_links_file() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_executable_regular_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.exec_style();
     let default_mode: u32 = 0o644;
     let file_name = "file";
@@ -409,8 +403,7 @@ fn test_format_filename_executable_regular_file() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_executable_setuid_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.setuid_style();
     let default_mode: u32 = 0o644 | c::S_ISUID;
     let file_name = "file";
@@ -580,8 +573,7 @@ fn test_format_filename_executable_setuid_file() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_executable_setgid_file() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.setgid_style();
     let default_mode: u32 = 0o644 | c::S_ISGID;
     let file_name = "file";
@@ -827,8 +819,7 @@ fn test_format_filename_executable_regular_file() {
 
 #[test]
 fn test_format_filename_regular_dir() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.dir_style();
 
     internal_test_format_filename_dir(None, IndicatorStyle::Never, false, ansi_style_str);
@@ -839,8 +830,7 @@ fn test_format_filename_regular_dir() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_sticky_dir() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.dir_sticky_style();
     let mode: Option<u32> = Some(0o755 | c::S_ISVTX);
 
@@ -852,8 +842,7 @@ fn test_format_filename_sticky_dir() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_other_writeable_dir() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.dir_other_writeable_style();
     let mode: Option<u32> = Some(0o755 | c::S_IWOTH);
 
@@ -865,8 +854,7 @@ fn test_format_filename_other_writeable_dir() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_sticky_and_other_writeable_dir() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.dir_sticky_and_other_writeable_style();
     let mode: Option<u32> = Some(0o755 | c::S_ISVTX | c::S_IWOTH);
 
@@ -878,8 +866,7 @@ fn test_format_filename_sticky_and_other_writeable_dir() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_symlink_non_long_format() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.symlink_style();
 
     internal_test_format_filename_symlink_non_long_format(
@@ -902,8 +889,7 @@ fn test_format_filename_symlink_non_long_format() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_symlink_long_format() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.symlink_style();
 
     internal_test_format_filename_symlink_long_format(IndicatorStyle::Never, false, ansi_style_str);
@@ -918,8 +904,7 @@ fn test_format_filename_symlink_long_format() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_block_device() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.block_device_style();
 
     internal_test_format_filename_block_device(IndicatorStyle::Never, ansi_style_str);
@@ -930,8 +915,7 @@ fn test_format_filename_block_device() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_char_device() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.char_device_style();
 
     internal_test_format_filename_char_device(IndicatorStyle::Never, ansi_style_str);
@@ -942,8 +926,7 @@ fn test_format_filename_char_device() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_fifo() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.fifo_style();
 
     internal_test_format_filename_fifo(IndicatorStyle::Never, false, ansi_style_str);
@@ -954,8 +937,7 @@ fn test_format_filename_fifo() {
 #[cfg(unix)]
 #[test]
 fn test_format_filename_socket() {
-    let mut ls_colors = LsColors::default();
-    ls_colors.init();
+    let ls_colors = LsColors::with_colors();
     let ansi_style_str = ls_colors.socket_style();
 
     internal_test_format_filename_socket(IndicatorStyle::Never, false, ansi_style_str);
@@ -1103,7 +1085,7 @@ fn internal_test_format_filename_symlink_long_format(
 
     assert_eq!(filename_cell, correct_filename_cell);
 
-    config.ls_colors.init();
+    config.ls_colors = LsColors::with_colors();
     let filename_cell_with_color = format_filename(
         &symlink_path,
         &symlink_path_string,
@@ -1234,7 +1216,7 @@ fn internal_test_format_filename_common(
     }
     assert_eq!(filename_cell, correct_filename_cell);
 
-    config.ls_colors.init();
+    config.ls_colors = LsColors::with_colors();
     let filename_cell_with_color = format_filename(path, &path_string, &metadata, &config);
     let mut correct_filename_cell_with_color = match &ansi_style_str {
         Some(ansi_style_str) => {

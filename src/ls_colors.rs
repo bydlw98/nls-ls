@@ -30,18 +30,22 @@ pub struct LsColors {
 }
 
 impl LsColors {
-    pub fn init(&mut self) {
+    pub fn with_colors() -> Self {
+        let mut ls_colors = Self::default();
+
         match std::env::var("LS_COLORS") {
-            Ok(ls_colors_string) => self.parse(ls_colors_string),
+            Ok(ls_colors_string) => ls_colors.parse(ls_colors_string),
             Err(err) => {
                 log::debug!(
                     "unable to get value of environment variable 'LS_COLORS': {}",
                     err
                 );
                 log::debug!("default LS_COLORS will be used");
-                self.parse(String::from(DEFAULT_LS_COLORS));
+                ls_colors.parse(String::from(DEFAULT_LS_COLORS));
             }
         }
+
+        ls_colors
     }
 
     fn parse(&mut self, ls_colors_string: String) {

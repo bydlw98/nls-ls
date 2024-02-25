@@ -6,6 +6,9 @@ use std::process;
 use crate::ls_colors::LsColors;
 use crate::theme::{IconTheme, ThemeConfig};
 
+const HELP: &str = include_str!(concat!(env!("OUT_DIR"), "/help-page.txt"));
+const VERSION: &str = concat!("nls-ls ", env!("CARGO_PKG_VERSION"));
+
 #[derive(Debug)]
 pub struct Config {
     pub is_atty: bool,
@@ -49,10 +52,13 @@ impl Config {
             config.icons = IconTheme::with_default_icons();
             config.output_format = OutputFormat::Vertical;
         }
-        config.parse_args(std::env::args_os().skip(1), &mut path_args_vec);
+        if let Err(err) = config.parse_args(std::env::args_os().skip(1), &mut path_args_vec) {
+            eprintln!("nls: {}", err);
+            process::exit(1);
+        }
 
         if config.color {
-            config.ls_colors.init();
+            config.ls_colors = LsColors::with_colors();
             config.theme = ThemeConfig::with_default_colors();
         }
 
@@ -71,340 +77,219 @@ impl Config {
         &mut self,
         raw: impl IntoIterator<Item = impl Into<OsString>>,
         path_args_vec: &mut Vec<PathBuf>,
-    ) {
-        let raw = clap_lex::RawArgs::new(raw);
-        let mut cursor = raw.cursor();
-        // raw.next(&mut cursor); // Skip the bin
+    ) -> anyhow::Result<()> {
+        use anyhow::anyhow;
+        use lexopt::prelude::*;
 
-        while let Some(arg) = raw.next(&mut cursor) {
-            // if arg is "--"
-            if arg.is_escape() {
-                path_args_vec.extend(raw.remaining(&mut cursor).map(PathBuf::from));
-            } else if let Some(mut shorts) = arg.to_short() {
-                while let Some(short) = shorts.next_flag() {
-                    match short {
-                        Ok('a') => {
-                            self.list_current_and_parent_dirs = true;
-                            self.ignore_hidden = false;
-                        }
-                        Ok('A') => {
-                            self.list_current_and_parent_dirs = false;
-                            self.ignore_hidden = false;
-                        }
-                        Ok('c') => {
-                            self.timestamp_used = TimestampUsed::Changed;
-                        }
-                        Ok('C') => {
-                            self.output_format = OutputFormat::Vertical;
-                        }
-                        Ok('d') => {
-                            self.list_dir = false;
-                        }
-                        Ok('F') => {
-                            self.indicator_style = IndicatorStyle::Classify;
-                        }
-                        Ok('g') => {
-                            self.list_owner = false;
-                            self.output_format = OutputFormat::Long;
-                        }
-                        Ok('h') => {
-                            self.size_format = SizeFormat::HumanReadable;
-                            self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
-                        }
-                        Ok('H') => {
-                            self.dereference = false;
-                            self.dereference_cmdline_symlink = true;
-                            self.dereference_cmdline_symlink_dir = true;
-                        }
-                        Ok('i') => {
-                            self.list_inode = true;
-                        }
-                        Ok('I') => match shorts.next_value_os() {
-                            Some(pattern) => {
-                                self.ignore_glob_vec
-                                    .push(format!("!{}", pattern.to_string_lossy()));
-                            }
-                            None => {
-                                eprintln!("nls: '-I' requires an argument");
-                                process::exit(1);
-                            }
-                        },
-                        Ok('k') => {
-                            if self.size_format.is_raw() {
-                                self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
-                            }
-                        }
-                        Ok('l') => {
-                            self.output_format = OutputFormat::Long;
-                        }
-                        Ok('L') => {
-                            self.dereference = true;
-                            self.dereference_cmdline_symlink = true;
-                            self.dereference_cmdline_symlink_dir = true;
-                        }
-                        Ok('n') => {
-                            self.numeric_uid_gid = true;
-                            self.output_format = OutputFormat::Long;
-                        }
-                        Ok('o') => {
-                            self.list_group = false;
-                            self.output_format = OutputFormat::Long;
-                        }
-                        Ok('p') => {
-                            self.indicator_style = IndicatorStyle::Slash;
-                        }
-                        Ok('r') => {
-                            self.reverse = true;
-                        }
-                        Ok('R') => {
-                            self.recursive = true;
-                        }
-                        Ok('s') => {
-                            self.list_allocated_size = true;
-                        }
-                        Ok('S') => {
-                            self.sorting_order = SortingOrder::Size;
-                        }
-                        Ok('t') => {
-                            self.sorting_order = SortingOrder::Timestamp;
-                        }
-                        Ok('u') => {
-                            self.timestamp_used = TimestampUsed::Accessed;
-                        }
-                        Ok('x') => {
-                            self.output_format = OutputFormat::Across;
-                        }
-                        Ok('1') => {
-                            self.output_format = OutputFormat::SingleColumn;
-                        }
-                        Ok(ch) => {
-                            eprintln!("nls: Unexpected flag: '-{}'", ch);
-                            process::exit(1);
-                        }
-                        Err(err) => {
-                            eprintln!("nls: Unexpected flag: '-{}'", err.to_string_lossy());
-                            process::exit(1);
-                        }
-                    }
+        let mut parser = lexopt::Parser::from_args(raw);
+        while let Some(arg) = parser.next()? {
+            match arg {
+                Value(value) => {
+                    path_args_vec.push(value.into());
                 }
-            } else if let Some((long, value)) = arg.to_long() {
-                match long {
-                    Ok("all") => {
-                        self.list_current_and_parent_dirs = true;
-                        self.ignore_hidden = false;
-                    }
-                    Ok("almost-all") => {
-                        self.list_current_and_parent_dirs = false;
-                        self.ignore_hidden = false;
-                    }
-                    Ok("allocated-bytes") => {
-                        if self.size_format.is_raw() {
-                            self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
-                        }
-                    }
-                    Ok("color") => match value {
-                        Some(when) => {
-                            if when == "always" {
-                                self.color = true;
-                            } else if when == "auto" {
-                                self.color = self.is_atty;
-                            } else if when == "never" {
-                                self.color = false;
-                            } else {
-                                eprintln!(
-                                    "nls: '{}' is an invalid argument for '--color'",
-                                    when.to_string_lossy()
-                                );
-                                eprintln!(
-                                    "     possible arguments are ['always', 'auto', 'never']"
-                                );
-                                process::exit(1);
-                            }
-                        }
-                        None => self.color = true,
-                    },
-                    Ok("classify") => {
-                        self.indicator_style = IndicatorStyle::Classify;
-                    }
-                    Ok("dereference") => {
-                        self.dereference = true;
-                        self.dereference_cmdline_symlink = true;
-                        self.dereference_cmdline_symlink_dir = true;
-                    }
-                    Ok("dereference-command-line") => {
-                        self.dereference = false;
-                        self.dereference_cmdline_symlink = true;
-                        self.dereference_cmdline_symlink_dir = true;
-                    }
-                    Ok("directory") => {
-                        self.list_dir = false;
-                    }
-                    Ok("gitignore") => {
-                        self.git_ignore = true;
-                    }
-                    Ok("help") => {
-                        println!(
-                            "{}",
-                            include_str!(concat!(env!("OUT_DIR"), "/help-page.txt"))
-                        );
-                        process::exit(0);
-                    }
-                    Ok("human-readable") => {
-                        self.size_format = SizeFormat::HumanReadable;
+                Short('a') | Long("all") => {
+                    self.list_current_and_parent_dirs = true;
+                    self.ignore_hidden = false;
+                }
+                Short('A') | Long("almost-all") => {
+                    self.list_current_and_parent_dirs = false;
+                    self.ignore_hidden = false;
+                }
+                Long("allocated-bytes") => {
+                    if self.size_format.is_raw() {
                         self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
                     }
-
-                    Ok("icons") => match value {
-                        Some(when) => {
-                            if when == "always" {
+                }
+                Short('c') => {
+                    self.timestamp_used = TimestampUsed::Changed;
+                }
+                Short('C') => {
+                    self.output_format = OutputFormat::Vertical;
+                }
+                Long("color") => match parser.optional_value() {
+                    Some(when) => {
+                        if when == "always" {
+                            self.color = true;
+                        } else if when == "auto" {
+                            self.color = self.is_atty;
+                        } else if when == "never" {
+                            self.color = false;
+                        } else {
+                            return Err(anyhow!(
+                                "'{}' is an invalid argument for '--color'\n\
+                                 possible arguments are ['always', 'auto', 'never']",
+                                when.to_string_lossy()
+                            ));
+                        }
+                    }
+                    None => self.color = true,
+                },
+                Short('d') | Long("directory") => {
+                    self.list_dir = false;
+                }
+                Short('F') | Long("classify") => {
+                    self.indicator_style = IndicatorStyle::Classify;
+                }
+                Short('g') => {
+                    self.list_owner = false;
+                    self.output_format = OutputFormat::Long;
+                }
+                Long("gitignore") => {
+                    self.git_ignore = true;
+                }
+                Short('h') | Long("human-readable") => {
+                    self.size_format = SizeFormat::HumanReadable;
+                    self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
+                }
+                Short('H') | Long("dereference-command-line") => {
+                    self.dereference = false;
+                    self.dereference_cmdline_symlink = true;
+                    self.dereference_cmdline_symlink_dir = true;
+                }
+                Long("help") => {
+                    println!("{}", HELP);
+                    process::exit(0);
+                }
+                Short('i') | Long("inode") => {
+                    self.list_inode = true;
+                }
+                Short('I') | Long("ignore-glob") => {
+                    let value_os = parser.value()?;
+                    self.ignore_glob_vec
+                        .push(format!("!{}", value_os.to_string_lossy()));
+                }
+                Long("icons") => match parser.optional_value() {
+                    Some(when) => {
+                        if when == "always" {
+                            self.icons = IconTheme::with_default_icons();
+                        } else if when == "auto" {
+                            if self.is_atty {
                                 self.icons = IconTheme::with_default_icons();
-                            } else if when == "auto" {
-                                if self.is_atty {
-                                    self.icons = IconTheme::with_default_icons();
-                                } else {
-                                    self.icons = IconTheme::default();
-                                }
-                            } else if when == "never" {
+                            } else {
                                 self.icons = IconTheme::default();
-                            } else {
-                                eprintln!(
-                                    "nls: '{}' is an invalid argument for '--icons'\n\
-                                          possible arguments are ['always', 'auto', 'never']",
-                                    when.to_string_lossy()
-                                );
-                                process::exit(1);
                             }
-                        }
-                        None => self.icons = IconTheme::with_default_icons(),
-                    },
-                    Ok("iec") => {
-                        self.size_format = SizeFormat::Iec;
-                        self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
-                    }
-                    Ok("ignore-glob") => match value {
-                        Some(pattern) => {
-                            self.ignore_glob_vec
-                                .push(format!("!{}", pattern.to_string_lossy()));
-                        }
-                        None => {
-                            eprintln!("nls: '--ignore-glob' requires an argument");
-                            process::exit(1);
-                        }
-                    },
-
-                    Ok("ignore-file") => {
-                        self.ignore_file = true;
-                    }
-                    Ok("inode") => {
-                        self.list_inode = true;
-                    }
-                    Ok("kibibytes") => {
-                        if self.size_format.is_raw() {
-                            self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
+                        } else if when == "never" {
+                            self.icons = IconTheme::default();
+                        } else {
+                            return Err(anyhow!(
+                                "'{}' is an invalid argument for '--icons'\n\
+                                 possible arguments are ['always', 'auto', 'never']",
+                                when.to_string_lossy()
+                            ));
                         }
                     }
-                    Ok("max-depth") => match value {
-                        Some(max_depth_os) => {
-                            match max_depth_os.to_string_lossy().parse::<usize>() {
-                                Ok(max_depth) => {
-                                    self.max_depth = Some(max_depth);
-                                }
-                                Err(err) => {
-                                    eprintln!(
-                                        "nls: {:?} is not a valid input for '--max-depth': {}",
-                                        max_depth_os, err
-                                    );
-                                    process::exit(1);
-                                }
-                            }
-                        }
-                        None => {
-                            eprintln!("nls: '--max-depth' requires an argument");
-                            process::exit(1);
-                        }
-                    },
-                    Ok("mode") => match value {
-                        Some(word) => {
-                            if word == "native" {
-                                self.mode_format.set_native();
-                            } else if word == "pwsh" {
-                                self.mode_format = ModeFormat::Pwsh;
-                            } else if word == "rwx" {
-                                self.mode_format = ModeFormat::Rwx;
-                            } else {
-                                eprintln!(
-                                    "nls: '{}' is an invalid argument for '--mode'",
-                                    word.to_string_lossy()
-                                );
-                                eprintln!("     possible arguments are ['native', 'pwsh', 'rwx']");
-                                process::exit(1);
-                            }
-                        }
-                        None => {
-                            eprintln!("nls: '--mode' requires an argument");
-                            eprintln!("     possible arguments are ['native', 'pwsh', 'rwx']");
-                            process::exit(1);
-                        }
-                    },
-                    Ok("numeric-uid-gid") => {
-                        self.numeric_uid_gid = true;
-                        self.output_format = OutputFormat::Long;
-                    }
-                    Ok("recursive") => {
-                        self.recursive = true;
-                    }
-                    Ok("reverse") => {
-                        self.reverse = true;
-                    }
-                    Ok("si") => {
-                        self.size_format = SizeFormat::Si;
-                        self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
-                    }
-                    Ok("size") => {
-                        self.list_allocated_size = true;
-                    }
-                    Ok("time") => match value {
-                        Some(timestamp_used) => {
-                            if timestamp_used == "accessed" || timestamp_used == "atime" {
-                                self.timestamp_used = TimestampUsed::Accessed;
-                            } else if timestamp_used == "changed" || timestamp_used == "ctime" {
-                                self.timestamp_used = TimestampUsed::Changed;
-                            } else if timestamp_used == "created" || timestamp_used == "btime" {
-                                self.timestamp_used = TimestampUsed::Created;
-                            } else if timestamp_used == "modified" || timestamp_used == "mtime" {
-                                self.timestamp_used = TimestampUsed::Modified;
-                            } else {
-                                eprintln!(
-                                    "nls: {:?} is not a valid input for '--time'",
-                                    timestamp_used
-                                );
-                                eprintln!(
-                                    "     possible arguments are ['accessed', 'changed', 'created', 'modified', 'atime', 'ctime', 'btime', 'mtime']"
-                                );
-                                process::exit(1);
-                            }
-                        }
-                        None => {
-                            eprintln!("nls: '--time' requires an argument");
-                            eprintln!(
-                                    "     possible arguments are ['accessed', 'changed', 'created', 'modified', 'atime', 'ctime', 'btime', 'mtime']"
-                            );
-                            process::exit(1);
-                        }
-                    },
-                    Ok("version") => {
-                        println!("nls-ls {}", env!("CARGO_PKG_VERSION"));
-                        process::exit(0);
-                    }
-                    _ => {
-                        eprintln!("nls: Unexpected flag '{}'", arg.display());
-                        process::exit(1);
+                    None => self.icons = IconTheme::with_default_icons(),
+                },
+                Long("iec") => {
+                    self.size_format = SizeFormat::Iec;
+                    self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
+                }
+                Long("ignore-file") => {
+                    self.ignore_file = true;
+                }
+                Short('k') | Long("kibibytes") => {
+                    if self.size_format.is_raw() {
+                        self.allocated_size_blocks = AllocatedSizeBlocks::Kibibytes;
                     }
                 }
-            } else {
-                path_args_vec.push(PathBuf::from(arg.to_value_os().to_owned()));
+                Short('l') => {
+                    self.output_format = OutputFormat::Long;
+                }
+                Short('L') | Long("dereference") => {
+                    self.dereference = true;
+                    self.dereference_cmdline_symlink = true;
+                    self.dereference_cmdline_symlink_dir = true;
+                }
+                Long("max-depth") => {
+                    let val: usize = parser.value()?.parse()?;
+                    self.max_depth = Some(val);
+                }
+                Long("mode") => {
+                    let word = parser.value()?;
+
+                    if word == "native" {
+                        self.mode_format.set_native();
+                    } else if word == "pwsh" {
+                        self.mode_format = ModeFormat::Pwsh;
+                    } else if word == "rwx" {
+                        self.mode_format = ModeFormat::Rwx;
+                    } else {
+                        return Err(anyhow!(
+                            "'{}' is an invalid argument for '--mode'\n\
+                             possible arguments are ['native', 'pwsh', 'rwx']",
+                            word.to_string_lossy()
+                        ));
+                    }
+                }
+                Short('n') | Long("numeric-uid-gid") => {
+                    self.numeric_uid_gid = true;
+                    self.output_format = OutputFormat::Long;
+                }
+                Short('o') => {
+                    self.list_group = false;
+                    self.output_format = OutputFormat::Long;
+                }
+                Short('p') => {
+                    self.indicator_style = IndicatorStyle::Slash;
+                }
+                Short('r') | Long("reverse") => {
+                    self.reverse = true;
+                }
+                Short('R') | Long("recursive") => {
+                    self.recursive = true;
+                }
+                Short('s') | Long("size") => {
+                    self.list_allocated_size = true;
+                }
+                Short('S') => {
+                    self.sorting_order = SortingOrder::Size;
+                }
+                Long("si") => {
+                    self.size_format = SizeFormat::Si;
+                    self.allocated_size_blocks = AllocatedSizeBlocks::Raw;
+                }
+                Short('t') => {
+                    self.sorting_order = SortingOrder::Timestamp;
+                }
+                Long("time") => {
+                    let word = parser.value()?;
+
+                    if word == "accessed" || word == "atime" {
+                        self.timestamp_used = TimestampUsed::Accessed;
+                    } else if word == "changed" || word == "ctime" {
+                        self.timestamp_used = TimestampUsed::Changed;
+                    } else if word == "created" || word == "btime" {
+                        self.timestamp_used = TimestampUsed::Created;
+                    } else if word == "modified" || word == "mtime" {
+                        self.timestamp_used = TimestampUsed::Modified;
+                    } else {
+                        return Err(anyhow!(
+                            "'{}' is an invalid argument for '--time'\n\
+                             possible arguments are ['accessed', 'changed', 'created', 'modified', 'atime', 'ctime', 'btime', 'mtime']",
+                            word.to_string_lossy()
+                        ));
+                    }
+                }
+                Short('u') => {
+                    self.timestamp_used = TimestampUsed::Accessed;
+                }
+                Long("version") => {
+                    println!("{}", VERSION);
+                    process::exit(0);
+                }
+                Short('x') => {
+                    self.output_format = OutputFormat::Across;
+                }
+                Short('1') => {
+                    self.output_format = OutputFormat::SingleColumn;
+                }
+                _ => {
+                    return Err(anyhow!(arg.unexpected()));
+                }
             }
         }
+
+        Ok(())
     }
 }
 
