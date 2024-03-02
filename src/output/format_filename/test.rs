@@ -1115,7 +1115,12 @@ fn internal_test_format_filename_block_device(
     indicator_style: IndicatorStyle,
     ansi_style_str: Option<&str>,
 ) {
+    #[cfg(target_os = "linux")]
     let block_device_path = Path::new("/dev/sda");
+
+    #[cfg(target_os = "macos")]
+    let block_device_path = Path::new("/dev/disk0");
+
     internal_test_format_filename_common(
         block_device_path,
         None,
