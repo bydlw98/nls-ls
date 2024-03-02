@@ -24,8 +24,9 @@ pub fn get_allocated_size(metadata: &Metadata, config: &Config) -> u64 {
 }
 
 pub fn format_rdev(rdev: u64, config: &Config) -> DisplayCell {
-    let major = unsafe { c::major(rdev) };
-    let minor = unsafe { c::minor(rdev) };
+    let raw_rdev = rdev as libc::dev_t;
+    let major = unsafe { c::major(raw_rdev) };
+    let minor = unsafe { c::minor(raw_rdev) };
     let major_minor_string = format!("{},{:>4}", major, minor);
     let rdev_style = config.theme.size_style();
 
