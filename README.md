@@ -12,7 +12,7 @@ Yet another ls(1) implementation
 * Color support for all columns
 * Icons support (through ![Nerd Fonts](https://www.nerdfonts.com))
 * Ignore files set in '.gitignore' files (through '--gitignore' flag)
-* Cross-platform support (Linux and Windows)
+* Cross-platform support (Linux, macOS and Windows)
 
 ## Command-line options
 ```
