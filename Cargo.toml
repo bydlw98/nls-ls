@@ -26,7 +26,7 @@ clap_mangen = "0.2.14"
 [dependencies]
 anyhow = "1.0.80"
 cfg-if = "1.0.0"
-chrono = { version = "0.4.31", default-features = false, features = [
+chrono = { version = "0.4.35", default-features = false, features = [
     "std",
     "clock",
 ] }
