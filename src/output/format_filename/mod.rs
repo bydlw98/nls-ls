@@ -8,6 +8,8 @@ use std::fs::Metadata;
 use std::os::unix::fs::{FileTypeExt, MetadataExt};
 use std::path::Path;
 
+use nls_term_grid::{Alignment, GridCell};
+
 use crate::config::{Config, IndicatorStyle};
 use crate::ls_colors::get_file_extension;
 #[cfg(unix)]
@@ -15,14 +17,14 @@ use crate::os::unix::sys_prelude::*;
 #[cfg(unix)]
 use crate::utils::HasMaskSetExt;
 
-use super::DisplayCell;
+use super::GridCellExts;
 
 pub fn format_filename(
     path: &Path,
     file_name: &str,
     metadata: &Metadata,
     config: &Config,
-) -> DisplayCell {
+) -> GridCell {
     let file_type = metadata.file_type();
 
     if file_type.is_file() {
@@ -36,7 +38,7 @@ pub fn format_filename(
             if #[cfg(unix)] {
                 internal_format_unix_file_type_exts(file_name, file_type, config)
             } else {
-                DisplayCell::from(file_name.to_string())
+                GridCell::from(file_name.to_string())
             }
         }
     }
@@ -47,7 +49,7 @@ fn internal_format_unix_file_type_exts(
     file_name: &str,
     file_type: FileType,
     config: &Config,
-) -> DisplayCell {
+) -> GridCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let icons = &config.icons;
@@ -79,16 +81,12 @@ fn internal_format_unix_file_type_exts(
         }
         return filename_cell;
     } else {
-        return DisplayCell::from(file_name.to_string());
+        return GridCell::from(file_name.to_string());
     }
 }
 
 #[cfg(unix)]
-fn internal_format_regular_file(
-    file_name: &str,
-    metadata: &Metadata,
-    config: &Config,
-) -> DisplayCell {
+fn internal_format_regular_file(file_name: &str, metadata: &Metadata, config: &Config) -> GridCell {
     const EXEC_MASK: u32 = c::S_IXUSR | c::S_IXGRP | c::S_IXOTH;
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
@@ -122,7 +120,7 @@ fn internal_format_regular_file(
     file_name: &str,
     _metadata: &Metadata,
     config: &Config,
-) -> DisplayCell {
+) -> GridCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let extension = get_file_extension(file_name);
@@ -144,7 +142,7 @@ fn internal_format_regular_file(
     }
 }
 
-fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -> DisplayCell {
+fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -> GridCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let icon = config.icons.dir_icon(file_name);
@@ -176,7 +174,7 @@ fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -
     filename_cell
 }
 
-fn internal_format_symlink(path: &Path, file_name: &str, config: &Config) -> DisplayCell {
+fn internal_format_symlink(path: &Path, file_name: &str, config: &Config) -> GridCell {
     let indicator_style = config.indicator_style;
     let ls_colors = &config.ls_colors;
     let icon = config.icons.symlink_icon();
@@ -224,8 +222,7 @@ fn create_filename_cell(
     file_name: &str,
     ansi_style_str: Option<&str>,
     icon: Option<char>,
-) -> DisplayCell {
-    use crate::output::Alignment;
+) -> GridCell {
     use unicode_width::UnicodeWidthStr;
 
     let mut contents = String::with_capacity(64);
@@ -250,7 +247,7 @@ fn create_filename_cell(
         contents.push_str("\x1b[0m");
     }
 
-    DisplayCell {
+    GridCell {
         contents: contents,
         width: width,
         alignment: Alignment::Left,

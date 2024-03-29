@@ -5,6 +5,8 @@ use std::os::unix::fs::{FileTypeExt, MetadataExt};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
+use nls_term_grid::{Alignment, GridCell};
+
 use crate::config::{Config, TimestampUsed};
 #[cfg(unix)]
 use crate::os::unix::*;
@@ -200,29 +202,29 @@ impl EntryBuf {
         &self.file_name_key
     }
 
-    pub fn file_name_cell(&self, config: &Config) -> DisplayCell {
+    pub fn file_name_cell(&self, config: &Config) -> GridCell {
         match &self.metadata {
             Some(metadata) => format_filename(&self.path, &self.file_name, metadata, config),
-            None => DisplayCell::from(self.file_name.clone()),
+            None => GridCell::from(self.file_name.clone()),
         }
     }
 
     #[cfg(unix)]
-    pub fn ino_cell(&self, config: &Config) -> DisplayCell {
+    pub fn ino_cell(&self, config: &Config) -> GridCell {
         let inode_style = config.theme.inode_style();
 
         match &self.ino {
-            Some(ino) => DisplayCell::from_num_with_style(*ino, inode_style),
-            None => DisplayCell::error_cell(Alignment::Right),
+            Some(ino) => GridCell::from_num_with_style(*ino, inode_style),
+            None => GridCell::error_cell(Alignment::Right),
         }
     }
 
     #[cfg(windows)]
-    pub fn ino_cell(&self, config: &Config) -> DisplayCell {
+    pub fn ino_cell(&self, config: &Config) -> GridCell {
         let inode_style = config.theme.inode_style();
 
         match get_file_id_identifier(&self.path, self.follow_links) {
-            Ok(file_id) => DisplayCell::from_u128_with_style(file_id, inode_style),
+            Ok(file_id) => GridCell::from_u128_with_style(file_id, inode_style),
             Err(err) => {
                 eprintln!(
                     "nls: unable to get inode number of '{}': {}",
@@ -230,18 +232,18 @@ impl EntryBuf {
                     err
                 );
 
-                DisplayCell::error_cell(Alignment::Right)
+                GridCell::error_cell(Alignment::Right)
             }
         }
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn ino_cell(&self, config: &Config) -> DisplayCell {
+    pub fn ino_cell(&self, config: &Config) -> GridCell {
         let inode_style = config.theme.inode_style();
 
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_str_with_style('-', inode_style),
-            None => DisplayCell::error_cell(false),
+            Some(_) => GridCell::from_ascii_str_with_style('-', inode_style),
+            None => GridCell::error_cell(false),
         }
     }
 
@@ -249,15 +251,15 @@ impl EntryBuf {
         self.allocated_size
     }
 
-    pub fn allocated_size_cell(&self, config: &Config) -> DisplayCell {
+    pub fn allocated_size_cell(&self, config: &Config) -> GridCell {
         match &self.allocated_size {
             Some(allocated_size) => format_size(*allocated_size, config),
-            None => DisplayCell::error_cell(Alignment::Right),
+            None => GridCell::error_cell(Alignment::Right),
         }
     }
 
     #[cfg(unix)]
-    pub fn mode_cell(&self, config: &Config) -> DisplayCell {
+    pub fn mode_cell(&self, config: &Config) -> GridCell {
         match &self.metadata {
             Some(metadata) => {
                 if config.mode_format.is_rwx() {
@@ -266,12 +268,12 @@ impl EntryBuf {
                     pwsh_mode_cell(metadata.mode(), &self.file_name, &self.path, config)
                 }
             }
-            None => DisplayCell::from_ascii_str_with_style("??????????", None),
+            None => GridCell::from_ascii_str_with_style("??????????", None),
         }
     }
 
     #[cfg(windows)]
-    pub fn mode_cell(&self, config: &Config) -> DisplayCell {
+    pub fn mode_cell(&self, config: &Config) -> GridCell {
         if config.mode_format.is_pwsh() {
             pwsh_mode_cell(
                 self.metadata
@@ -292,89 +294,89 @@ impl EntryBuf {
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn mode_cell(&self, config: &Config) -> DisplayCell {
+    pub fn mode_cell(&self, config: &Config) -> GridCell {
         match &self.metadata {
             Some(metadata) => {
                 let file_type = metadata.file_type();
                 let ls_colors = &config.ls_colors;
                 if file_type.is_file() {
-                    DisplayCell::from_ascii_str_with_style("-", ls_colors.file_style())
+                    GridCell::from_ascii_str_with_style("-", ls_colors.file_style())
                 } else if file_type.is_dir() {
-                    DisplayCell::from_ascii_str_with_style("d", ls_colors.dir_style())
+                    GridCell::from_ascii_str_with_style("d", ls_colors.dir_style())
                 } else if file_type.is_symlink() {
-                    DisplayCell::from_ascii_str_with_style("l", ls_colors.symlink_style())
+                    GridCell::from_ascii_str_with_style("l", ls_colors.symlink_style())
                 } else {
-                    DisplayCell::from_ascii_str_with_style("?", None)
+                    GridCell::from_ascii_str_with_style("?", None)
                 }
             }
-            None => DisplayCell::from_ascii_str_with_style("?", None),
+            None => GridCell::from_ascii_str_with_style("?", None),
         }
     }
 
     #[cfg(unix)]
-    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> GridCell {
         let nlink_style = config.theme.nlink_style();
         match &self.metadata {
-            Some(metadata) => DisplayCell::from_num_with_style(metadata.nlink(), nlink_style),
-            None => DisplayCell::error_cell(Alignment::Right),
+            Some(metadata) => GridCell::from_num_with_style(metadata.nlink(), nlink_style),
+            None => GridCell::error_cell(Alignment::Right),
         }
     }
 
     #[cfg(windows)]
-    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> GridCell {
         self.windows_metadata.nlink_cell(config)
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> GridCell {
         let nlink_style = config.theme.nlink_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_str_with_style('1', nlink_style),
-            None => DisplayCell::error_cell(Alignment::Right),
+            Some(_) => GridCell::from_ascii_str_with_style('1', nlink_style),
+            None => GridCell::error_cell(Alignment::Right),
         }
     }
 
     #[cfg(unix)]
-    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+    pub fn owner_cell(&self, config: &Config) -> GridCell {
         match &self.metadata {
             Some(metadata) => get_username_cell_by_uid(metadata.uid(), config),
-            None => DisplayCell::error_cell(Alignment::Left),
+            None => GridCell::error_cell(Alignment::Left),
         }
     }
 
     #[cfg(windows)]
-    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+    pub fn owner_cell(&self, config: &Config) -> GridCell {
         self.windows_metadata.owner_cell(config)
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+    pub fn owner_cell(&self, config: &Config) -> GridCell {
         let owner_style = config.theme.owner_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_str_with_style("-", owner_style),
-            None => DisplayCell::error_cell(Alignment::Left),
+            Some(_) => GridCell::from_ascii_str_with_style("-", owner_style),
+            None => GridCell::error_cell(Alignment::Left),
         }
     }
 
     #[cfg(unix)]
-    pub fn group_cell(&self, config: &Config) -> DisplayCell {
+    pub fn group_cell(&self, config: &Config) -> GridCell {
         match &self.metadata {
             Some(metadata) => get_groupname_cell_by_gid(metadata.gid(), config),
-            None => DisplayCell::error_cell(Alignment::Left),
+            None => GridCell::error_cell(Alignment::Left),
         }
     }
 
     #[cfg(windows)]
-    pub fn group_cell(&self, config: &Config) -> DisplayCell {
+    pub fn group_cell(&self, config: &Config) -> GridCell {
         self.windows_metadata.group_cell(config)
     }
 
     #[cfg(not(any(unix, windows)))]
-    pub fn group_cell(&self, config: &Config) -> DisplayCell {
+    pub fn group_cell(&self, config: &Config) -> GridCell {
         let group_style = config.theme.group_style();
         match &self.metadata {
-            Some(_) => DisplayCell::from_ascii_str_with_style("-", group_style),
-            None => DisplayCell::error_cell(true),
+            Some(_) => GridCell::from_ascii_str_with_style("-", group_style),
+            None => GridCell::error_cell(true),
         }
     }
 
@@ -382,7 +384,7 @@ impl EntryBuf {
         self.size
     }
 
-    pub fn size_cell(&self, config: &Config) -> DisplayCell {
+    pub fn size_cell(&self, config: &Config) -> GridCell {
         #[cfg(unix)]
         if let Some(metadata) = &self.metadata {
             let file_type = metadata.file_type();
@@ -393,7 +395,7 @@ impl EntryBuf {
 
         match &self.size {
             Some(size) => format_size(*size, config),
-            None => DisplayCell::error_cell(Alignment::Right),
+            None => GridCell::error_cell(Alignment::Right),
         }
     }
 
@@ -401,10 +403,10 @@ impl EntryBuf {
         self.timestamp
     }
 
-    pub fn timestamp_cell(&self, config: &Config) -> DisplayCell {
+    pub fn timestamp_cell(&self, config: &Config) -> GridCell {
         match &self.timestamp {
             Some(timestamp) => format_timestamp(*timestamp, config),
-            None => DisplayCell::error_cell(Alignment::Left),
+            None => GridCell::error_cell(Alignment::Left),
         }
     }
 }

@@ -5,12 +5,13 @@ use std::mem;
 use std::ptr;
 use std::sync::Mutex;
 
+use nls_term_grid::GridCell;
 use once_cell::sync::Lazy;
 
 use crate::config::Config;
-use crate::output::DisplayCell;
+use crate::output::GridCellExts;
 
-pub fn get_username_cell_by_uid(uid: u32, config: &Config) -> DisplayCell {
+pub fn get_username_cell_by_uid(uid: u32, config: &Config) -> GridCell {
     static USERS_CACHE: Lazy<Mutex<Vec<Account>>> = Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
 
     match USERS_CACHE.lock() {
@@ -39,7 +40,7 @@ pub fn get_username_cell_by_uid(uid: u32, config: &Config) -> DisplayCell {
     }
 }
 
-pub fn get_groupname_cell_by_gid(gid: u32, config: &Config) -> DisplayCell {
+pub fn get_groupname_cell_by_gid(gid: u32, config: &Config) -> GridCell {
     static GROUPS_CACHE: Lazy<Mutex<Vec<Account>>> =
         Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
 
@@ -71,7 +72,7 @@ pub fn get_groupname_cell_by_gid(gid: u32, config: &Config) -> DisplayCell {
 
 #[derive(Debug, Default)]
 struct Account {
-    name_cell: DisplayCell,
+    name_cell: GridCell,
     numeric_id: u32,
 }
 
@@ -81,7 +82,7 @@ impl Account {
 
         if config.numeric_uid_gid {
             Self {
-                name_cell: DisplayCell::from_num_with_style(uid as u64, owner_style),
+                name_cell: GridCell::from_num_with_style(uid as u64, owner_style),
                 numeric_id: uid,
             }
         } else {
@@ -99,12 +100,12 @@ impl Account {
                     let username_string = CStr::from_ptr(pwd.pw_name).to_string_lossy();
 
                     Self {
-                        name_cell: DisplayCell::from_str_with_style(&username_string, owner_style),
+                        name_cell: GridCell::from_str_with_style(&username_string, owner_style),
                         numeric_id: uid,
                     }
                 } else {
                     Self {
-                        name_cell: DisplayCell::from_num_with_style(uid as u64, owner_style),
+                        name_cell: GridCell::from_num_with_style(uid as u64, owner_style),
                         numeric_id: uid,
                     }
                 }
@@ -117,7 +118,7 @@ impl Account {
 
         if config.numeric_uid_gid {
             Self {
-                name_cell: DisplayCell::from_num_with_style(gid as u64, group_style),
+                name_cell: GridCell::from_num_with_style(gid as u64, group_style),
                 numeric_id: gid,
             }
         } else {
@@ -134,7 +135,7 @@ impl Account {
                 if return_code == 0 && (result == &mut grp) {
                     let groupname_string = CStr::from_ptr(grp.gr_name).to_string_lossy();
                     let groupname_cell =
-                        DisplayCell::from_str_with_style(&groupname_string, group_style);
+                        GridCell::from_str_with_style(&groupname_string, group_style);
 
                     Self {
                         name_cell: groupname_cell,
@@ -142,7 +143,7 @@ impl Account {
                     }
                 } else {
                     Self {
-                        name_cell: DisplayCell::from_num_with_style(gid as u64, group_style),
+                        name_cell: GridCell::from_num_with_style(gid as u64, group_style),
                         numeric_id: gid,
                     }
                 }

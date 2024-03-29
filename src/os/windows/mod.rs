@@ -16,8 +16,10 @@ use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
 use std::ptr;
 
+use nls_term_grid::{Alignment, GridCell};
+
 use crate::config::{AllocatedSizeBlocks, Config};
-use crate::output::{Alignment, DisplayCell};
+use crate::output::GridCellExts;
 
 use accounts::get_accountname_by_sid_ptr;
 use permissions::get_rwx_permissions;
@@ -118,11 +120,11 @@ impl WindowsMetadata {
         }
     }
 
-    pub fn nlink_cell(&self, config: &Config) -> DisplayCell {
+    pub fn nlink_cell(&self, config: &Config) -> GridCell {
         let nlink_style = config.theme.nlink_style();
         match &self.nlink {
-            Some(nlink) => DisplayCell::from_num_with_style(*nlink, nlink_style),
-            None => DisplayCell::error_cell(Alignment::Right),
+            Some(nlink) => GridCell::from_num_with_style(*nlink, nlink_style),
+            None => GridCell::error_cell(Alignment::Right),
         }
     }
 
@@ -130,25 +132,25 @@ impl WindowsMetadata {
         self.size
     }
 
-    pub fn owner_cell(&self, config: &Config) -> DisplayCell {
+    pub fn owner_cell(&self, config: &Config) -> GridCell {
         let owner_style = config.theme.owner_style();
         if self.owner_string == "?" {
-            DisplayCell::error_cell(Alignment::Left)
+            GridCell::error_cell(Alignment::Left)
         } else {
-            DisplayCell::from_str_with_style(&self.owner_string, owner_style)
+            GridCell::from_str_with_style(&self.owner_string, owner_style)
         }
     }
 
-    pub fn group_cell(&self, config: &Config) -> DisplayCell {
+    pub fn group_cell(&self, config: &Config) -> GridCell {
         let group_style = config.theme.group_style();
         if self.group_string == "?" {
-            DisplayCell::error_cell(Alignment::Left)
+            GridCell::error_cell(Alignment::Left)
         } else {
-            DisplayCell::from_str_with_style(&self.group_string, group_style)
+            GridCell::from_str_with_style(&self.group_string, group_style)
         }
     }
 
-    pub fn rwx_mode_cell(&self, file_type: Option<FileType>, config: &Config) -> DisplayCell {
+    pub fn rwx_mode_cell(&self, file_type: Option<FileType>, config: &Config) -> GridCell {
         mode::rwx_mode_cell(file_type, &self.rwx_permissions, config)
     }
 }

@@ -2,13 +2,14 @@ use std::time::SystemTime;
 
 use chrono::offset::{Local, TimeZone};
 use chrono::{Datelike, LocalResult, Timelike};
+use nls_term_grid::{Alignment, GridCell};
 use once_cell::sync::Lazy;
 
 use crate::config::Config;
-use crate::output::{Alignment, DisplayCell};
+use crate::output::GridCellExts;
 use crate::utils::systemtime_to_unix_timestamp;
 
-pub fn format_timestamp(timestamp: i64, config: &Config) -> DisplayCell {
+pub fn format_timestamp(timestamp: i64, config: &Config) -> GridCell {
     match Local.timestamp_opt(timestamp, 0) {
         LocalResult::Single(datetime) => {
             static SIX_MONTHS_AGO_TIMESTAMP: Lazy<i64> = Lazy::new(get_six_months_ago_timestamp);
@@ -31,9 +32,9 @@ pub fn format_timestamp(timestamp: i64, config: &Config) -> DisplayCell {
                 )
             };
 
-            DisplayCell::from_ascii_str_with_style(&timestamp_string, timestamp_style)
+            GridCell::from_ascii_str_with_style(&timestamp_string, timestamp_style)
         }
-        _ => DisplayCell::error_cell(Alignment::Left),
+        _ => GridCell::error_cell(Alignment::Left),
     }
 }
 

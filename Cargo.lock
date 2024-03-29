@@ -370,11 +370,21 @@ dependencies = [
  "lexopt",
  "libc",
  "log",
+ "nls_term_grid",
  "once_cell",
  "tempfile",
  "terminal_size",
  "unicode-width",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "nls_term_grid"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b247f5ad8588b19638e67c5bcb94e0976ffc390675c531d9e6e7ca7e8424506"
+dependencies = [
+ "unicode-width",
 ]
 
 [[package]]

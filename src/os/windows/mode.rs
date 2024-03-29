@@ -1,18 +1,20 @@
 use std::fs::FileType;
 
+use nls_term_grid::GridCell;
+
 use super::sys_prelude::*;
 
 use crate::config::Config;
-use crate::output::DisplayCell;
+use crate::output::GridCellExts;
 use crate::utils::HasMaskSetExt;
 
-pub fn pwsh_mode_cell(file_attributes: Option<u32>, config: &Config) -> DisplayCell {
+pub fn pwsh_mode_cell(file_attributes: Option<u32>, config: &Config) -> GridCell {
     let ls_colors = &config.ls_colors;
     let theme = &config.theme;
 
     match file_attributes {
         Some(file_attributes) => {
-            let mut cell = DisplayCell::with_capacity(6);
+            let mut cell = GridCell::with_capacity(6);
 
             if file_attributes.has_mask_set(c::FILE_ATTRIBUTE_DIRECTORY) {
                 cell.push_char_with_style('d', ls_colors.dir_style());
@@ -52,7 +54,7 @@ pub fn pwsh_mode_cell(file_attributes: Option<u32>, config: &Config) -> DisplayC
 
             cell
         }
-        None => DisplayCell::from_ascii_str_with_style("??????", None),
+        None => GridCell::from_ascii_str_with_style("??????", None),
     }
 }
 
@@ -60,8 +62,8 @@ pub fn rwx_mode_cell(
     file_type: Option<FileType>,
     rwx_permissions: &str,
     config: &Config,
-) -> DisplayCell {
-    let mut cell = DisplayCell::with_capacity(128);
+) -> GridCell {
+    let mut cell = GridCell::with_capacity(128);
     let ls_colors = &config.ls_colors;
     match file_type {
         Some(file_type) => {

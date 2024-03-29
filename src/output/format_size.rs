@@ -1,11 +1,13 @@
-use super::display_cell::{Alignment, DisplayCell};
-use crate::config::{Config, SizeFormat};
+use nls_term_grid::{Alignment, GridCell};
 
-pub fn format_size(size: u64, config: &Config) -> DisplayCell {
+use crate::config::{Config, SizeFormat};
+use crate::output::GridCellExts;
+
+pub fn format_size(size: u64, config: &Config) -> GridCell {
     let size_style = config.theme.size_style();
 
     match config.size_format {
-        SizeFormat::Raw => DisplayCell::from_num_with_style(size, size_style),
+        SizeFormat::Raw => GridCell::from_num_with_style(size, size_style),
         SizeFormat::HumanReadable => human_readable(size, size_style),
         SizeFormat::Si => si(size, size_style),
         SizeFormat::Iec => iec(size, size_style),
@@ -25,7 +27,7 @@ macro_rules! internal_format_size_impl {
         $prefix_6:literal
     ) => {
         if $size < u64::pow($factor, 1) {
-            DisplayCell::from_num_with_style($size, $size_style)
+            GridCell::from_num_with_style($size, $size_style)
         } else if $size < u64::pow($factor, 2) {
             format_size_with_prefix($size, u64::pow($factor, 1), $prefix_1, $size_style)
         } else if $size < u64::pow($factor, 3) {
@@ -43,17 +45,17 @@ macro_rules! internal_format_size_impl {
 }
 
 /// format size using factors of 1024 like 1.0K 200M 3.0G etc
-fn human_readable(size: u64, size_style: Option<&str>) -> DisplayCell {
+fn human_readable(size: u64, size_style: Option<&str>) -> GridCell {
     internal_format_size_impl!(size, size_style, 1024, "K", "M", "G", "T", "P", "E")
 }
 
 /// format size using factors of 1000 like 1.0k 200M 3.0G etc
-fn si(size: u64, size_style: Option<&str>) -> DisplayCell {
+fn si(size: u64, size_style: Option<&str>) -> GridCell {
     internal_format_size_impl!(size, size_style, 1000, "k", "M", "G", "T", "P", "E")
 }
 
 /// format size using factors of 1024 like 1.0Ki 200Mi 3.0Gi etc
-fn iec(size: u64, size_style: Option<&str>) -> DisplayCell {
+fn iec(size: u64, size_style: Option<&str>) -> GridCell {
     internal_format_size_impl!(size, size_style, 1024, "Ki", "Mi", "Gi", "Ti", "Pi", "Ei")
 }
 
@@ -62,13 +64,13 @@ fn format_size_with_prefix(
     factor: u64,
     prefix: &str,
     size_style: Option<&str>,
-) -> DisplayCell {
+) -> GridCell {
     let num_f64 = (num as f64) / (factor as f64);
 
     if num_f64 >= 10.0 {
         let size_string = format!("{}{}", num_f64.ceil() as u64, prefix);
 
-        let mut size_cell = DisplayCell::from_ascii_str_with_style(&size_string, size_style);
+        let mut size_cell = GridCell::from_ascii_str_with_style(&size_string, size_style);
         size_cell.alignment = Alignment::Right;
 
         size_cell
@@ -82,7 +84,7 @@ fn format_size_with_prefix(
         //      124 / 10 = 12.4
         let size_string = format!("{:.1}{}", ((num_f64 * 10.0).ceil() / 10.0), prefix);
 
-        let mut size_cell = DisplayCell::from_ascii_str_with_style(&size_string, size_style);
+        let mut size_cell = GridCell::from_ascii_str_with_style(&size_string, size_style);
         size_cell.alignment = Alignment::Right;
 
         size_cell
@@ -200,7 +202,7 @@ mod test {
         let mut config = Config::default();
 
         config.size_format = SizeFormat::Raw;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: String::from(raw_str),
             width: raw_str.len(),
             alignment: Alignment::Right,
@@ -208,7 +210,7 @@ mod test {
         assert_eq!(format_size(size, &config), correct_cell);
 
         config.size_format = SizeFormat::HumanReadable;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: String::from(human_readable_str),
             width: human_readable_str.len(),
             alignment: Alignment::Right,
@@ -216,7 +218,7 @@ mod test {
         assert_eq!(format_size(size, &config), correct_cell);
 
         config.size_format = SizeFormat::Si;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: String::from(si_str),
             width: si_str.len(),
             alignment: Alignment::Right,
@@ -224,7 +226,7 @@ mod test {
         assert_eq!(format_size(size, &config), correct_cell);
 
         config.size_format = SizeFormat::Iec;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: String::from(iec_str),
             width: iec_str.len(),
             alignment: Alignment::Right,
@@ -235,7 +237,7 @@ mod test {
         let size_style: &str = config.theme.size_style().unwrap();
 
         config.size_format = SizeFormat::Raw;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: format!("\x1b[{}m{}\x1b[0m", size_style, raw_str),
             width: raw_str.len(),
             alignment: Alignment::Right,
@@ -243,7 +245,7 @@ mod test {
         assert_eq!(format_size(size, &config), correct_cell);
 
         config.size_format = SizeFormat::HumanReadable;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: format!("\x1b[{}m{}\x1b[0m", size_style, human_readable_str),
             width: human_readable_str.len(),
             alignment: Alignment::Right,
@@ -251,7 +253,7 @@ mod test {
         assert_eq!(format_size(size, &config), correct_cell);
 
         config.size_format = SizeFormat::Si;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: format!("\x1b[{}m{}\x1b[0m", size_style, si_str),
             width: si_str.len(),
             alignment: Alignment::Right,
@@ -259,7 +261,7 @@ mod test {
         assert_eq!(format_size(size, &config), correct_cell);
 
         config.size_format = SizeFormat::Iec;
-        let correct_cell = DisplayCell {
+        let correct_cell = GridCell {
             contents: format!("\x1b[{}m{}\x1b[0m", size_style, iec_str),
             width: iec_str.len(),
             alignment: Alignment::Right,

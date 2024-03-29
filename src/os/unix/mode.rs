@@ -1,15 +1,17 @@
 use std::path::Path;
 
+use nls_term_grid::GridCell;
+
 use super::sys_prelude::*;
 
 use crate::config::Config;
-use crate::output::DisplayCell;
+use crate::output::GridCellExts;
 use crate::utils::HasMaskSetExt;
 
-pub fn rwx_mode_cell(st_mode: u32, config: &Config) -> DisplayCell {
+pub fn rwx_mode_cell(st_mode: u32, config: &Config) -> GridCell {
     let ls_colors = &config.ls_colors;
     let theme = &config.theme;
-    let mut cell = DisplayCell::with_capacity(10);
+    let mut cell = GridCell::with_capacity(10);
 
     match st_mode & c::S_IFMT {
         c::S_IFREG => cell.push_char_with_style('-', ls_colors.file_style()),
@@ -91,8 +93,8 @@ pub fn rwx_mode_cell(st_mode: u32, config: &Config) -> DisplayCell {
     cell
 }
 
-pub fn pwsh_mode_cell(st_mode: u32, file_name: &str, path: &Path, config: &Config) -> DisplayCell {
-    let mut cell = DisplayCell::with_capacity(6);
+pub fn pwsh_mode_cell(st_mode: u32, file_name: &str, path: &Path, config: &Config) -> GridCell {
+    let mut cell = GridCell::with_capacity(6);
     let file_type_mask = st_mode & c::S_IFMT;
     let is_symlink = file_type_mask == c::S_IFLNK;
     let ls_colors = &config.ls_colors;

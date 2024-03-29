@@ -1,16 +1,15 @@
 mod column;
-mod display_cell;
 mod format_filename;
 mod format_size;
 mod format_timestamp;
-mod grid;
+mod gridcellexts;
 mod long;
 mod sort;
 
-pub use display_cell::{Alignment, DisplayCell};
 pub use format_filename::format_filename;
 pub use format_size::format_size;
 pub use format_timestamp::format_timestamp;
+pub use gridcellexts::GridCellExts;
 
 use crate::config::{Config, OutputFormat};
 use crate::entry::EntryBuf;
