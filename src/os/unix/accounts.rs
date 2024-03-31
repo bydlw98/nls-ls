@@ -1,24 +1,22 @@
-use super::sys_prelude::*;
-
-use std::ffi::{c_char, CStr};
-use std::mem;
-use std::ptr;
 use std::sync::Mutex;
 
 use nls_term_grid::GridCell;
 use once_cell::sync::Lazy;
+use user_utils::{unix::*, LookupResult};
 
 use crate::config::Config;
 use crate::output::GridCellExts;
 
 pub fn get_username_cell_by_uid(uid: u32, config: &Config) -> GridCell {
-    static USERS_CACHE: Lazy<Mutex<Vec<Account>>> = Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
+    static USERS_CACHE: Lazy<Mutex<Vec<Account<OwnedUid>>>> =
+        Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
+    let borrowed_uid = BorrowedUid::borrow_raw(uid as libc::uid_t);
 
     match USERS_CACHE.lock() {
         Ok(mut users_cache) => {
             let cache_index_option = users_cache
                 .iter()
-                .position(|account| account.numeric_id == uid);
+                .position(|account| account.id == borrowed_uid);
 
             match cache_index_option {
                 Some(cache_index) => users_cache[cache_index].name_cell.clone(),
@@ -41,14 +39,15 @@ pub fn get_username_cell_by_uid(uid: u32, config: &Config) -> GridCell {
 }
 
 pub fn get_groupname_cell_by_gid(gid: u32, config: &Config) -> GridCell {
-    static GROUPS_CACHE: Lazy<Mutex<Vec<Account>>> =
+    static GROUPS_CACHE: Lazy<Mutex<Vec<Account<OwnedGid>>>> =
         Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
+    let borrowed_gid = BorrowedGid::borrow_raw(gid as libc::gid_t);
 
     match GROUPS_CACHE.lock() {
         Ok(mut groups_cache) => {
             let cache_index_option = groups_cache
                 .iter()
-                .position(|account| account.numeric_id == gid);
+                .position(|account| account.id == borrowed_gid);
 
             match cache_index_option {
                 Some(cache_index) => groups_cache[cache_index].name_cell.clone(),
@@ -70,83 +69,64 @@ pub fn get_groupname_cell_by_gid(gid: u32, config: &Config) -> GridCell {
     }
 }
 
-#[derive(Debug, Default)]
-struct Account {
+struct Account<T> {
     name_cell: GridCell,
-    numeric_id: u32,
+    id: T,
 }
 
-impl Account {
-    pub fn get_by_uid(uid: u32, config: &Config) -> Self {
+impl Account<OwnedUid> {
+    fn get_by_uid(uid: u32, config: &Config) -> Self {
         let owner_style = config.theme.owner_style();
+        let borrowed_uid = BorrowedUid::borrow_raw(uid as libc::uid_t);
+        let owned_uid = borrowed_uid.try_clone_to_owned().unwrap();
 
         if config.numeric_uid_gid {
             Self {
                 name_cell: GridCell::from_num_with_style(uid as u64, owner_style),
-                numeric_id: uid,
+                id: owned_uid,
             }
         } else {
-            let mut pwd: c::passwd = unsafe { mem::zeroed() };
-            const BUFLEN: usize = 2048;
-            let mut buf: [c_char; BUFLEN] = [0; BUFLEN];
-            let mut result: *mut c::passwd = ptr::null_mut();
-
-            unsafe {
-                let return_code =
-                    c::getpwuid_r(uid, &mut pwd, buf.as_mut_ptr(), BUFLEN, &mut result);
-
-                // On success, return_code is 0 and result is a pointer to pwd,
-                if return_code == 0 && (result == &mut pwd) {
-                    let username_string = CStr::from_ptr(pwd.pw_name).to_string_lossy();
-
-                    Self {
-                        name_cell: GridCell::from_str_with_style(&username_string, owner_style),
-                        numeric_id: uid,
-                    }
-                } else {
-                    Self {
-                        name_cell: GridCell::from_num_with_style(uid as u64, owner_style),
-                        numeric_id: uid,
-                    }
-                }
+            match borrowed_uid.lookup_username() {
+                LookupResult::Ok(username) => Self {
+                    name_cell: GridCell::from_str_with_style(
+                        &username.to_string_lossy(),
+                        owner_style,
+                    ),
+                    id: owned_uid,
+                },
+                _ => Self {
+                    name_cell: GridCell::from_num_with_style(uid as u64, owner_style),
+                    id: owned_uid,
+                },
             }
         }
     }
+}
 
-    pub fn get_by_gid(gid: u32, config: &Config) -> Self {
+impl Account<OwnedGid> {
+    fn get_by_gid(gid: u32, config: &Config) -> Self {
         let group_style = config.theme.group_style();
+        let borrowed_gid = BorrowedGid::borrow_raw(gid as libc::gid_t);
+        let owned_gid = borrowed_gid.try_clone_to_owned().unwrap();
 
         if config.numeric_uid_gid {
             Self {
                 name_cell: GridCell::from_num_with_style(gid as u64, group_style),
-                numeric_id: gid,
+                id: owned_gid,
             }
         } else {
-            let mut grp: c::group = unsafe { mem::zeroed() };
-            const BUFLEN: usize = 2048;
-            let mut buf: [c_char; BUFLEN] = [0; BUFLEN];
-            let mut result: *mut c::group = ptr::null_mut();
-
-            unsafe {
-                let return_code =
-                    c::getgrgid_r(gid, &mut grp, buf.as_mut_ptr(), BUFLEN, &mut result);
-
-                // On success, return_code is 0 and result is a pointer to grp,
-                if return_code == 0 && (result == &mut grp) {
-                    let groupname_string = CStr::from_ptr(grp.gr_name).to_string_lossy();
-                    let groupname_cell =
-                        GridCell::from_str_with_style(&groupname_string, group_style);
-
-                    Self {
-                        name_cell: groupname_cell,
-                        numeric_id: gid,
-                    }
-                } else {
-                    Self {
-                        name_cell: GridCell::from_num_with_style(gid as u64, group_style),
-                        numeric_id: gid,
-                    }
-                }
+            match borrowed_gid.lookup_groupname() {
+                LookupResult::Ok(groupname) => Self {
+                    name_cell: GridCell::from_str_with_style(
+                        &groupname.to_string_lossy(),
+                        group_style,
+                    ),
+                    id: owned_gid,
+                },
+                _ => Self {
+                    name_cell: GridCell::from_num_with_style(gid as u64, group_style),
+                    id: owned_gid,
+                },
             }
         }
     }
