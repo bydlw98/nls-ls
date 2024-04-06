@@ -31,6 +31,6 @@ pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
         cells_vec.push(entrybuf.file_name_cell(config));
     }
 
-    let grid = Grid::new(1, Direction::LeftToRight, &cells_vec);
+    let grid = Grid::new(" ", Direction::LeftToRight, &cells_vec);
     print!("{}", grid.fit_into_columns(num_columns));
 }

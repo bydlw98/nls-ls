@@ -381,9 +381,9 @@ dependencies = [
 
 [[package]]
 name = "nls_term_grid"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b247f5ad8588b19638e67c5bcb94e0976ffc390675c531d9e6e7ca7e8424506"
+checksum = "fb28c941cc6c69a1610d6a88b982a4e406ba51edd443a7789a5dc093ace2f97e"
 dependencies = [
  "unicode-width",
 ]

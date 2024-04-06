@@ -34,7 +34,7 @@ pub fn single_column_format(entrybuf_vec: &[EntryBuf], config: &Config) {
             cells_vec.push(entrybuf.file_name_cell(config));
         }
 
-        let grid = Grid::new(1, Direction::LeftToRight, &cells_vec);
+        let grid = Grid::new(" ", Direction::LeftToRight, &cells_vec);
         print!("{}", grid.fit_into_columns(num_columns));
     }
 }
@@ -53,7 +53,7 @@ fn multi_column_format(direction: Direction, entrybuf_vec: &[EntryBuf], config: 
     }
 
     let display_width = terminal_width().unwrap_or(80);
-    let grid = Grid::new(2, direction, &cells_vec);
+    let grid = Grid::new("  ", direction, &cells_vec);
 
     match grid.fit_into_width(display_width) {
         Some(display) => print!("{}", display),
