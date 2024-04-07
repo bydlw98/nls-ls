@@ -1,26 +1,21 @@
-use std::io;
-use std::mem::MaybeUninit;
-use std::ptr;
 use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
-
-use super::sys_prelude::*;
-use super::utf16_until_null_to_string_lossy;
+use user_utils::windows::*;
 
 use crate::config::Config;
 
-pub fn get_accountname_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> String {
+pub fn get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> String {
     static ACCOUNTS_CACHE: Lazy<Mutex<Vec<Account>>> =
         Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
     let mut accounts_cache = ACCOUNTS_CACHE.lock().unwrap();
     let cache_index_option = accounts_cache
         .iter()
-        .position(|account| account.sid_buf == sid_ptr);
+        .position(|account| account.psid == psid);
 
     match cache_index_option {
         Some(cache_index) => accounts_cache[cache_index].name.clone(),
-        None => match Account::from_sid_ptr(sid_ptr, config) {
+        None => match Account::get_by_psid(psid, config) {
             Some(account) => {
                 let accountname = account.name.clone();
                 log::debug!("account '{}' is not found in ACCOUNTS_CACHE", accountname);
@@ -28,146 +23,36 @@ pub fn get_accountname_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> String {
 
                 accountname
             }
-            None => internal_get_accountname_by_sid_ptr(sid_ptr, config),
+            None => internal_get_accountname_by_psid(psid, config),
         },
     }
 }
 
-fn internal_get_accountname_by_sid_ptr(sid_ptr: c::PSID, config: &Config) -> String {
+fn internal_get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> String {
     if config.numeric_uid_gid {
-        convert_to_string_sid(sid_ptr)
+        psid.convert_to_string_sid().unwrap_or(String::from("?"))
     } else {
-        lookup_accountname(sid_ptr)
-    }
-}
-
-fn lookup_accountname(sid_ptr: c::PSID) -> String {
-    let mut wide_name_length: u32 = 32;
-    let mut wide_domain_length: u32 = 32;
-    let mut wide_name_buf: [u16; 32] = [0; 32];
-    let mut wide_domain_buf: [u16; 32] = [0; 32];
-    let mut sid_name_use = c::SidTypeUnknown;
-
-    unsafe {
-        let return_code = c::LookupAccountSidW(
-            ptr::null(),
-            sid_ptr,
-            wide_name_buf.as_mut_ptr(),
-            &mut wide_name_length,
-            wide_domain_buf.as_mut_ptr(),
-            &mut wide_domain_length,
-            &mut sid_name_use,
-        );
-
-        // If LookupAccountSidW succeeds, return_code is non-zero
-        if return_code != 0 {
-            format!(
-                "{}\\{}",
-                utf16_until_null_to_string_lossy(&wide_domain_buf),
-                utf16_until_null_to_string_lossy(&wide_name_buf)
-            )
-        }
-        // If GetLastError() returns ERROR_NONE_MAPPED, means
-        // unable to get the name of SID
-        else if c::GetLastError() == c::ERROR_NONE_MAPPED {
-            log::debug!("no SID is mapped");
-            convert_to_string_sid(sid_ptr)
-        } else {
-            // Retry lookup SID name with correct size
-            let mut wide_name = vec![0; wide_name_length as usize];
-            let mut wide_domain = vec![0; wide_domain_length as usize];
-
-            let return_code = c::LookupAccountSidW(
-                ptr::null(),
-                sid_ptr,
-                wide_name.as_mut_ptr(),
-                &mut wide_name_length,
-                wide_domain.as_mut_ptr(),
-                &mut wide_domain_length,
-                &mut sid_name_use,
-            );
-            if return_code != 0 {
-                format!(
-                    "{}\\{}",
-                    utf16_until_null_to_string_lossy(&wide_domain),
-                    utf16_until_null_to_string_lossy(&wide_name)
-                )
-            } else {
-                log::debug!(
-                    "unable to lookup accountname: {}",
-                    io::Error::last_os_error()
-                );
-
-                String::from('?')
-            }
+        match psid.lookup_accountname() {
+            Ok(accountname) => accountname.to_string_lossy().to_string(),
+            Err(_) => psid.convert_to_string_sid().unwrap_or(String::from("?")),
         }
     }
 }
 
-fn convert_to_string_sid(sid_ptr: c::PSID) -> String {
-    unsafe {
-        let mut wide_cstring_ptr = MaybeUninit::<*mut u16>::uninit();
-        let return_code = c::ConvertSidToStringSidW(sid_ptr, wide_cstring_ptr.as_mut_ptr());
-
-        // On success, return_code is non-zero
-        if return_code != 0 {
-            let wide_cstring_ptr = wide_cstring_ptr.assume_init();
-            let wide_cstring_len = c::wcslen(wide_cstring_ptr);
-            let wide_cstring_array = std::slice::from_raw_parts(wide_cstring_ptr, wide_cstring_len);
-            let string_sid = String::from_utf16_lossy(wide_cstring_array);
-            c::LocalFree(wide_cstring_ptr as c::HLOCAL);
-
-            string_sid
-        } else {
-            String::from('?')
-        }
-    }
-}
-
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct Account {
     name: String,
-    sid_buf: SidBuf,
+    psid: OwnedPsid,
 }
 
 impl Account {
-    fn from_sid_ptr(sid_ptr: c::PSID, config: &Config) -> Option<Self> {
-        let sid_buf = SidBuf::from_sid_ptr(sid_ptr)?;
-        let accountname = internal_get_accountname_by_sid_ptr(sid_ptr, config);
+    fn get_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> Option<Self> {
+        let sid_buf = psid.try_clone_to_owned().ok()?;
+        let accountname = internal_get_accountname_by_psid(psid, config);
 
         Some(Self {
             name: accountname,
-            sid_buf: sid_buf,
+            psid: sid_buf,
         })
-    }
-}
-
-#[derive(Debug, Default)]
-struct SidBuf(Vec<u8>);
-
-impl SidBuf {
-    pub fn as_ptr(&self) -> c::PSID {
-        self.0.as_ptr() as c::PSID
-    }
-
-    pub fn from_sid_ptr(sid_ptr: c::PSID) -> Option<Self> {
-        unsafe {
-            let sid_length = c::GetLengthSid(sid_ptr);
-            let mut buf: Vec<u8> = vec![0; sid_length as usize];
-            let return_code = c::CopySid(sid_length, buf.as_mut_ptr() as c::PSID, sid_ptr);
-
-            // On success, return_code is non-zero
-            if return_code != 0 {
-                Some(Self(buf))
-            } else {
-                None
-            }
-        }
-    }
-}
-
-impl PartialEq<c::PSID> for SidBuf {
-    fn eq(&self, other: &c::PSID) -> bool {
-        unsafe { c::EqualSid(self.as_ptr(), *other) != 0 }
     }
 }

@@ -21,7 +21,7 @@ use nls_term_grid::{Alignment, GridCell};
 use crate::config::{AllocatedSizeBlocks, Config};
 use crate::output::GridCellExts;
 
-use accounts::get_accountname_by_sid_ptr;
+use accounts::get_accountname_by_psid;
 use permissions::get_rwx_permissions;
 use security_info::SecurityInfo;
 
@@ -86,12 +86,10 @@ impl WindowsMetadata {
                     self.rwx_permissions = get_rwx_permissions(&security_info, config);
                 }
                 if config.list_owner {
-                    self.owner_string =
-                        get_accountname_by_sid_ptr(security_info.sid_owner_ptr(), config);
+                    self.owner_string = get_accountname_by_psid(security_info.owner_psid(), config);
                 }
                 if config.list_group {
-                    self.group_string =
-                        get_accountname_by_sid_ptr(security_info.sid_group_ptr(), config);
+                    self.group_string = get_accountname_by_psid(security_info.group_psid(), config);
                 }
             }
             Err(err) => {

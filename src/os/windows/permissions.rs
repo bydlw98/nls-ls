@@ -1,7 +1,8 @@
 use std::io;
 use std::mem::MaybeUninit;
-use std::ptr;
-use std::sync::OnceLock;
+
+use once_cell::sync::OnceCell;
+use user_utils::windows::{AsPsid, AsRawPsid, BorrowedPsid, OwnedPsid};
 
 use super::security_info::SecurityInfo;
 use super::sys_prelude::*;
@@ -10,10 +11,10 @@ use crate::config::Config;
 use crate::utils::HasMaskSetExt;
 
 pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> String {
-    static OTHERS_SIDBUF: OnceLock<Option<Vec<u8>>> = OnceLock::new();
+    static WORLD_PSID: OnceCell<Option<OwnedPsid>> = OnceCell::new();
     let mut permissions_buf = String::with_capacity(9);
 
-    match get_accessmask(security_info.dacl_ptr(), security_info.sid_owner_ptr()) {
+    match get_accessmask(security_info.dacl_ptr(), security_info.owner_psid()) {
         Ok(owner_accessmask) => {
             permissions_buf.push_str(&accessmask_to_rwx(owner_accessmask, config))
         }
@@ -23,7 +24,7 @@ pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> Str
         }
     }
 
-    match get_accessmask(security_info.dacl_ptr(), security_info.sid_group_ptr()) {
+    match get_accessmask(security_info.dacl_ptr(), security_info.group_psid()) {
         Ok(group_accessmask) => {
             permissions_buf.push_str(&accessmask_to_rwx(group_accessmask, config))
         }
@@ -33,46 +34,19 @@ pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> Str
         }
     }
 
-    match OTHERS_SIDBUF.get_or_init(|| create_others_sidbuf()) {
-        Some(others_sidbuf) => {
-            match get_accessmask(security_info.dacl_ptr(), others_sidbuf.as_ptr() as c::PSID) {
-                Ok(others_accessmask) => {
-                    permissions_buf.push_str(&accessmask_to_rwx(others_accessmask, config))
-                }
-                Err(err) => {
-                    eprintln!("nls: unable to get others permissions: {}", err);
-                    permissions_buf.push_str("???")
-                }
+    match WORLD_PSID.get_or_init(|| OwnedPsid::world().ok()) {
+        Some(world_psid) => match get_accessmask(security_info.dacl_ptr(), world_psid.as_psid()) {
+            Ok(others_accessmask) => {
+                permissions_buf.push_str(&accessmask_to_rwx(others_accessmask, config))
             }
-        }
+            Err(err) => {
+                eprintln!("nls: unable to get others permissions: {}", err);
+                permissions_buf.push_str("???")
+            }
+        },
         None => permissions_buf.push_str("???"),
     }
     permissions_buf
-}
-
-pub fn create_others_sidbuf() -> Option<Vec<u8>> {
-    unsafe {
-        let mut world_sid_len = c::GetSidLengthRequired(1);
-        let mut others_sidbuf: Vec<u8> = vec![0; world_sid_len as usize];
-
-        let return_code = c::CreateWellKnownSid(
-            c::WinWorldSid,
-            ptr::null_mut(),
-            others_sidbuf.as_mut_ptr() as c::PSID,
-            &mut world_sid_len,
-        );
-
-        // On success, return_code is 0
-        if return_code != 0 {
-            Some(others_sidbuf)
-        } else {
-            log::debug!(
-                "unable to create others SID: {}",
-                io::Error::last_os_error()
-            );
-            None
-        }
-    }
 }
 
 fn accessmask_to_rwx(accessmask: u32, config: &Config) -> String {
@@ -100,22 +74,21 @@ fn accessmask_to_rwx(accessmask: u32, config: &Config) -> String {
     rwx_string
 }
 
-pub fn get_accessmask(dacl_ptr: *const c::ACL, sid_ptr: c::PSID) -> Result<u32, io::Error> {
-    unsafe {
-        let mut trustee = MaybeUninit::<c::TRUSTEE_W>::uninit();
-        c::BuildTrusteeWithSidW(trustee.as_mut_ptr(), sid_ptr);
-        let trustee = trustee.assume_init();
+pub fn get_accessmask(dacl_ptr: *const c::ACL, psid: BorrowedPsid<'_>) -> Result<u32, io::Error> {
+    let raw_psid = psid.as_raw_psid();
+    let mut trustee = MaybeUninit::<c::TRUSTEE_W>::uninit();
+    unsafe { c::BuildTrusteeWithSidW(trustee.as_mut_ptr(), raw_psid) };
+    let trustee = unsafe { trustee.assume_init() };
 
-        let mut accessmask: u32 = 0;
-        let return_code = c::GetEffectiveRightsFromAclW(dacl_ptr, &trustee, &mut accessmask);
+    let mut accessmask: u32 = 0;
+    let return_code = unsafe { c::GetEffectiveRightsFromAclW(dacl_ptr, &trustee, &mut accessmask) };
 
-        // On success, return_code is ERROR_SUCCESS
-        // Else return_code is a raw os error
-        if return_code == c::ERROR_SUCCESS {
-            Ok(accessmask)
-        } else {
-            Err(io::Error::from_raw_os_error(return_code as i32))
-        }
+    // On success, return_code is ERROR_SUCCESS
+    // Else return_code is a raw os error
+    if return_code == c::ERROR_SUCCESS {
+        Ok(accessmask)
+    } else {
+        Err(io::Error::from_raw_os_error(return_code as i32))
     }
 }
 

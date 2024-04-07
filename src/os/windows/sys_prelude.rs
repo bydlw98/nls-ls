@@ -1,17 +1,14 @@
 pub mod c {
-    pub use libc::wcslen;
     pub use windows_sys::Win32::Foundation::{
-        CloseHandle, GetLastError, LocalFree, ERROR_NONE_MAPPED, ERROR_SUCCESS, HANDLE, HLOCAL,
-        INVALID_HANDLE_VALUE, PSID,
+        CloseHandle, LocalFree, ERROR_SUCCESS, HANDLE, HLOCAL, INVALID_HANDLE_VALUE, PSID,
     };
     pub use windows_sys::Win32::Security::Authorization::{
-        BuildTrusteeWithSidW, ConvertSidToStringSidW, GetEffectiveRightsFromAclW, GetSecurityInfo,
-        SE_FILE_OBJECT, TRUSTEE_W,
+        BuildTrusteeWithSidW, GetEffectiveRightsFromAclW, GetSecurityInfo, SE_FILE_OBJECT,
+        TRUSTEE_W,
     };
     pub use windows_sys::Win32::Security::{
-        CopySid, CreateWellKnownSid, EqualSid, GetLengthSid, GetSidLengthRequired,
-        LookupAccountSidW, SidTypeUnknown, WinWorldSid, ACL, DACL_SECURITY_INFORMATION,
-        GROUP_SECURITY_INFORMATION, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
+        ACL, DACL_SECURITY_INFORMATION, GROUP_SECURITY_INFORMATION, OBJECT_SECURITY_INFORMATION,
+        OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
     };
     pub use windows_sys::Win32::Storage::FileSystem::{
         CreateFileW, FileIdInfo, FileStandardInfo, GetFileInformationByHandleEx,
