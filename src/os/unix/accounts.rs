@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use nls_term_grid::GridCell;
 use once_cell::sync::Lazy;
-use user_utils::{unix::*, LookupResult};
+use user_utils::unix::*;
 
 use crate::config::Config;
 use crate::output::GridCellExts;
@@ -87,7 +87,7 @@ impl Account<OwnedUid> {
             }
         } else {
             match borrowed_uid.lookup_username() {
-                LookupResult::Ok(username) => Self {
+                Ok(username) => Self {
                     name_cell: GridCell::from_str_with_style(
                         &username.to_string_lossy(),
                         owner_style,
@@ -116,7 +116,7 @@ impl Account<OwnedGid> {
             }
         } else {
             match borrowed_gid.lookup_groupname() {
-                LookupResult::Ok(groupname) => Self {
+                Ok(groupname) => Self {
                     name_cell: GridCell::from_str_with_style(
                         &groupname.to_string_lossy(),
                         group_style,

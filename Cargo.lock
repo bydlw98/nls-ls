@@ -568,9 +568,9 @@ checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
 
 [[package]]
 name = "user_utils"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843c5a1b4bea064440822a6507388eb56954938e5d2fb9259f4274f5167ca173"
+checksum = "46456d2cfeef9fe3ddbc454e09c5c7200c1d781d7c942b71eca544da74937c54"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
