@@ -224,7 +224,7 @@ impl EntryBuf {
         let inode_style = config.theme.inode_style();
 
         match get_file_id_identifier(&self.path, self.follow_links) {
-            Ok(file_id) => GridCell::from_u128_with_style(file_id, inode_style),
+            Ok(file_id) => GridCell::from_num_with_style(file_id, inode_style),
             Err(err) => {
                 eprintln!(
                     "nls: unable to get inode number of '{}': {}",

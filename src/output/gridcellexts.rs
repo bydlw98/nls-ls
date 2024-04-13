@@ -8,10 +8,7 @@ pub trait GridCellExts {
 
     fn from_str_with_style(value: &str, ansi_style_str: Option<&str>) -> Self;
 
-    fn from_num_with_style(value: u64, ansi_style_str: Option<&str>) -> Self;
-
-    #[cfg(windows)]
-    fn from_u128_with_style(value: u128, ansi_style_str: Option<&str>) -> Self;
+    fn from_num_with_style<I: itoa::Integer>(value: I, ansi_style_str: Option<&str>) -> Self;
 
     fn with_capacity(capacity: usize) -> Self;
 
@@ -63,12 +60,13 @@ impl GridCellExts for GridCell {
         }
     }
 
-    fn from_num_with_style(value: u64, ansi_style_str: Option<&str>) -> Self {
-        let value_string = value.to_string();
+    fn from_num_with_style<I: itoa::Integer>(value: I, ansi_style_str: Option<&str>) -> Self {
+        let mut buffer = itoa::Buffer::new();
+        let value_string = buffer.format(value);
         let width = value_string.len();
         let contents = match ansi_style_str {
             Some(ansi_style_str) => format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value_string),
-            None => value_string,
+            None => value_string.to_string(),
         };
 
         Self {
@@ -78,21 +76,6 @@ impl GridCellExts for GridCell {
         }
     }
 
-    #[cfg(windows)]
-    fn from_u128_with_style(value: u128, ansi_style_str: Option<&str>) -> Self {
-        let value_string = value.to_string();
-        let width = value_string.len();
-        let contents = match ansi_style_str {
-            Some(ansi_style_str) => format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value_string),
-            None => value_string,
-        };
-
-        Self {
-            contents: contents,
-            width: width,
-            alignment: Alignment::Right,
-        }
-    }
     fn with_capacity(capacity: usize) -> Self {
         Self {
             contents: String::with_capacity(capacity),
@@ -207,26 +190,6 @@ mod test {
         assert_eq!(cell_no_style, correct_cell_no_style);
 
         let cell_with_style = GridCell::from_num_with_style(4096, Some("36"));
-        let correct_cell_with_style = GridCell {
-            contents: String::from("\x1b[36m4096\x1b[0m"),
-            width: 4,
-            alignment: Alignment::Right,
-        };
-        assert_eq!(cell_with_style, correct_cell_with_style);
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn test_gridcellexts_from_u128_with_style() {
-        let cell_no_style = GridCell::from_u128_with_style(4096, None);
-        let correct_cell_no_style = GridCell {
-            contents: String::from("4096"),
-            width: 4,
-            alignment: Alignment::Right,
-        };
-        assert_eq!(cell_no_style, correct_cell_no_style);
-
-        let cell_with_style = GridCell::from_u128_with_style(4096, Some("36"));
         let correct_cell_with_style = GridCell {
             contents: String::from("\x1b[36m4096\x1b[0m"),
             width: 4,
