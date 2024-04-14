@@ -5,7 +5,7 @@ pub struct ThemeConfig {
     owner: Option<String>,
     group: Option<String>,
     size: Option<String>,
-    time: Option<String>,
+    timestamp: Option<String>,
     read: Option<String>,
     write: Option<String>,
     execute: Option<String>,
@@ -39,8 +39,8 @@ impl ThemeConfig {
     pub fn size_style(&self) -> Option<&str> {
         self.size.as_deref()
     }
-    pub fn time_style(&self) -> Option<&str> {
-        self.time.as_deref()
+    pub fn timestamp_style(&self) -> Option<&str> {
+        self.timestamp.as_deref()
     }
     pub fn read_style(&self) -> Option<&str> {
         self.read.as_deref()
@@ -84,7 +84,7 @@ impl ThemeConfig {
             owner: Some(String::from("31")),
             group: Some(String::from("35")),
             size: Some(String::from("36")),
-            time: Some(String::from("33")),
+            timestamp: Some(String::from("33")),
             read: Some(String::from("33;1")),
             write: Some(String::from("31;1")),
             execute: Some(String::from("32;1")),
