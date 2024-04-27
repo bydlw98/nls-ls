@@ -841,7 +841,7 @@ fn test_format_filename_sticky_dir() {
 #[test]
 fn test_format_filename_other_writeable_dir() {
     let ls_colors = LsColors::with_colors();
-    let ansi_style_str = ls_colors.dir_other_writeable_style();
+    let ansi_style_str = ls_colors.dir_other_writable_style();
     let mode: Option<u32> = Some(0o755 | c::S_IWOTH);
 
     internal_test_format_filename_dir(mode, IndicatorStyle::Never, false, ansi_style_str);
@@ -853,7 +853,7 @@ fn test_format_filename_other_writeable_dir() {
 #[test]
 fn test_format_filename_sticky_and_other_writeable_dir() {
     let ls_colors = LsColors::with_colors();
-    let ansi_style_str = ls_colors.dir_sticky_and_other_writeable_style();
+    let ansi_style_str = ls_colors.dir_sticky_and_other_writable_style();
     let mode: Option<u32> = Some(0o755 | c::S_ISVTX | c::S_IWOTH);
 
     internal_test_format_filename_dir(mode, IndicatorStyle::Never, false, ansi_style_str);

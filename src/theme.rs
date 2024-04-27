@@ -1,3 +1,13 @@
+macro_rules! theme_config_get_style_impl {
+    ($field:ident, $method:ident, $comment:literal) => {
+        #[doc = concat!("Returns the style used for ", stringify!($comment))]
+        #[inline]
+        pub fn $method(&self) -> Option<&str> {
+            self.$field.as_deref()
+        }
+    };
+}
+
 #[derive(Debug, Default)]
 pub struct ThemeConfig {
     inode: Option<String>,
@@ -24,59 +34,43 @@ pub struct ThemeConfig {
 }
 
 impl ThemeConfig {
-    pub fn inode_style(&self) -> Option<&str> {
-        self.inode.as_deref()
-    }
-    pub fn nlink_style(&self) -> Option<&str> {
-        self.nlink.as_deref()
-    }
-    pub fn owner_style(&self) -> Option<&str> {
-        self.owner.as_deref()
-    }
-    pub fn group_style(&self) -> Option<&str> {
-        self.group.as_deref()
-    }
-    pub fn size_style(&self) -> Option<&str> {
-        self.size.as_deref()
-    }
-    pub fn timestamp_style(&self) -> Option<&str> {
-        self.timestamp.as_deref()
-    }
-    pub fn read_style(&self) -> Option<&str> {
-        self.read.as_deref()
-    }
-    pub fn write_style(&self) -> Option<&str> {
-        self.write.as_deref()
-    }
-    pub fn execute_style(&self) -> Option<&str> {
-        self.execute.as_deref()
-    }
-    pub fn no_permission_style(&self) -> Option<&str> {
-        self.no_permission.as_deref()
-    }
+    theme_config_get_style_impl!(inode, inode_style, "inode.");
+
+    theme_config_get_style_impl!(nlink, nlink_style, "nlink.");
+
+    theme_config_get_style_impl!(owner, owner_style, "owner.");
+
+    theme_config_get_style_impl!(group, group_style, "group.");
+
+    theme_config_get_style_impl!(size, size_style, "size.");
+
+    theme_config_get_style_impl!(timestamp, timestamp_style, "timestamp.");
+
+    theme_config_get_style_impl!(read, read_style, "read permission.");
+
+    theme_config_get_style_impl!(write, write_style, "write permission.");
+
+    theme_config_get_style_impl!(execute, execute_style, "execute permission.");
+
+    theme_config_get_style_impl!(no_permission, no_permission_style, "no permission.");
+
     #[cfg(unix)]
-    pub fn setuid_style(&self) -> Option<&str> {
-        self.setuid.as_deref()
-    }
+    theme_config_get_style_impl!(setuid, setuid_style, "setuid permission.");
+
     #[cfg(unix)]
-    pub fn setgid_style(&self) -> Option<&str> {
-        self.setgid.as_deref()
-    }
+    theme_config_get_style_impl!(setgid, setgid_style, "setgid permission.");
+
     #[cfg(unix)]
-    pub fn sticky_style(&self) -> Option<&str> {
-        self.sticky.as_deref()
-    }
+    theme_config_get_style_impl!(sticky, sticky_style, "sticky permission.");
+
     #[cfg(windows)]
-    pub fn archive_style(&self) -> Option<&str> {
-        self.archive.as_deref()
-    }
+    theme_config_get_style_impl!(archive, archive_style, "archive attribute.");
+
     #[cfg(windows)]
-    pub fn system_style(&self) -> Option<&str> {
-        self.system.as_deref()
-    }
-    pub fn hidden_style(&self) -> Option<&str> {
-        self.hidden.as_deref()
-    }
+    theme_config_get_style_impl!(system, system_style, "system attribute.");
+
+    theme_config_get_style_impl!(hidden, hidden_style, "hidden attribute.");
+
     pub fn with_default_colors() -> Self {
         Self {
             inode: Some(String::from("32;1")),

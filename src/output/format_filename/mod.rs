@@ -156,10 +156,10 @@ fn internal_format_dir(file_name: &str, _metadata: &Metadata, config: &Config) -
             ) {
                 (false, false) => create_filename_cell(file_name, ls_colors.dir_style(), icon),
                 (true, false) => create_filename_cell(file_name, ls_colors.dir_sticky_style(), icon),
-                (false, true) => create_filename_cell(file_name, ls_colors.dir_other_writeable_style(), icon),
+                (false, true) => create_filename_cell(file_name, ls_colors.dir_other_writable_style(), icon),
                 _ => create_filename_cell(
                     file_name,
-                    ls_colors.dir_sticky_and_other_writeable_style(), icon
+                    ls_colors.dir_sticky_and_other_writable_style(), icon
                 ),
             };
         } else {

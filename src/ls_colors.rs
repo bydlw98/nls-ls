@@ -1,5 +1,15 @@
 use std::collections::hash_map::HashMap;
 
+macro_rules! ls_colors_get_style_impl {
+    ($field:ident, $method:ident, $comment:literal) => {
+        #[doc = concat!("Returns the style used for ", $comment)]
+        #[inline]
+        pub fn $method(&self) -> Option<&str> {
+            self.$field.as_deref()
+        }
+    };
+}
+
 #[derive(Debug)]
 pub struct LsColors {
     file: Option<String>,
@@ -23,7 +33,7 @@ pub struct LsColors {
     #[cfg(unix)]
     dir_sticky_and_other_writable: Option<String>,
     #[cfg(unix)]
-    dir_other_writeable: Option<String>,
+    dir_other_writable: Option<String>,
     #[cfg(unix)]
     dir_sticky: Option<String>,
     extension: HashMap<String, String>,
@@ -98,7 +108,7 @@ impl LsColors {
                     }
                     #[cfg(unix)]
                     "ow" => {
-                        self.dir_other_writeable = Some(v.to_string());
+                        self.dir_other_writable = Some(v.to_string());
                     }
                     #[cfg(unix)]
                     "st" => {
@@ -115,58 +125,68 @@ impl LsColors {
         }
     }
 
-    pub fn file_style(&self) -> Option<&str> {
-        self.file.as_deref()
-    }
-    pub fn dir_style(&self) -> Option<&str> {
-        self.dir.as_deref()
-    }
-    pub fn symlink_style(&self) -> Option<&str> {
-        self.symlink.as_deref()
-    }
-    pub fn exec_style(&self) -> Option<&str> {
-        self.exec.as_deref()
-    }
+    ls_colors_get_style_impl!(file, file_style, "regular files.");
+
+    ls_colors_get_style_impl!(dir, dir_style, "directories.");
+
+    ls_colors_get_style_impl!(symlink, symlink_style, "symbolic links.");
+
+    ls_colors_get_style_impl!(exec, exec_style, "executables.");
+
     #[cfg(unix)]
-    pub fn block_device_style(&self) -> Option<&str> {
-        self.block_device.as_deref()
-    }
+    ls_colors_get_style_impl!(block_device, block_device_style, "block devices.");
+
     #[cfg(unix)]
-    pub fn char_device_style(&self) -> Option<&str> {
-        self.char_device.as_deref()
-    }
+    ls_colors_get_style_impl!(char_device, char_device_style, "char devices.");
+
     #[cfg(unix)]
-    pub fn fifo_style(&self) -> Option<&str> {
-        self.fifo.as_deref()
-    }
+    ls_colors_get_style_impl!(fifo, fifo_style, "fifos.");
+
     #[cfg(unix)]
-    pub fn socket_style(&self) -> Option<&str> {
-        self.socket.as_deref()
-    }
+    ls_colors_get_style_impl!(socket, socket_style, "socket file type.");
+
     #[cfg(unix)]
-    pub fn setuid_style(&self) -> Option<&str> {
-        self.setuid.as_deref()
-    }
+    ls_colors_get_style_impl!(
+        setuid,
+        setuid_style,
+        "regular files with setuid file permission."
+    );
+
     #[cfg(unix)]
-    pub fn setgid_style(&self) -> Option<&str> {
-        self.setgid.as_deref()
-    }
+    ls_colors_get_style_impl!(
+        setgid,
+        setgid_style,
+        "regular files with setgid file permission."
+    );
+
     #[cfg(unix)]
-    pub fn multiple_hard_links_style(&self) -> Option<&str> {
-        self.multiple_hard_links.as_deref()
-    }
+    ls_colors_get_style_impl!(
+        multiple_hard_links,
+        multiple_hard_links_style,
+        "files with multiple hard links."
+    );
+
     #[cfg(unix)]
-    pub fn dir_sticky_and_other_writeable_style(&self) -> Option<&str> {
-        self.dir_sticky_and_other_writable.as_deref()
-    }
+    ls_colors_get_style_impl!(
+        dir_sticky_and_other_writable,
+        dir_sticky_and_other_writable_style,
+        "directories with sticky and other writable permissions."
+    );
+
     #[cfg(unix)]
-    pub fn dir_other_writeable_style(&self) -> Option<&str> {
-        self.dir_other_writeable.as_deref()
-    }
+    ls_colors_get_style_impl!(
+        dir_other_writable,
+        dir_other_writable_style,
+        "directories with other writable permission."
+    );
+
     #[cfg(unix)]
-    pub fn dir_sticky_style(&self) -> Option<&str> {
-        self.dir_sticky.as_deref()
-    }
+    ls_colors_get_style_impl!(
+        dir_sticky,
+        dir_sticky_style,
+        "directories with sticky permission."
+    );
+
     pub fn extension_style(&self, extension: String) -> Option<&str> {
         if self.extension.is_empty() {
             self.file_style()
@@ -203,7 +223,7 @@ impl Default for LsColors {
             #[cfg(unix)]
             dir_sticky_and_other_writable: None,
             #[cfg(unix)]
-            dir_other_writeable: None,
+            dir_other_writable: None,
             #[cfg(unix)]
             dir_sticky: None,
             extension: HashMap::with_capacity(128),
@@ -307,12 +327,12 @@ mod test {
 
         #[cfg(unix)]
         assert_eq!(
-            ls_colors.dir_sticky_and_other_writeable_style(),
+            ls_colors.dir_sticky_and_other_writable_style(),
             Some("30;42")
         );
 
         #[cfg(unix)]
-        assert_eq!(ls_colors.dir_other_writeable_style(), Some("34;42"));
+        assert_eq!(ls_colors.dir_other_writable_style(), Some("34;42"));
 
         #[cfg(unix)]
         assert_eq!(ls_colors.dir_sticky_style(), Some("37;44"));
