@@ -6,11 +6,11 @@ use std::time::SystemTime;
 
 use chrono::offset::{Local, TimeZone};
 use chrono::{DateTime, Datelike, LocalResult, Timelike};
-use nls_term_grid::{Alignment, GridCell};
+use nls_term_grid::Alignment;
 use once_cell::sync::OnceCell;
 
 use crate::config::Config;
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 use crate::utils::systemtime_to_unix_timestamp;
 
 /// Formats a timestamp into a left aligned `GridCell`.
@@ -237,6 +237,8 @@ mod tests {
 
     use std::time::Duration;
 
+    use compact_str::{format_compact, ToCompactString};
+
     use crate::config::Config;
     use crate::theme::ThemeConfig;
 
@@ -246,7 +248,7 @@ mod tests {
         let timestamp = datetime.timestamp();
         let config = Config::default();
 
-        let correct_timestamp_format = datetime.format("%b %e %H:%M").to_string();
+        let correct_timestamp_format = datetime.format("%b %e %H:%M").to_compact_string();
         let correct_timestamp_width = correct_timestamp_format.len();
         let correct_timestamp_cell = GridCell {
             contents: correct_timestamp_format,
@@ -270,9 +272,10 @@ mod tests {
         let correct_timestamp_width = correct_timestamp_format.len();
         let timestamp_style = config.theme.timestamp_style().unwrap();
         let correct_timestamp_cell = GridCell {
-            contents: format!(
+            contents: format_compact!(
                 "\x1b[{}m{}\x1b[0m",
-                timestamp_style, correct_timestamp_format
+                timestamp_style,
+                correct_timestamp_format
             ),
             width: correct_timestamp_width,
             alignment: Alignment::Left,
@@ -288,7 +291,7 @@ mod tests {
         let timestamp = datetime.timestamp();
         let config = Config::default();
 
-        let correct_timestamp_format = datetime.format("%b %e  %Y").to_string();
+        let correct_timestamp_format = datetime.format("%b %e  %Y").to_compact_string();
         let correct_timestamp_width = correct_timestamp_format.len();
         let correct_timestamp_cell = GridCell {
             contents: correct_timestamp_format,
@@ -313,9 +316,10 @@ mod tests {
         let correct_timestamp_width = correct_timestamp_format.len();
         let timestamp_style = config.theme.timestamp_style().unwrap();
         let correct_timestamp_cell = GridCell {
-            contents: format!(
+            contents: format_compact!(
                 "\x1b[{}m{}\x1b[0m",
-                timestamp_style, correct_timestamp_format
+                timestamp_style,
+                correct_timestamp_format
             ),
             width: correct_timestamp_width,
             alignment: Alignment::Left,
@@ -327,11 +331,7 @@ mod tests {
     #[test]
     fn test_format_timestamp_invalid() {
         let config = Config::default();
-        let correct_timestamp_cell = GridCell {
-            contents: String::from("?"),
-            width: 1,
-            alignment: Alignment::Left,
-        };
+        let correct_timestamp_cell = GridCell::error_cell(Alignment::Left);
 
         assert_eq!(format_timestamp(i64::MAX, &config), correct_timestamp_cell);
     }

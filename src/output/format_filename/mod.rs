@@ -8,16 +8,16 @@ use std::fs::Metadata;
 use std::os::unix::fs::{FileTypeExt, MetadataExt};
 use std::path::Path;
 
-use nls_term_grid::{Alignment, GridCell};
+use compact_str::CompactString;
+use nls_term_grid::Alignment;
 
 use crate::config::{Config, IndicatorStyle};
 use crate::ls_colors::get_file_extension;
 #[cfg(unix)]
 use crate::os::unix::sys_prelude::*;
+use crate::output::{GridCell, GridCellExts};
 #[cfg(unix)]
 use crate::utils::HasMaskSetExt;
-
-use super::GridCellExts;
 
 pub fn format_filename(
     path: &Path,
@@ -38,7 +38,7 @@ pub fn format_filename(
             if #[cfg(unix)] {
                 internal_format_unix_file_type_exts(file_name, file_type, config)
             } else {
-                GridCell::from(file_name.to_string())
+                GridCell::from_str_with_style(file_name, None)
             }
         }
     }
@@ -81,7 +81,7 @@ fn internal_format_unix_file_type_exts(
         }
         return filename_cell;
     } else {
-        return GridCell::from(file_name.to_string());
+        return GridCell::from_str_with_style(file_name, None);
     }
 }
 
@@ -225,7 +225,7 @@ fn create_filename_cell(
 ) -> GridCell {
     use unicode_width::UnicodeWidthStr;
 
-    let mut contents = String::with_capacity(64);
+    let mut contents = CompactString::default();
     let mut width: usize = 0;
 
     if let Some(ansi_style_str) = ansi_style_str {

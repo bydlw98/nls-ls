@@ -1,11 +1,10 @@
 use std::sync::Mutex;
 
-use nls_term_grid::GridCell;
 use once_cell::sync::Lazy;
 use user_utils::unix::*;
 
 use crate::config::Config;
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 
 pub fn get_username_cell_by_uid(uid: u32, config: &Config) -> GridCell {
     static USERS_CACHE: Lazy<Mutex<Vec<Account<OwnedUid>>>> =

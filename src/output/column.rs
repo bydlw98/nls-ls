@@ -2,7 +2,7 @@ use nls_term_grid::*;
 
 use crate::config::Config;
 use crate::entry::EntryBuf;
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 
 pub fn vertical_format(entrybuf_vec: &[EntryBuf], config: &Config) {
     multi_column_format(Direction::TopToBottom, entrybuf_vec, config)

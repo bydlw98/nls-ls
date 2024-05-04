@@ -5,9 +5,11 @@ use super::*;
 #[cfg(unix)]
 use std::path::Path;
 
+use compact_str::{format_compact, CompactString};
 use unicode_width::UnicodeWidthStr;
 
 use crate::ls_colors::LsColors;
+use crate::output::GridCell;
 use crate::theme::IconTheme;
 
 #[test]
@@ -16,7 +18,7 @@ fn test_create_filename_cell() {
 
     let cell = create_filename_cell(file_name, None, None);
     let correct_cell = GridCell {
-        contents: String::from(file_name),
+        contents: CompactString::from(file_name),
         width: 4,
         alignment: Alignment::Left,
     };
@@ -33,7 +35,7 @@ fn test_create_filename_cell_with_color() {
 
     let cell = create_filename_cell(file_name, ls_colors.dir_style(), None);
     let correct_cell = GridCell {
-        contents: format!(
+        contents: format_compact!(
             "\x1b[{}m{}\x1b[0m",
             ls_colors.dir_style().unwrap(),
             file_name
@@ -54,7 +56,7 @@ fn test_create_filename_cell_with_icon() {
 
     let cell = create_filename_cell(file_name, None, icons.dir_icon(file_name));
     let correct_cell = GridCell {
-        contents: format!("{} {}", icons.dir_icon(file_name).unwrap(), file_name),
+        contents: format_compact!("{} {}", icons.dir_icon(file_name).unwrap(), file_name),
         width: 6,
         alignment: Alignment::Left,
     };
@@ -73,7 +75,7 @@ fn test_create_filename_cell_with_icon_and_color() {
 
     let cell = create_filename_cell(file_name, ls_colors.dir_style(), icons.dir_icon(file_name));
     let correct_cell = GridCell {
-        contents: format!(
+        contents: format_compact!(
             "\x1b[{}m{} {}\x1b[0m",
             ls_colors.dir_style().unwrap(),
             icons.dir_icon(file_name).unwrap(),
@@ -1075,7 +1077,7 @@ fn internal_test_format_filename_symlink_long_format(
         &symlink_metadata,
         &config,
     );
-    let mut correct_filename_cell = GridCell::from(symlink_path_string.clone());
+    let mut correct_filename_cell = GridCell::from_str_with_style(&symlink_path_string, None);
     let target_name_cell =
         format_filename(&target_path, &target_path_string, &target_metadata, &config);
     correct_filename_cell.push_str(" -> ");
@@ -1091,11 +1093,11 @@ fn internal_test_format_filename_symlink_long_format(
         &config,
     );
     let mut correct_filename_cell_with_color = match &ansi_style_str {
-        Some(ansi_style_str) => GridCell::from(format!(
-            "\x1b[{}m{}\x1b[0m",
-            ansi_style_str, symlink_path_string
-        )),
-        None => GridCell::from(symlink_path_string.clone()),
+        Some(ansi_style_str) => GridCell::from_str_with_style(
+            &format_compact!("\x1b[{}m{}\x1b[0m", ansi_style_str, symlink_path_string),
+            None,
+        ),
+        None => GridCell::from_str_with_style(&symlink_path_string, None),
     };
     let target_name_cell =
         format_filename(&target_path, &target_path_string, &target_metadata, &config);
@@ -1213,7 +1215,7 @@ fn internal_test_format_filename_common(
     config.indicator_style = indicator_style;
 
     let filename_cell = format_filename(path, &path_string, &metadata, &config);
-    let mut correct_filename_cell = GridCell::from(path_string.clone());
+    let mut correct_filename_cell = GridCell::from_str_with_style(&path_string, None);
     if correct_filename_has_indicator {
         correct_filename_cell.push_char(indicator_symbol);
     }
@@ -1222,10 +1224,11 @@ fn internal_test_format_filename_common(
     config.ls_colors = LsColors::with_colors();
     let filename_cell_with_color = format_filename(path, &path_string, &metadata, &config);
     let mut correct_filename_cell_with_color = match &ansi_style_str {
-        Some(ansi_style_str) => {
-            GridCell::from(format!("\x1b[{}m{}\x1b[0m", ansi_style_str, path_string))
-        }
-        None => GridCell::from(path_string.clone()),
+        Some(ansi_style_str) => GridCell::from_str_with_style(
+            &format_compact!("\x1b[{}m{}\x1b[0m", ansi_style_str, path_string),
+            None,
+        ),
+        None => GridCell::from_str_with_style(&path_string, None),
     };
 
     correct_filename_cell_with_color.width = UnicodeWidthStr::width(&*path_string);

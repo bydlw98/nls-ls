@@ -8,12 +8,12 @@ pub use mode::{pwsh_mode_cell, rwx_mode_cell};
 use std::fs::Metadata;
 use std::os::unix::fs::MetadataExt;
 
-use nls_term_grid::{Alignment, GridCell};
+use nls_term_grid::Alignment;
 
 use sys_prelude::*;
 
 use crate::config::{AllocatedSizeBlocks, Config};
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 
 pub fn get_allocated_size(metadata: &Metadata, config: &Config) -> u64 {
     match config.allocated_size_blocks {

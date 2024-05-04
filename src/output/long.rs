@@ -1,9 +1,10 @@
+use nls_term_grid::{Direction, Grid};
+
 use crate::config::Config;
 use crate::entry::EntryBuf;
+use crate::output::GridCell;
 
 pub fn long_format(entrybuf_vec: &[EntryBuf], config: &Config) {
-    use nls_term_grid::*;
-
     let num_columns: usize = 5
         + (config.list_inode as usize)
         + (config.list_allocated_size as usize)

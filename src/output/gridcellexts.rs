@@ -1,5 +1,8 @@
+use compact_str::{format_compact, CompactString, ToCompactString};
 use nls_term_grid::*;
 use unicode_width::UnicodeWidthStr;
+
+use crate::output::GridCell;
 
 pub trait GridCellExts {
     fn error_cell(alignment: Alignment) -> Self;
@@ -26,7 +29,7 @@ pub trait GridCellExts {
 impl GridCellExts for GridCell {
     fn error_cell(alignment: Alignment) -> Self {
         Self {
-            contents: String::from('?'),
+            contents: CompactString::new_inline("?"),
             width: 1,
             alignment: alignment,
         }
@@ -35,8 +38,8 @@ impl GridCellExts for GridCell {
     fn from_ascii_str_with_style(value: &str, ansi_style_str: Option<&str>) -> Self {
         let width = value.len();
         let contents = match ansi_style_str {
-            Some(ansi_style_str) => format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value),
-            None => value.to_string(),
+            Some(ansi_style_str) => format_compact!("\x1b[{}m{}\x1b[0m", ansi_style_str, value),
+            None => value.to_compact_string(),
         };
 
         Self {
@@ -49,8 +52,8 @@ impl GridCellExts for GridCell {
     fn from_str_with_style(value: &str, ansi_style_str: Option<&str>) -> Self {
         let width = UnicodeWidthStr::width(value);
         let contents = match ansi_style_str {
-            Some(ansi_style_str) => format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value),
-            None => value.to_string(),
+            Some(ansi_style_str) => format_compact!("\x1b[{}m{}\x1b[0m", ansi_style_str, value),
+            None => value.to_compact_string(),
         };
 
         Self {
@@ -65,8 +68,10 @@ impl GridCellExts for GridCell {
         let value_string = buffer.format(value);
         let width = value_string.len();
         let contents = match ansi_style_str {
-            Some(ansi_style_str) => format!("\x1b[{}m{}\x1b[0m", ansi_style_str, value_string),
-            None => value_string.to_string(),
+            Some(ansi_style_str) => {
+                format_compact!("\x1b[{}m{}\x1b[0m", ansi_style_str, value_string)
+            }
+            None => value_string.to_compact_string(),
         };
 
         Self {
@@ -78,7 +83,7 @@ impl GridCellExts for GridCell {
 
     fn with_capacity(capacity: usize) -> Self {
         Self {
-            contents: String::with_capacity(capacity),
+            contents: CompactString::with_capacity(capacity),
             ..Default::default()
         }
     }
@@ -107,7 +112,7 @@ impl GridCellExts for GridCell {
         match ansi_style_str {
             Some(ansi_style_str) => {
                 self.contents
-                    .push_str(&format!("\x1b[{}m{}\x1b[0m", ansi_style_str, ch));
+                    .push_str(&format_compact!("\x1b[{}m{}\x1b[0m", ansi_style_str, ch));
                 self.width += 1;
             }
             None => {
@@ -119,14 +124,14 @@ impl GridCellExts for GridCell {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
     fn test_gridcellexts_error_cell() {
         let left_aligned_cell = GridCell::error_cell(Alignment::Left);
         let correct_left_aligned_cell = GridCell {
-            contents: String::from("?"),
+            contents: CompactString::from("?"),
             width: 1,
             alignment: Alignment::Left,
         };
@@ -134,7 +139,7 @@ mod test {
 
         let right_aligned_cell = GridCell::error_cell(Alignment::Right);
         let correct_right_aligned_cell = GridCell {
-            contents: String::from("?"),
+            contents: CompactString::from("?"),
             width: 1,
             alignment: Alignment::Right,
         };
@@ -145,7 +150,7 @@ mod test {
     fn test_gridcellexts_from_ascii_str_with_style() {
         let cell_no_style = GridCell::from_ascii_str_with_style("1,   3", None);
         let correct_cell_no_style = GridCell {
-            contents: String::from("1,   3"),
+            contents: CompactString::from("1,   3"),
             width: 6,
             alignment: Alignment::Left,
         };
@@ -153,7 +158,7 @@ mod test {
 
         let cell_with_style = GridCell::from_ascii_str_with_style("1,   3", Some("36"));
         let correct_cell_with_style = GridCell {
-            contents: String::from("\x1b[36m1,   3\x1b[0m"),
+            contents: CompactString::from("\x1b[36m1,   3\x1b[0m"),
             width: 6,
             alignment: Alignment::Left,
         };
@@ -164,7 +169,7 @@ mod test {
     fn test_gridcellexts_from_str_with_style() {
         let cell_no_style = GridCell::from_str_with_style("main.rs", None);
         let correct_cell_no_style = GridCell {
-            contents: String::from("main.rs"),
+            contents: CompactString::from("main.rs"),
             width: 7,
             alignment: Alignment::Left,
         };
@@ -172,7 +177,7 @@ mod test {
 
         let cell_with_style = GridCell::from_str_with_style("main.rs", Some("36"));
         let correct_cell_with_style = GridCell {
-            contents: String::from("\x1b[36mmain.rs\x1b[0m"),
+            contents: CompactString::from("\x1b[36mmain.rs\x1b[0m"),
             width: 7,
             alignment: Alignment::Left,
         };
@@ -183,7 +188,7 @@ mod test {
     fn test_gridcellexts_from_num_with_style() {
         let cell_no_style = GridCell::from_num_with_style(4096, None);
         let correct_cell_no_style = GridCell {
-            contents: String::from("4096"),
+            contents: CompactString::from("4096"),
             width: 4,
             alignment: Alignment::Right,
         };
@@ -191,7 +196,7 @@ mod test {
 
         let cell_with_style = GridCell::from_num_with_style(4096, Some("36"));
         let correct_cell_with_style = GridCell {
-            contents: String::from("\x1b[36m4096\x1b[0m"),
+            contents: CompactString::from("\x1b[36m4096\x1b[0m"),
             width: 4,
             alignment: Alignment::Right,
         };
@@ -200,9 +205,9 @@ mod test {
 
     #[test]
     fn test_gridcellexts_append() {
-        let mut cell = GridCell::from(String::from("/bin -> "));
-        let other_cell = GridCell::from(String::from("/usr/bin"));
-        let correct_cell = GridCell::from(String::from("/bin -> /usr/bin"));
+        let mut cell = GridCell::from_str_with_style("/bin -> ", None);
+        let other_cell = GridCell::from_str_with_style("/usr/bin", None);
+        let correct_cell = GridCell::from_str_with_style("/bin -> /usr/bin", None);
         cell.append(other_cell);
 
         assert_eq!(cell, correct_cell);
@@ -210,19 +215,22 @@ mod test {
 
     #[test]
     fn test_gridcellexts_push_str() {
-        let mut cell = GridCell::from(String::from("/bin -> "));
+        let mut cell = GridCell::from_str_with_style("/bin -> ", None);
         cell.push_str("/usr/bin");
 
-        assert_eq!(cell, GridCell::from(String::from("/bin -> /usr/bin")));
+        assert_eq!(
+            cell,
+            GridCell::from_str_with_style("/bin -> /usr/bin", None)
+        );
     }
 
     #[test]
     fn test_gridcellexts_push_str_with_width() {
-        let mut cell = GridCell::from(String::from("/bin -> "));
+        let mut cell = GridCell::from_str_with_style("/bin -> ", None);
         cell.push_str_with_width("/usr/bin", 3);
 
         let correct_cell = GridCell {
-            contents: String::from("/bin -> /usr/bin"),
+            contents: CompactString::from("/bin -> /usr/bin"),
             width: 11,
             alignment: Alignment::Left,
         };
@@ -232,22 +240,22 @@ mod test {
 
     #[test]
     fn test_gridcellexts_push_char() {
-        let mut cell = GridCell::from(String::from("src"));
+        let mut cell = GridCell::from_str_with_style("src", None);
         cell.push_char('/');
 
-        assert_eq!(cell, GridCell::from(String::from("src/")));
+        assert_eq!(cell, GridCell::from_str_with_style("src/", None));
     }
 
     #[test]
     fn test_gridcellexts_push_char_with_style() {
-        let mut cell_no_style = GridCell::from(String::from("drwx"));
+        let mut cell_no_style = GridCell::from_str_with_style("drwx", None);
         cell_no_style.push_char_with_style('r', None);
-        assert_eq!(cell_no_style, GridCell::from(String::from("drwxr")));
+        assert_eq!(cell_no_style, GridCell::from_str_with_style("drwxr", None));
 
-        let mut cell_with_style = GridCell::from(String::from("drwx"));
+        let mut cell_with_style = GridCell::from_str_with_style("drwx", None);
         cell_with_style.push_char_with_style('r', Some("33;1"));
         let correct_cell_with_style = GridCell {
-            contents: String::from("drwx\x1b[33;1mr\x1b[0m"),
+            contents: CompactString::from("drwx\x1b[33;1mr\x1b[0m"),
             width: 5,
             alignment: Alignment::Left,
         };

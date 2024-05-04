@@ -16,10 +16,10 @@ use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
 use std::ptr;
 
-use nls_term_grid::{Alignment, GridCell};
+use nls_term_grid::Alignment;
 
 use crate::config::{AllocatedSizeBlocks, Config};
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 
 use accounts::get_accountname_by_psid;
 use permissions::get_rwx_permissions;

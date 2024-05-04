@@ -1,7 +1,7 @@
-use nls_term_grid::{Alignment, GridCell};
+use nls_term_grid::Alignment;
 
 use crate::config::{Config, SizeFormat};
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 
 pub fn format_size(size: u64, config: &Config) -> GridCell {
     let size_style = config.theme.size_style();
@@ -94,6 +94,9 @@ fn format_size_with_prefix(
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use compact_str::{format_compact, CompactString};
+
     use crate::theme::ThemeConfig;
 
     #[test]
@@ -203,7 +206,7 @@ mod test {
 
         config.size_format = SizeFormat::Raw;
         let correct_cell = GridCell {
-            contents: String::from(raw_str),
+            contents: CompactString::new(raw_str),
             width: raw_str.len(),
             alignment: Alignment::Right,
         };
@@ -211,7 +214,7 @@ mod test {
 
         config.size_format = SizeFormat::HumanReadable;
         let correct_cell = GridCell {
-            contents: String::from(human_readable_str),
+            contents: CompactString::new(human_readable_str),
             width: human_readable_str.len(),
             alignment: Alignment::Right,
         };
@@ -219,7 +222,7 @@ mod test {
 
         config.size_format = SizeFormat::Si;
         let correct_cell = GridCell {
-            contents: String::from(si_str),
+            contents: CompactString::new(si_str),
             width: si_str.len(),
             alignment: Alignment::Right,
         };
@@ -227,7 +230,7 @@ mod test {
 
         config.size_format = SizeFormat::Iec;
         let correct_cell = GridCell {
-            contents: String::from(iec_str),
+            contents: CompactString::new(iec_str),
             width: iec_str.len(),
             alignment: Alignment::Right,
         };
@@ -238,7 +241,7 @@ mod test {
 
         config.size_format = SizeFormat::Raw;
         let correct_cell = GridCell {
-            contents: format!("\x1b[{}m{}\x1b[0m", size_style, raw_str),
+            contents: format_compact!("\x1b[{}m{}\x1b[0m", size_style, raw_str),
             width: raw_str.len(),
             alignment: Alignment::Right,
         };
@@ -246,7 +249,7 @@ mod test {
 
         config.size_format = SizeFormat::HumanReadable;
         let correct_cell = GridCell {
-            contents: format!("\x1b[{}m{}\x1b[0m", size_style, human_readable_str),
+            contents: format_compact!("\x1b[{}m{}\x1b[0m", size_style, human_readable_str),
             width: human_readable_str.len(),
             alignment: Alignment::Right,
         };
@@ -254,7 +257,7 @@ mod test {
 
         config.size_format = SizeFormat::Si;
         let correct_cell = GridCell {
-            contents: format!("\x1b[{}m{}\x1b[0m", size_style, si_str),
+            contents: format_compact!("\x1b[{}m{}\x1b[0m", size_style, si_str),
             width: si_str.len(),
             alignment: Alignment::Right,
         };
@@ -262,7 +265,7 @@ mod test {
 
         config.size_format = SizeFormat::Iec;
         let correct_cell = GridCell {
-            contents: format!("\x1b[{}m{}\x1b[0m", size_style, iec_str),
+            contents: format_compact!("\x1b[{}m{}\x1b[0m", size_style, iec_str),
             width: iec_str.len(),
             alignment: Alignment::Right,
         };

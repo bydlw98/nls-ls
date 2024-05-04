@@ -5,7 +5,7 @@ use std::os::unix::fs::{FileTypeExt, MetadataExt};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-use nls_term_grid::{Alignment, GridCell};
+use nls_term_grid::Alignment;
 
 use crate::config::{Config, TimestampUsed};
 #[cfg(unix)]
@@ -205,7 +205,7 @@ impl EntryBuf {
     pub fn file_name_cell(&self, config: &Config) -> GridCell {
         match &self.metadata {
             Some(metadata) => format_filename(&self.path, &self.file_name, metadata, config),
-            None => GridCell::from(self.file_name.clone()),
+            None => GridCell::from_str_with_style(&self.file_name, None),
         }
     }
 

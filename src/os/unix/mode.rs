@@ -1,11 +1,9 @@
 use std::path::Path;
 
-use nls_term_grid::GridCell;
-
 use super::sys_prelude::*;
 
 use crate::config::Config;
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 use crate::utils::HasMaskSetExt;
 
 pub fn rwx_mode_cell(st_mode: u32, config: &Config) -> GridCell {

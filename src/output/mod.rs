@@ -6,13 +6,15 @@ mod gridcellexts;
 mod long;
 mod sort;
 
+use crate::config::{Config, OutputFormat};
+use crate::entry::EntryBuf;
+
 pub use format_filename::format_filename;
 pub use format_size::format_size;
 pub use format_timestamp::format_timestamp;
 pub use gridcellexts::GridCellExts;
 
-use crate::config::{Config, OutputFormat};
-use crate::entry::EntryBuf;
+pub type GridCell = nls_term_grid::GridCell<compact_str::CompactString>;
 
 pub fn output(entrybuf_vec: &mut Vec<EntryBuf>, config: &Config) {
     use column::{across_format, single_column_format, vertical_format};

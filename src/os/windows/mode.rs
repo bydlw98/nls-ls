@@ -1,11 +1,9 @@
 use std::fs::FileType;
 
-use nls_term_grid::GridCell;
-
 use super::sys_prelude::*;
 
 use crate::config::Config;
-use crate::output::GridCellExts;
+use crate::output::{GridCell, GridCellExts};
 use crate::utils::HasMaskSetExt;
 
 pub fn pwsh_mode_cell(file_attributes: Option<u32>, config: &Config) -> GridCell {
