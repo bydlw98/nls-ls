@@ -1,3 +1,5 @@
+use compact_str::CompactString;
+
 macro_rules! theme_config_get_style_impl {
     ($field:ident, $method:ident, $comment:literal) => {
         #[doc = concat!("Returns the style used for ", stringify!($comment))]
@@ -10,27 +12,27 @@ macro_rules! theme_config_get_style_impl {
 
 #[derive(Debug, Default)]
 pub struct ThemeConfig {
-    inode: Option<String>,
-    nlink: Option<String>,
-    owner: Option<String>,
-    group: Option<String>,
-    size: Option<String>,
-    timestamp: Option<String>,
-    read: Option<String>,
-    write: Option<String>,
-    execute: Option<String>,
-    no_permission: Option<String>,
+    inode: Option<CompactString>,
+    nlink: Option<CompactString>,
+    owner: Option<CompactString>,
+    group: Option<CompactString>,
+    size: Option<CompactString>,
+    timestamp: Option<CompactString>,
+    read: Option<CompactString>,
+    write: Option<CompactString>,
+    execute: Option<CompactString>,
+    no_permission: Option<CompactString>,
     #[cfg(unix)]
-    setuid: Option<String>,
+    setuid: Option<CompactString>,
     #[cfg(unix)]
-    setgid: Option<String>,
+    setgid: Option<CompactString>,
     #[cfg(unix)]
-    sticky: Option<String>,
+    sticky: Option<CompactString>,
     #[cfg(windows)]
-    archive: Option<String>,
+    archive: Option<CompactString>,
     #[cfg(windows)]
-    system: Option<String>,
-    hidden: Option<String>,
+    system: Option<CompactString>,
+    hidden: Option<CompactString>,
 }
 
 impl ThemeConfig {
@@ -73,27 +75,27 @@ impl ThemeConfig {
 
     pub fn with_default_colors() -> Self {
         Self {
-            inode: Some(String::from("32;1")),
-            nlink: Some(String::from("36;1")),
-            owner: Some(String::from("31")),
-            group: Some(String::from("35")),
-            size: Some(String::from("36")),
-            timestamp: Some(String::from("33")),
-            read: Some(String::from("33;1")),
-            write: Some(String::from("31;1")),
-            execute: Some(String::from("32;1")),
-            no_permission: Some(String::from("37;1;2")),
+            inode: Some(CompactString::new_inline("32;1")),
+            nlink: Some(CompactString::new_inline("36;1")),
+            owner: Some(CompactString::new_inline("31")),
+            group: Some(CompactString::new_inline("35")),
+            size: Some(CompactString::new_inline("36")),
+            timestamp: Some(CompactString::new_inline("33")),
+            read: Some(CompactString::new_inline("33;1")),
+            write: Some(CompactString::new_inline("31;1")),
+            execute: Some(CompactString::new_inline("32;1")),
+            no_permission: Some(CompactString::new_inline("37;1;2")),
             #[cfg(unix)]
-            setuid: Some(String::from("35;1")),
+            setuid: Some(CompactString::new_inline("35;1")),
             #[cfg(unix)]
-            setgid: Some(String::from("35;1")),
+            setgid: Some(CompactString::new_inline("35;1")),
             #[cfg(unix)]
-            sticky: Some(String::from("35;1")),
+            sticky: Some(CompactString::new_inline("35;1")),
             #[cfg(windows)]
-            archive: Some(String::from("31")),
+            archive: Some(CompactString::new_inline("31")),
             #[cfg(windows)]
-            system: Some(String::from("40;33;01")),
-            hidden: Some(String::from("35")),
+            system: Some(CompactString::new_inline("40;33;01")),
+            hidden: Some(CompactString::new_inline("35")),
         }
     }
 }

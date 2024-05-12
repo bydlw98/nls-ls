@@ -3,6 +3,8 @@ use std::io::{self, IsTerminal};
 use std::path::PathBuf;
 use std::process;
 
+use compact_str::{format_compact, CompactString};
+
 use crate::ls_colors::LsColors;
 use crate::theme::{IconTheme, ThemeConfig};
 
@@ -18,7 +20,7 @@ pub struct Config {
     pub dereference_cmdline_symlink_dir: bool,
     pub git_ignore: bool,
     pub ignore_file: bool,
-    pub ignore_glob_vec: Vec<String>,
+    pub ignore_glob_vec: Vec<CompactString>,
     pub ignore_hidden: bool,
     pub indicator_style: IndicatorStyle,
     pub ls_colors: LsColors,
@@ -156,7 +158,7 @@ impl Config {
                 Short('I') | Long("ignore-glob") => {
                     let value_os = parser.value()?;
                     self.ignore_glob_vec
-                        .push(format!("!{}", value_os.to_string_lossy()));
+                        .push(format_compact!("!{}", value_os.to_string_lossy()));
                 }
                 Long("icons") => match parser.optional_value() {
                     Some(when) => {

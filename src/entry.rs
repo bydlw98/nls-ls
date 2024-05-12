@@ -5,6 +5,7 @@ use std::os::unix::fs::{FileTypeExt, MetadataExt};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
+use compact_str::{CompactString, ToCompactString};
 use nls_term_grid::Alignment;
 
 use crate::config::{Config, TimestampUsed};
@@ -17,7 +18,7 @@ use crate::utils::systemtime_to_unix_timestamp;
 
 #[derive(Debug, Default)]
 pub struct EntryBuf {
-    file_name: String,
+    file_name: CompactString,
     file_name_key: String,
     path: PathBuf,
     metadata: Option<Metadata>,
@@ -35,9 +36,9 @@ pub struct EntryBuf {
 impl EntryBuf {
     pub fn from_direntry(dent: ignore::DirEntry, config: &Config) -> Self {
         let file_name = if dent.depth() == 0 {
-            String::from(".")
+            CompactString::new_inline(".")
         } else {
-            dent.file_name().to_string_lossy().to_string()
+            dent.file_name().to_string_lossy().to_compact_string()
         };
 
         let follow_links = if cfg!(windows) {
@@ -82,7 +83,7 @@ impl EntryBuf {
     }
 
     pub fn from_cmdline_path(path: &Path, config: &Config) -> Self {
-        let file_name = path.display().to_string();
+        let file_name = path.display().to_compact_string();
         let metadata_result = if config.dereference_cmdline_symlink {
             path.metadata()
         } else {
@@ -124,7 +125,7 @@ impl EntryBuf {
         };
 
         let mut entrybuf = Self {
-            file_name: String::from(path_name),
+            file_name: CompactString::from(path_name),
             path: path.to_path_buf(),
             metadata: metadata,
             #[cfg(windows)]

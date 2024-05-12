@@ -16,6 +16,7 @@ use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
 use std::ptr;
 
+use compact_str::CompactString;
 use nls_term_grid::Alignment;
 
 use crate::config::{AllocatedSizeBlocks, Config};
@@ -32,9 +33,9 @@ pub struct WindowsMetadata {
     nlink: Option<u64>,
     allocated_size: Option<u64>,
     size: Option<u64>,
-    rwx_permissions: String,
-    owner_string: String,
-    group_string: String,
+    rwx_permissions: CompactString,
+    owner_string: CompactString,
+    group_string: CompactString,
 }
 
 impl WindowsMetadata {
@@ -98,9 +99,9 @@ impl WindowsMetadata {
                     path.display(),
                     err
                 );
-                self.rwx_permissions = String::from("?????????");
-                self.owner_string = String::from('?');
-                self.group_string = String::from('?');
+                self.rwx_permissions = CompactString::new_inline("?????????");
+                self.owner_string = CompactString::new_inline("?");
+                self.group_string = CompactString::new_inline("?");
             }
         }
     }

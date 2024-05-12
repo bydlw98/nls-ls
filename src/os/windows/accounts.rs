@@ -1,11 +1,12 @@
 use std::sync::Mutex;
 
+use compact_str::{CompactString, ToCompactString};
 use once_cell::sync::Lazy;
 use user_utils::windows::*;
 
 use crate::config::Config;
 
-pub fn get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> String {
+pub fn get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> CompactString {
     static ACCOUNTS_CACHE: Lazy<Mutex<Vec<Account>>> =
         Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
     let mut accounts_cache = ACCOUNTS_CACHE.lock().unwrap();
@@ -28,20 +29,25 @@ pub fn get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> Strin
     }
 }
 
-fn internal_get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> String {
+fn internal_get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> CompactString {
     if config.numeric_uid_gid {
-        psid.convert_to_string_sid().unwrap_or(String::from("?"))
+        psid.convert_to_string_sid()
+            .map(|string_sid| string_sid.to_compact_string())
+            .unwrap_or(CompactString::new_inline("?"))
     } else {
         match psid.lookup_accountname() {
-            Ok(accountname) => accountname.to_string_lossy().to_string(),
-            Err(_) => psid.convert_to_string_sid().unwrap_or(String::from("?")),
+            Ok(accountname) => accountname.to_string_lossy().to_compact_string(),
+            Err(_) => psid
+                .convert_to_string_sid()
+                .map(|string_sid| string_sid.to_compact_string())
+                .unwrap_or(CompactString::new_inline("?")),
         }
     }
 }
 
 #[derive(Debug)]
 struct Account {
-    name: String,
+    name: CompactString,
     psid: OwnedPsid,
 }
 

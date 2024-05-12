@@ -1,5 +1,7 @@
 use std::collections::hash_map::HashMap;
 
+use compact_str::{CompactString, ToCompactString};
+
 macro_rules! ls_colors_get_style_impl {
     ($field:ident, $method:ident, $comment:literal) => {
         #[doc = concat!("Returns the style used for ", $comment)]
@@ -12,31 +14,31 @@ macro_rules! ls_colors_get_style_impl {
 
 #[derive(Debug)]
 pub struct LsColors {
-    file: Option<String>,
-    dir: Option<String>,
-    symlink: Option<String>,
-    exec: Option<String>,
+    file: Option<CompactString>,
+    dir: Option<CompactString>,
+    symlink: Option<CompactString>,
+    exec: Option<CompactString>,
     #[cfg(unix)]
-    block_device: Option<String>,
+    block_device: Option<CompactString>,
     #[cfg(unix)]
-    char_device: Option<String>,
+    char_device: Option<CompactString>,
     #[cfg(unix)]
-    fifo: Option<String>,
+    fifo: Option<CompactString>,
     #[cfg(unix)]
-    socket: Option<String>,
+    socket: Option<CompactString>,
     #[cfg(unix)]
-    setuid: Option<String>,
+    setuid: Option<CompactString>,
     #[cfg(unix)]
-    setgid: Option<String>,
+    setgid: Option<CompactString>,
     #[cfg(unix)]
-    multiple_hard_links: Option<String>,
+    multiple_hard_links: Option<CompactString>,
     #[cfg(unix)]
-    dir_sticky_and_other_writable: Option<String>,
+    dir_sticky_and_other_writable: Option<CompactString>,
     #[cfg(unix)]
-    dir_other_writable: Option<String>,
+    dir_other_writable: Option<CompactString>,
     #[cfg(unix)]
-    dir_sticky: Option<String>,
-    extension: HashMap<String, String>,
+    dir_sticky: Option<CompactString>,
+    extension: HashMap<CompactString, CompactString>,
 }
 
 impl LsColors {
@@ -63,61 +65,63 @@ impl LsColors {
             if let Some((k, v)) = s.split_once('=') {
                 match k {
                     "fi" => {
-                        self.file = Some(v.to_string());
+                        self.file = Some(v.to_compact_string());
                     }
                     "di" => {
-                        self.dir = Some(v.to_string());
+                        self.dir = Some(v.to_compact_string());
                     }
                     "ln" => {
-                        self.symlink = Some(v.to_string());
+                        self.symlink = Some(v.to_compact_string());
                     }
                     "ex" => {
-                        self.exec = Some(v.to_string());
+                        self.exec = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "bd" => {
-                        self.block_device = Some(v.to_string());
+                        self.block_device = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "cd" => {
-                        self.char_device = Some(v.to_string());
+                        self.char_device = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "pi" => {
-                        self.fifo = Some(v.to_string());
+                        self.fifo = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "so" => {
-                        self.socket = Some(v.to_string());
+                        self.socket = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "su" => {
-                        self.setuid = Some(v.to_string());
+                        self.setuid = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "sg" => {
-                        self.setgid = Some(v.to_string());
+                        self.setgid = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "mh" => {
-                        self.multiple_hard_links = Some(v.to_string());
+                        self.multiple_hard_links = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "tw" => {
-                        self.dir_sticky_and_other_writable = Some(v.to_string());
+                        self.dir_sticky_and_other_writable = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "ow" => {
-                        self.dir_other_writable = Some(v.to_string());
+                        self.dir_other_writable = Some(v.to_compact_string());
                     }
                     #[cfg(unix)]
                     "st" => {
-                        self.dir_sticky = Some(v.to_string());
+                        self.dir_sticky = Some(v.to_compact_string());
                     }
                     _ => {
                         if k.starts_with("*.") {
-                            self.extension
-                                .insert(k.trim_start_matches("*.").to_string(), v.to_string());
+                            self.extension.insert(
+                                k.trim_start_matches("*.").to_compact_string(),
+                                v.to_compact_string(),
+                            );
                         }
                     }
                 }
@@ -187,12 +191,12 @@ impl LsColors {
         "directories with sticky permission."
     );
 
-    pub fn extension_style(&self, extension: String) -> Option<&str> {
+    pub fn extension_style(&self, extension: &str) -> Option<&str> {
         if self.extension.is_empty() {
             self.file_style()
         } else {
             self.extension
-                .get(&extension)
+                .get(extension)
                 .map(|ansi_str_style| Some(ansi_str_style.as_str()))
                 .unwrap_or(self.file_style())
         }
@@ -231,19 +235,19 @@ impl Default for LsColors {
     }
 }
 
-pub fn get_file_extension(file_name: &str) -> String {
+pub fn get_file_extension(file_name: &str) -> CompactString {
     match file_name.rsplit_once('.') {
         Some((file_name_without_extension, extension)) => {
             if file_name_without_extension.is_empty()
                 || file_name_without_extension.ends_with('/')
                 || file_name_without_extension.ends_with(std::path::MAIN_SEPARATOR_STR)
             {
-                String::default()
+                CompactString::default()
             } else {
-                extension.to_string()
+                extension.to_compact_string()
             }
         }
-        None => String::default(),
+        None => CompactString::default(),
     }
 }
 
@@ -343,11 +347,11 @@ mod test {
         let mut ls_colors = LsColors::default();
         ls_colors.parse(String::from(DEFAULT_LS_COLORS));
 
-        assert_eq!(ls_colors.extension_style(String::from("gz")), Some("01;31"));
-        assert_eq!(ls_colors.extension_style(String::from("")), None);
+        assert_eq!(ls_colors.extension_style("gz"), Some("01;31"));
+        assert_eq!(ls_colors.extension_style(""), None);
 
         // "xyz" extension is not set in DEFAULT_LS_COLORS
-        assert_eq!(ls_colors.extension_style(String::from("xyz")), None);
+        assert_eq!(ls_colors.extension_style("xyz"), None);
     }
 
     #[test]

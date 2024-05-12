@@ -120,7 +120,7 @@ fn test_format_filename_regular_file() {
 #[test]
 fn test_format_filename_file_with_extension() {
     let ls_colors = LsColors::with_colors();
-    let ansi_style_str = ls_colors.extension_style(String::from("jpeg"));
+    let ansi_style_str = ls_colors.extension_style("jpeg");
     let file_name = "file.jpeg";
 
     internal_test_format_filename_file(

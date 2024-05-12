@@ -1,6 +1,7 @@
 use std::io;
 use std::mem::MaybeUninit;
 
+use compact_str::CompactString;
 use once_cell::sync::OnceCell;
 use user_utils::windows::{AsPsid, AsRawPsid, BorrowedPsid, OwnedPsid};
 
@@ -10,9 +11,9 @@ use super::sys_prelude::*;
 use crate::config::Config;
 use crate::utils::HasMaskSetExt;
 
-pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> String {
+pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> CompactString {
     static WORLD_PSID: OnceCell<Option<OwnedPsid>> = OnceCell::new();
-    let mut permissions_buf = String::with_capacity(9);
+    let mut permissions_buf = CompactString::default();
 
     match get_accessmask(security_info.dacl_ptr(), security_info.owner_psid()) {
         Ok(owner_accessmask) => {
@@ -49,8 +50,8 @@ pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> Str
     permissions_buf
 }
 
-fn accessmask_to_rwx(accessmask: u32, config: &Config) -> String {
-    let mut rwx_string = String::with_capacity(32);
+fn accessmask_to_rwx(accessmask: u32, config: &Config) -> CompactString {
+    let mut rwx_string = CompactString::default();
     let theme = &config.theme;
 
     if accessmask.has_mask_set(c::FILE_GENERIC_READ) {
@@ -92,7 +93,7 @@ pub fn get_accessmask(dacl_ptr: *const c::ACL, psid: BorrowedPsid<'_>) -> Result
     }
 }
 
-fn string_push_char_with_style(string: &mut String, ch: char, ansi_style_str: Option<&str>) {
+fn string_push_char_with_style(string: &mut CompactString, ch: char, ansi_style_str: Option<&str>) {
     match ansi_style_str {
         Some(ansi_style_str) => {
             string.push_str("\x1b[");

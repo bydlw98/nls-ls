@@ -105,7 +105,7 @@ fn internal_format_regular_file(file_name: &str, metadata: &Metadata, config: &C
     } else if extension.is_empty() {
         create_filename_cell(file_name, ls_colors.file_style(), icon)
     } else {
-        create_filename_cell(file_name, ls_colors.extension_style(extension), icon)
+        create_filename_cell(file_name, ls_colors.extension_style(&extension), icon)
     };
 
     if indicator_style.others() && st_mode.has_bit_in_mask_set(EXEC_MASK) {
@@ -130,7 +130,7 @@ fn internal_format_regular_file(
         return create_filename_cell(file_name, ls_colors.file_style(), icon);
     } else {
         #[cfg(windows)]
-        if ["exe", "bat", "cmd"].contains(&&extension.as_str()) {
+        if ["exe", "bat", "cmd"].contains(&extension.as_str()) {
             let mut filename_cell = create_filename_cell(file_name, ls_colors.exec_style(), icon);
             if indicator_style.others() {
                 filename_cell.push_char(IndicatorStyle::EXEC);
@@ -138,7 +138,7 @@ fn internal_format_regular_file(
             return filename_cell;
         }
 
-        return create_filename_cell(file_name, ls_colors.extension_style(extension), icon);
+        return create_filename_cell(file_name, ls_colors.extension_style(&extension), icon);
     }
 }
 
