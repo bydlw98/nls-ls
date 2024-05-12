@@ -1,6 +1,6 @@
 [package]
 name = "nls-ls"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 categories = ["command-line-utilities"]
 description = "Yet another ls(1) implementation"
