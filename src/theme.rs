@@ -135,6 +135,7 @@ impl IconTheme {
     const EMACS: Option<char> = Some('\u{e632}');
     const FONT: Option<char> = Some('\u{e659}');
     const GIT: Option<char> = Some('\u{e702}');
+    const GO: Option<char> = Some('\u{e627}');
     const HEADER: Option<char> = Some('\u{f0fd}');
     const IMAGE: Option<char> = Some('\u{f1c5}');
     const JAVA: Option<char> = Some('\u{e738}');
@@ -181,6 +182,9 @@ impl IconTheme {
                 ".gitconfig" => Self::GIT,
                 ".gitignore" => Self::GIT,
                 ".gitmodules" => Self::GIT,
+                "go.mod" => Self::GO,
+                "go.sum" => Self::GO,
+                "go.work" => Self::GO,
                 ".login" => Self::SHELL,
                 ".logout" => Self::SHELL,
                 "profile" => Self::SHELL,
@@ -222,6 +226,7 @@ impl IconTheme {
                 "diff" => Some('\u{e728}'),
                 "el" => Self::EMACS,
                 "elc" => Self::EMACS,
+                "go" => Self::GO,
                 "gz" => Self::COMPRESSED,
                 "h" => Self::HEADER,
                 "hh" => Self::HEADER,
