@@ -138,6 +138,7 @@ impl IconTheme {
     const GO: Option<char> = Some('\u{e627}');
     const HEADER: Option<char> = Some('\u{f0fd}');
     const IMAGE: Option<char> = Some('\u{f1c5}');
+    const MAKE: Option<char> = Some('\u{e673}');
     const JAVA: Option<char> = Some('\u{e738}');
     const LUA: Option<char> = Some('\u{e620}');
     const PYTHON: Option<char> = Some('\u{e73c}');
@@ -173,6 +174,7 @@ impl IconTheme {
                 ".bash_logout" => Self::SHELL,
                 ".bash_profile" => Self::SHELL,
                 ".bashrc" => Self::SHELL,
+                "BSDmakefile" => Self::SHELL,
                 "Cargo.lock" => Self::RUST,
                 "Cargo.toml" => Self::RUST,
                 "Cargo.toml.orig" => Self::RUST,
@@ -182,11 +184,14 @@ impl IconTheme {
                 ".gitconfig" => Self::GIT,
                 ".gitignore" => Self::GIT,
                 ".gitmodules" => Self::GIT,
+                "GNUmakefile" => Self::MAKE,
                 "go.mod" => Self::GO,
                 "go.sum" => Self::GO,
                 "go.work" => Self::GO,
                 ".login" => Self::SHELL,
                 ".logout" => Self::SHELL,
+                "makefile" => Self::MAKE,
+                "Makefile" => Self::MAKE,
                 "profile" => Self::SHELL,
                 ".profile" => Self::SHELL,
                 "requirements.txt" => Self::PYTHON,
@@ -243,6 +248,7 @@ impl IconTheme {
                 "lock" => Some('\u{e672}'),
                 "lua" => Self::LUA,
                 "md" => Some('\u{e73e}'),
+                "mk" => Self::MAKE,
                 "mp3" => Some('\u{f001}'),
                 "mp4" => Some('\u{f03d}'),
                 "otf" => Self::FONT,
