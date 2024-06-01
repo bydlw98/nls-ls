@@ -128,6 +128,7 @@ impl IconTheme {
     #[cfg(unix)]
     const DEFAULT_SOCKET: Option<char> = Some('=');
 
+    const BINARY: Option<char> = Some('\u{eae8}');
     const COMPRESSED: Option<char> = Some('\u{f410}');
     const CONFIG: Option<char> = Some('\u{e615}');
     const CPP: Option<char> = Some('\u{e646}');
@@ -172,6 +173,7 @@ impl IconTheme {
             None
         } else {
             match file_name {
+                "a.out" => Self::BINARY,
                 "bash.bashrc" => Self::SHELL,
                 ".bash_aliases" => Self::SHELL,
                 ".bash_history" => Self::SHELL,
@@ -220,7 +222,9 @@ impl IconTheme {
         } else {
             match extension {
                 "7z" => Self::COMPRESSED,
+                "a" => Self::BINARY,
                 "bash" => Self::SHELL,
+                "bin" => Self::BINARY,
                 "bz2" => Self::COMPRESSED,
                 "c" => Some('\u{e649}'),
                 "cc" => Self::CPP,
@@ -236,6 +240,8 @@ impl IconTheme {
                 "cxx" => Self::CPP,
                 "db" => Some('\u{e706}'),
                 "diff" => Some('\u{e728}'),
+                "dll" => Self::BINARY,
+                "dylib" => Self::BINARY,
                 "el" => Self::EMACS,
                 "elc" => Self::EMACS,
                 "go" => Self::GO,
@@ -254,6 +260,7 @@ impl IconTheme {
                 "jpg" => Self::IMAGE,
                 "js" => Self::JAVASCRIPT,
                 "jsx" => Self::REACT,
+                "lib" => Self::BINARY,
                 "lock" => Some('\u{e672}'),
                 "lua" => Self::LUA,
                 "md" => Some('\u{e73e}'),
@@ -276,7 +283,9 @@ impl IconTheme {
                 "rs" => Self::RUST,
                 "sh" => Self::SHELL,
                 "shtml" => Self::HTML,
+                "so" => Self::BINARY,
                 "svelte" => Some('\u{e697}'),
+                "sym" => Self::BINARY,
                 "toml" => Self::CONFIG,
                 "ts" => Self::TYPESCRIPT,
                 "tsx" => Self::REACT,
