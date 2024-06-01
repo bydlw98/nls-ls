@@ -145,6 +145,7 @@ impl IconTheme {
     const JAVASCRIPT: Option<char> = Some('\u{e74e}');
     const LUA: Option<char> = Some('\u{e620}');
     const PYTHON: Option<char> = Some('\u{e73c}');
+    const REACT: Option<char> = Some('\u{e7ba}');
     const RUST: Option<char> = Some('\u{e7a8}');
     const SHELL: Option<char> = Some('\u{ebca}');
     const TYPESCRIPT: Option<char> = Some('\u{e628}');
@@ -252,6 +253,7 @@ impl IconTheme {
                 "jpeg" => Self::IMAGE,
                 "jpg" => Self::IMAGE,
                 "js" => Self::JAVASCRIPT,
+                "jsx" => Self::REACT,
                 "lock" => Some('\u{e672}'),
                 "lua" => Self::LUA,
                 "md" => Some('\u{e73e}'),
@@ -276,6 +278,7 @@ impl IconTheme {
                 "shtml" => Self::HTML,
                 "toml" => Self::CONFIG,
                 "ts" => Self::TYPESCRIPT,
+                "tsx" => Self::REACT,
                 "ttf" => Self::FONT,
                 "vim" => Self::VIM,
                 "whl" => Self::PYTHON,
