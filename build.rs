@@ -47,7 +47,7 @@ fn generate_manpage() {
     }
     let cmd = build_command();
 
-    let man = clap_mangen::Man::new(cmd).date("2024-05-12");
+    let man = clap_mangen::Man::new(cmd).date("2024-06-01");
     let mut buffer: Vec<u8> = Default::default();
     man.render(&mut buffer)
         .expect("Unable to render man page to buffer");
