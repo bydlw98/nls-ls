@@ -5,94 +5,23 @@ use crate::output::{GridCell, GridCellExts};
 
 pub fn format_size(size: u64, config: &Config) -> GridCell {
     let size_style = config.theme.size_style();
+    let mut buffer = size_fmt::Buffer::new();
 
-    match config.size_format {
-        SizeFormat::Raw => GridCell::from_num_with_style(size, size_style),
-        SizeFormat::HumanReadable => human_readable(size, size_style),
-        SizeFormat::Si => si(size, size_style),
-        SizeFormat::Iec => iec(size, size_style),
-    }
-}
-
-macro_rules! internal_format_size_impl {
-    (
-        $size:ident,
-        $size_style:ident,
-        $factor:literal,
-        $prefix_1:literal,
-        $prefix_2:literal,
-        $prefix_3:literal,
-        $prefix_4:literal,
-        $prefix_5:literal,
-        $prefix_6:literal
-    ) => {
-        if $size < u64::pow($factor, 1) {
-            GridCell::from_num_with_style($size, $size_style)
-        } else if $size < u64::pow($factor, 2) {
-            format_size_with_prefix($size, u64::pow($factor, 1), $prefix_1, $size_style)
-        } else if $size < u64::pow($factor, 3) {
-            format_size_with_prefix($size, u64::pow($factor, 2), $prefix_2, $size_style)
-        } else if $size < u64::pow($factor, 4) {
-            format_size_with_prefix($size, u64::pow($factor, 3), $prefix_3, $size_style)
-        } else if $size < u64::pow($factor, 5) {
-            format_size_with_prefix($size, u64::pow($factor, 4), $prefix_4, $size_style)
-        } else if $size < u64::pow($factor, 6) {
-            format_size_with_prefix($size, u64::pow($factor, 5), $prefix_5, $size_style)
-        } else {
-            format_size_with_prefix($size, u64::pow($factor, 6), $prefix_6, $size_style)
-        }
+    let size_str = match config.size_format {
+        SizeFormat::Raw => buffer.raw_fmt(size),
+        SizeFormat::HumanReadable => buffer.human_fmt(size),
+        SizeFormat::Si => buffer.si_fmt(size),
+        SizeFormat::Iec => buffer.iec_fmt(size),
     };
-}
 
-/// format size using factors of 1024 like 1.0K 200M 3.0G etc
-fn human_readable(size: u64, size_style: Option<&str>) -> GridCell {
-    internal_format_size_impl!(size, size_style, 1024, "K", "M", "G", "T", "P", "E")
-}
+    let mut size_cell = GridCell::from_ascii_str_with_style(size_str, size_style);
+    size_cell.alignment = Alignment::Right;
 
-/// format size using factors of 1000 like 1.0k 200M 3.0G etc
-fn si(size: u64, size_style: Option<&str>) -> GridCell {
-    internal_format_size_impl!(size, size_style, 1000, "k", "M", "G", "T", "P", "E")
-}
-
-/// format size using factors of 1024 like 1.0Ki 200Mi 3.0Gi etc
-fn iec(size: u64, size_style: Option<&str>) -> GridCell {
-    internal_format_size_impl!(size, size_style, 1024, "Ki", "Mi", "Gi", "Ti", "Pi", "Ei")
-}
-
-fn format_size_with_prefix(
-    num: u64,
-    factor: u64,
-    prefix: &str,
-    size_style: Option<&str>,
-) -> GridCell {
-    let num_f64 = (num as f64) / (factor as f64);
-
-    if num_f64 >= 10.0 {
-        let size_string = format!("{}{}", num_f64.ceil() as u64, prefix);
-
-        let mut size_cell = GridCell::from_ascii_str_with_style(&size_string, size_style);
-        size_cell.alignment = Alignment::Right;
-
-        size_cell
-    } else {
-        // E.g 123.456
-        // multiply by 10 first to move the first decimal digit in front of decimal point
-        //      123.456 * 10 = 1234.56
-        // get the ceil of value
-        //      123.456.ceil() = 124
-        // divide by 10
-        //      124 / 10 = 12.4
-        let size_string = format!("{:.1}{}", ((num_f64 * 10.0).ceil() / 10.0), prefix);
-
-        let mut size_cell = GridCell::from_ascii_str_with_style(&size_string, size_style);
-        size_cell.alignment = Alignment::Right;
-
-        size_cell
-    }
+    size_cell
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     use compact_str::{format_compact, CompactString};
