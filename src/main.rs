@@ -3,6 +3,7 @@
 mod config;
 mod entry;
 mod list_dir;
+mod logger;
 mod ls_colors;
 mod os;
 mod output;
@@ -14,7 +15,7 @@ use entry::EntryBuf;
 use std::path::{Path, PathBuf};
 
 fn main() {
-    env_logger::init();
+    logger::init();
 
     let (config, path_args_vec) = Config::init();
     log::debug!("{:?}", config);
