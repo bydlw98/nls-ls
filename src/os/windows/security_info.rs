@@ -1,8 +1,6 @@
 use std::io;
 use std::ptr;
 
-use user_utils::windows::BorrowedPsid;
-
 use super::sys_prelude::*;
 use super::FileHandle;
 
@@ -46,12 +44,12 @@ impl SecurityInfo {
         }
     }
 
-    pub fn owner_psid(&self) -> BorrowedPsid<'_> {
-        unsafe { BorrowedPsid::borrow_raw_unchecked(self.raw_owner_psid) }
+    pub fn owner_psid(&self) -> c::PSID {
+        self.raw_owner_psid
     }
 
-    pub fn group_psid(&self) -> BorrowedPsid<'_> {
-        unsafe { BorrowedPsid::borrow_raw_unchecked(self.raw_group_psid) }
+    pub fn group_psid(&self) -> c::PSID {
+        self.raw_group_psid
     }
 
     pub fn dacl_ptr(&self) -> *const c::ACL {
