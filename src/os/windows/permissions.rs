@@ -3,7 +3,8 @@ use std::mem::MaybeUninit;
 
 use compact_str::CompactString;
 use once_cell::sync::OnceCell;
-use user_utils::windows::{AsPsid, AsRawPsid, BorrowedPsid, OwnedPsid};
+use user_utils::os::windows::{GroupidBufExt, GroupidExt};
+use user_utils::GroupidBuf;
 
 use super::security_info::SecurityInfo;
 use super::sys_prelude::*;
@@ -12,7 +13,7 @@ use crate::config::Config;
 use crate::utils::HasMaskSetExt;
 
 pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> CompactString {
-    static WORLD_PSID: OnceCell<Option<OwnedPsid>> = OnceCell::new();
+    static WORLD_PSID: OnceCell<Option<GroupidBuf>> = OnceCell::new();
     let mut permissions_buf = CompactString::default();
 
     match get_accessmask(security_info.dacl_ptr(), security_info.owner_psid()) {
@@ -35,16 +36,18 @@ pub fn get_rwx_permissions(security_info: &SecurityInfo, config: &Config) -> Com
         }
     }
 
-    match WORLD_PSID.get_or_init(|| OwnedPsid::world().ok()) {
-        Some(world_psid) => match get_accessmask(security_info.dacl_ptr(), world_psid.as_psid()) {
-            Ok(others_accessmask) => {
-                permissions_buf.push_str(&accessmask_to_rwx(others_accessmask, config))
+    match WORLD_PSID.get_or_init(|| GroupidBuf::world().ok()) {
+        Some(world_psid) => {
+            match get_accessmask(security_info.dacl_ptr(), world_psid.as_raw_psid()) {
+                Ok(others_accessmask) => {
+                    permissions_buf.push_str(&accessmask_to_rwx(others_accessmask, config))
+                }
+                Err(err) => {
+                    eprintln!("nls: unable to get others permissions: {}", err);
+                    permissions_buf.push_str("???")
+                }
             }
-            Err(err) => {
-                eprintln!("nls: unable to get others permissions: {}", err);
-                permissions_buf.push_str("???")
-            }
-        },
+        }
         None => permissions_buf.push_str("???"),
     }
     permissions_buf
@@ -75,10 +78,9 @@ fn accessmask_to_rwx(accessmask: u32, config: &Config) -> CompactString {
     rwx_string
 }
 
-pub fn get_accessmask(dacl_ptr: *const c::ACL, psid: BorrowedPsid<'_>) -> Result<u32, io::Error> {
-    let raw_psid = psid.as_raw_psid();
+pub fn get_accessmask(dacl_ptr: *const c::ACL, psid: c::PSID) -> Result<u32, io::Error> {
     let mut trustee = MaybeUninit::<c::TRUSTEE_W>::uninit();
-    unsafe { c::BuildTrusteeWithSidW(trustee.as_mut_ptr(), raw_psid) };
+    unsafe { c::BuildTrusteeWithSidW(trustee.as_mut_ptr(), psid) };
     let trustee = unsafe { trustee.assume_init() };
 
     let mut accessmask: u32 = 0;

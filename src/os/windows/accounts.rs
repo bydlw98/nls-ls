@@ -2,63 +2,95 @@ use std::sync::Mutex;
 
 use compact_str::{CompactString, ToCompactString};
 use once_cell::sync::Lazy;
-use user_utils::windows::*;
+use user_utils::os::windows::{
+    convert_sid_to_string_sid, lookup_account_sid, GroupidExt, UseridExt,
+};
+use user_utils::{Groupid, GroupidBuf, Userid, UseridBuf};
 
+use super::sys_prelude::*;
 use crate::config::Config;
 
-pub fn get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> CompactString {
-    static ACCOUNTS_CACHE: Lazy<Mutex<Vec<Account>>> =
-        Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
-    let mut accounts_cache = ACCOUNTS_CACHE.lock().unwrap();
-    let cache_index_option = accounts_cache
-        .iter()
-        .position(|account| account.psid == psid);
+pub fn get_username_by_psid(psid: c::PSID, config: &Config) -> CompactString {
+    struct User {
+        name: CompactString,
+        id: UseridBuf,
+    }
 
-    match cache_index_option {
-        Some(cache_index) => accounts_cache[cache_index].name.clone(),
-        None => match Account::get_by_psid(psid, config) {
-            Some(account) => {
-                let accountname = account.name.clone();
-                log::debug!("account '{}' is not found in ACCOUNTS_CACHE", accountname);
-                accounts_cache.push(account);
+    static USERS_CACHE: Lazy<Mutex<Vec<User>>> = Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
 
-                accountname
+    match USERS_CACHE.lock() {
+        Ok(mut users_cache) => {
+            let user_id = unsafe { Userid::from_raw_psid_unchecked(psid) };
+            let cache_index_option = users_cache.iter().position(|user| user.id.eq(user_id));
+
+            match cache_index_option {
+                Some(cache_index) => users_cache[cache_index].name.clone(),
+                None => {
+                    log::debug!("owner SID: '{}' is not found in USERS_CACHE", user_id);
+                    let name = accountname_str(psid, config);
+                    if let Ok(id) = user_id.try_clone() {
+                        let user = User {
+                            name: name.clone(),
+                            id,
+                        };
+
+                        users_cache.push(user);
+                    }
+
+                    name
+                }
             }
-            None => internal_get_accountname_by_psid(psid, config),
-        },
+        }
+        Err(_) => accountname_str(psid, config),
     }
 }
 
-fn internal_get_accountname_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> CompactString {
+pub fn get_groupname_by_psid(psid: c::PSID, config: &Config) -> CompactString {
+    struct Group {
+        name: CompactString,
+        id: GroupidBuf,
+    }
+
+    static GROUPS_CACHE: Lazy<Mutex<Vec<Group>>> = Lazy::new(|| Mutex::new(Vec::with_capacity(2)));
+
+    match GROUPS_CACHE.lock() {
+        Ok(mut groups_cache) => {
+            let group_id = unsafe { Groupid::from_raw_psid_unchecked(psid) };
+            let cache_index_option = groups_cache.iter().position(|group| group.id.eq(group_id));
+
+            match cache_index_option {
+                Some(cache_index) => groups_cache[cache_index].name.clone(),
+                None => {
+                    log::debug!("group SID: '{}' is not found in GROUPS_CACHE", group_id);
+                    let name = accountname_str(psid, config);
+                    if let Ok(id) = group_id.try_clone() {
+                        let group = Group {
+                            name: name.clone(),
+                            id,
+                        };
+
+                        groups_cache.push(group);
+                    }
+
+                    name
+                }
+            }
+        }
+        Err(_) => accountname_str(psid, config),
+    }
+}
+
+fn accountname_str(psid: c::PSID, config: &Config) -> CompactString {
     if config.numeric_uid_gid {
-        psid.convert_to_string_sid()
+        convert_sid_to_string_sid(psid)
             .map(|string_sid| string_sid.to_compact_string())
             .unwrap_or(CompactString::new_inline("?"))
     } else {
-        match psid.lookup_accountname() {
-            Ok(accountname) => accountname.to_string_lossy().to_compact_string(),
-            Err(_) => psid
-                .convert_to_string_sid()
+        match lookup_account_sid(psid) {
+            Ok(name) => CompactString::new(&name.to_string_lossy()),
+            Err(_) => convert_sid_to_string_sid(psid)
                 .map(|string_sid| string_sid.to_compact_string())
                 .unwrap_or(CompactString::new_inline("?")),
         }
-    }
-}
-
-#[derive(Debug)]
-struct Account {
-    name: CompactString,
-    psid: OwnedPsid,
-}
-
-impl Account {
-    fn get_by_psid(psid: BorrowedPsid<'_>, config: &Config) -> Option<Self> {
-        let sid_buf = psid.try_clone_to_owned().ok()?;
-        let accountname = internal_get_accountname_by_psid(psid, config);
-
-        Some(Self {
-            name: accountname,
-            psid: sid_buf,
-        })
     }
 }
