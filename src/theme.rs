@@ -150,6 +150,7 @@ impl IconTheme {
     const RUST: Option<char> = Some('\u{e7a8}');
     const SHELL: Option<char> = Some('\u{ebca}');
     const TYPESCRIPT: Option<char> = Some('\u{e628}');
+    const VIDEO: Option<char> = Some('\u{f03d}');
     const VIM: Option<char> = Some('\u{e7c5}');
 
     pub fn with_default_icons() -> Self {
@@ -223,6 +224,7 @@ impl IconTheme {
             match extension {
                 "7z" => Self::COMPRESSED,
                 "a" => Self::BINARY,
+                "avi" => Self::VIDEO,
                 "bash" => Self::SHELL,
                 "bin" => Self::BINARY,
                 "bz2" => Self::COMPRESSED,
@@ -244,9 +246,11 @@ impl IconTheme {
                 "dylib" => Self::BINARY,
                 "el" => Self::EMACS,
                 "elc" => Self::EMACS,
+                "flv" => Self::VIDEO,
                 "go" => Self::GO,
                 "gz" => Self::COMPRESSED,
                 "h" => Self::HEADER,
+                "h264" => Self::VIDEO,
                 "hh" => Self::HEADER,
                 "hpp" => Self::HEADER,
                 "hxx" => Self::HEADER,
@@ -263,13 +267,22 @@ impl IconTheme {
                 "lib" => Self::BINARY,
                 "lock" => Some('\u{e672}'),
                 "lua" => Self::LUA,
+                "m2ts" => Self::VIDEO,
+                "m2v" => Self::VIDEO,
+                "m4v" => Self::VIDEO,
                 "md" => Some('\u{e73e}'),
                 "mjs" => Self::JAVASCRIPT,
                 "mk" => Self::MAKE,
+                "mkv" => Self::VIDEO,
+                "mov" => Self::VIDEO,
                 "mp3" => Some('\u{f001}'),
-                "mp4" => Some('\u{f03d}'),
+                "mp4" => Self::VIDEO,
+                "mpeg" => Self::VIDEO,
+                "mpg" => Self::VIDEO,
                 "mts" => Self::TYPESCRIPT,
                 "o" => Self::BINARY,
+                "ogm" => Self::VIDEO,
+                "ogv" => Self::VIDEO,
                 "otf" => Self::FONT,
                 "pdf" => Some('\u{f1c1}'),
                 "png" => Self::IMAGE,
@@ -292,8 +305,11 @@ impl IconTheme {
                 "tsx" => Self::REACT,
                 "ttf" => Self::FONT,
                 "vim" => Self::VIM,
+                "vob" => Self::VIDEO,
                 "vue" => Some('\u{f0844}'),
+                "webm" => Self::VIDEO,
                 "whl" => Self::PYTHON,
+                "wmv" => Self::VIDEO,
                 "xhtml" => Self::HTML,
                 "xz" => Self::COMPRESSED,
                 "yml" => Self::CONFIG,
