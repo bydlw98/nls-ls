@@ -269,6 +269,7 @@ impl IconTheme {
                 "mp3" => Some('\u{f001}'),
                 "mp4" => Some('\u{f03d}'),
                 "mts" => Self::TYPESCRIPT,
+                "o" => Self::BINARY,
                 "otf" => Self::FONT,
                 "pdf" => Some('\u{f1c1}'),
                 "png" => Self::IMAGE,
