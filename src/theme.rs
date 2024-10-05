@@ -146,6 +146,7 @@ impl IconTheme {
     const JAVA: Option<char> = Some('\u{e738}');
     const JAVASCRIPT: Option<char> = Some('\u{e74e}');
     const LUA: Option<char> = Some('\u{e620}');
+    const PERL: Option<char> = Some('\u{e67e}');
     const PYTHON: Option<char> = Some('\u{e73c}');
     const REACT: Option<char> = Some('\u{e7ba}');
     const RUST: Option<char> = Some('\u{e7a8}');
@@ -324,8 +325,12 @@ impl IconTheme {
                 "pcm" => Self::AUDIO,
                 "pdf" => Some('\u{f1c1}'),
                 "pgm" => Self::IMAGE,
+                "pl" => Self::PERL,
+                "plx" => Self::PERL,
+                "pm" => Self::PERL,
                 "png" => Self::IMAGE,
                 "pnm" => Self::IMAGE,
+                "pod" => Self::PERL,
                 "ppm" => Self::IMAGE,
                 "pxm" => Self::IMAGE,
                 "py" => Self::PYTHON,
@@ -344,6 +349,7 @@ impl IconTheme {
                 "svelte" => Some('\u{e697}'),
                 "swf" => Self::AUDIO,
                 "sym" => Self::BINARY,
+                "t" => Self::PERL,
                 "tif" => Self::IMAGE,
                 "tiff" => Self::IMAGE,
                 "toml" => Self::CONFIG,
