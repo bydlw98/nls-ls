@@ -149,6 +149,7 @@ impl IconTheme {
     const PERL: Option<char> = Some('\u{e67e}');
     const PYTHON: Option<char> = Some('\u{e73c}');
     const REACT: Option<char> = Some('\u{e7ba}');
+    const RUBY: Option<char> = Some('\u{e739}');
     const RUST: Option<char> = Some('\u{e7a8}');
     const SHELL: Option<char> = Some('\u{ebca}');
     const TYPESCRIPT: Option<char> = Some('\u{e628}');
@@ -205,6 +206,10 @@ impl IconTheme {
                 "profile" => Self::SHELL,
                 ".profile" => Self::SHELL,
                 "requirements.txt" => Self::PYTHON,
+                ".rvm" => Self::RUBY,
+                "rvmrc" => Self::RUBY,
+                ".rvmrc" => Self::RUBY,
+                "Rakefile" => Self::RUBY,
                 ".vimrc" => Self::VIM,
                 "_vimrc" => Self::VIM,
                 ".zlogin" => Self::SHELL,
@@ -264,7 +269,11 @@ impl IconTheme {
                 "flac" => Self::AUDIO,
                 "flv" => Self::VIDEO,
                 "gif" => Self::VIDEO,
+                "gem" => Self::RUBY,
+                "gemfile" => Self::RUBY,
+                "gemspec" => Self::RUBY,
                 "go" => Self::GO,
+                "guardfile" => Self::RUBY,
                 "gz" => Self::COMPRESSED,
                 "h" => Self::HEADER,
                 "h264" => Self::VIDEO,
@@ -342,7 +351,12 @@ impl IconTheme {
                 "pyx" => Self::PYTHON,
                 "pyz" => Self::PYTHON,
                 "raw" => Self::IMAGE,
+                "rb" => Self::RUBY,
                 "rs" => Self::RUST,
+                "rspec" => Self::RUBY,
+                "rspec_parallel" => Self::RUBY,
+                "rspec_status" => Self::RUBY,
+                "ru" => Self::RUBY,
                 "sh" => Self::SHELL,
                 "shtml" => Self::HTML,
                 "so" => Self::BINARY,
